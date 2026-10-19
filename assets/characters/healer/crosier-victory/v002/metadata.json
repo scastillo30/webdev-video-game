@@ -1,0 +1,18 @@
+{
+  "characterId": "healer",
+  "animation": "crosier-victory",
+  "version": "v002",
+  "fps": 24,
+  "frames": 192,
+  "durationSeconds": 8,
+  "width": 1024,
+  "height": 1536,
+  "format": "PNG RGBA 8-bit",
+  "filmTransparent": true,
+  "previewDurationMs": 8000,
+  "lastToFirstMeanAbsoluteDifference": 0.33977142969767254,
+  "closureKeyFrame": 193,
+  "closureKeyMatchesFrame": 1,
+  "technique": "2.5D illustration mesh",
+  "originalsPreserved": true
+}

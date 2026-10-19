@@ -1,0 +1,22 @@
+{
+  "id": "rogue",
+  "name": "Rogue",
+  "defaultAnimation": "pointing",
+  "animations": {
+    "pointing": {
+      "animationId": "pointing",
+      "version": "v001",
+      "animation": "assets/rogue-pointing/pointing.webp?v=restored-1",
+      "poster": "assets/rogue-pointing/poster.webp?v=restored-1",
+      "head": "assets/rogue-pointing/head.webp?v=restored-1",
+      "width": 384,
+      "height": 576,
+      "source": "animation/character_pointing_breathing.blend"
+    }
+  },
+  "legacyAssetsPreserved": [
+    "assets/rogue_full.webp",
+    "assets/rogue_body.webp",
+    "assets/rogue_head.webp"
+  ]
+}

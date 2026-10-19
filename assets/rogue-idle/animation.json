@@ -1,0 +1,19 @@
+{
+  "image": "idle.webp",
+  "poster": "poster.webp",
+  "width": 384,
+  "height": 576,
+  "sourceFrames": 192,
+  "encodedFrames": 192,
+  "fps": 24,
+  "durationMs": 8000,
+  "loop": true,
+  "alpha": true,
+  "source": "animation/character_smile_grasp_transparent.blend",
+  "features": [
+    "confident smile with upper teeth",
+    "left hand grasps sword hilt",
+    "breathing",
+    "cape breeze"
+  ]
+}

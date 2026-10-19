@@ -1,0 +1,17 @@
+{
+  "characterId": "healer",
+  "animationId": "crosier-victory",
+  "version": "v001",
+  "width": 384,
+  "height": 576,
+  "fps": 24,
+  "durationMs": 8000,
+  "encodedFrames": 192,
+  "alpha": true,
+  "loop": true,
+  "image": "idle.webp",
+  "poster": "poster.webp",
+  "head": "head.webp",
+  "portraitRegistration": "full canvas, feathered at shoulders",
+  "productionSource": "../healer_crosier_victory.blend"
+}

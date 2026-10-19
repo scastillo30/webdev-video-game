@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "animatedCoatVertices": 8224,
+  "pantsAndUpperBodyFixed": true,
+  "cubeCenterPixels": [
+    186,
+    290
+  ],
+  "cubeScale": 0.72,
+  "fingerOcclusion": true,
+  "fps": 24,
+  "frames": 192
+}

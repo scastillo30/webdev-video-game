@@ -1,0 +1,18 @@
+{
+  "image": "pointing.webp",
+  "poster": "poster.webp",
+  "width": 384,
+  "height": 576,
+  "sourceFrames": 144,
+  "encodedFrames": 144,
+  "fps": 24,
+  "durationMs": 6000,
+  "loop": true,
+  "alpha": true,
+  "source": "animation/character_pointing_breathing.blend",
+  "features": [
+    "pointing gesture",
+    "subtle breathing",
+    "glasses glow"
+  ]
+}

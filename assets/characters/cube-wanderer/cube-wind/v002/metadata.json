@@ -1,0 +1,18 @@
+{
+  "characterId": "cube-wanderer",
+  "animationId": "cube-wind",
+  "version": "v002",
+  "fps": 24,
+  "frameCount": 192,
+  "durationSeconds": 8,
+  "width": 512,
+  "height": 768,
+  "technique": "2.5D original illustration mesh and 27 animated 3D wireframe cells",
+  "rotationDegrees": 180,
+  "gameIntegration": "Not integrated",
+  "source": "assets/characters/cube-wanderer/cube-wind/v002/cube_wanderer_cube_wind.blend",
+  "animation": "assets/characters/cube-wanderer/cube-wind/v002/idle.webp",
+  "poster": "assets/characters/cube-wanderer/cube-wind/v002/poster.png",
+  "head": "assets/characters/cube-wanderer/cube-wind/v002/head.webp",
+  "limitations": "Illustration-based mesh with manually traced silhouette; not a volumetric character or physical cloth simulation."
+}

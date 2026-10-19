@@ -1,0 +1,16 @@
+node_modules/
+frontend/node_modules/
+frontend/dist/
+backend/data/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+animation/__pycache__/
+animation/*_frames/
+assets/**/frames/
+assets/**/*.zip
+*.blend1
+*.mp4
+dist/
+.angular/

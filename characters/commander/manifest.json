@@ -1,0 +1,22 @@
+{
+  "id": "commander",
+  "name": "Commander",
+  "defaultAnimation": "sword-ready",
+  "animations": {
+    "sword-ready": {
+      "animationId": "sword-ready",
+      "version": "v001",
+      "animation": "assets/characters/commander/sword-ready/v001/idle.webp?v=1",
+      "poster": "assets/characters/commander/sword-ready/v001/poster.webp?v=1",
+      "head": "assets/characters/commander/sword-ready/v001/head.webp?v=1",
+      "width": 384,
+      "height": 576,
+      "source": "animation/character_smile_grasp_transparent.blend"
+    }
+  },
+  "legacyAssetsPreserved": [
+    "assets/commander_full.webp",
+    "assets/commander_body.webp",
+    "assets/commander_head.webp"
+  ]
+}

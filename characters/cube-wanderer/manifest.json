@@ -1,0 +1,73 @@
+{
+  "id": "cube-wanderer",
+  "name": "Cube Wanderer",
+  "identity": "New character explicitly requested by user; distinct from existing eight-character roster.",
+  "animations": {
+    "cube-wind": {
+      "characterId": "cube-wanderer",
+      "animationId": "cube-wind",
+      "version": "v002",
+      "fps": 24,
+      "frameCount": 192,
+      "durationSeconds": 8,
+      "width": 512,
+      "height": 768,
+      "technique": "2.5D original illustration mesh and 27 animated 3D wireframe cells",
+      "rotationDegrees": 180,
+      "gameIntegration": "Active in Guardian roster slot (guardian), replacing previous artwork by user request",
+      "source": "assets/characters/cube-wanderer/cube-wind/v002/cube_wanderer_cube_wind.blend",
+      "animation": "assets/characters/cube-wanderer/cube-wind/v002/idle.webp",
+      "poster": "assets/characters/cube-wanderer/cube-wind/v002/poster.png",
+      "head": "assets/characters/cube-wanderer/cube-wind/v002/head.webp",
+      "limitations": "Illustration-based mesh with manually traced silhouette; not a volumetric character or physical cloth simulation.",
+      "previousVersions": {
+        "v001": {
+          "characterId": "cube-wanderer",
+          "animationId": "cube-wind",
+          "version": "v001",
+          "fps": 24,
+          "frameCount": 192,
+          "durationSeconds": 8,
+          "width": 512,
+          "height": 768,
+          "technique": "2.5D original illustration mesh and 27 animated 3D wireframe cells",
+          "rotationDegrees": 180,
+          "gameIntegration": "Active in Guardian roster slot (guardian), replacing previous artwork by user request",
+          "source": "assets/characters/cube-wanderer/cube-wind/v001/cube_wanderer_cube_wind.blend",
+          "animation": "assets/characters/cube-wanderer/cube-wind/v001/idle.webp",
+          "poster": "assets/characters/cube-wanderer/cube-wind/v001/poster.png",
+          "head": "assets/characters/cube-wanderer/cube-wind/v001/head.webp",
+          "limitations": "Illustration-based mesh with manually traced silhouette; not a volumetric character or physical cloth simulation.",
+          "gameAssets": {
+            "characterId": "cube-wanderer",
+            "animationId": "cube-wind",
+            "version": "v001",
+            "animation": "assets/characters/cube-wanderer/cube-wind/v001/web/idle.webp?v=1",
+            "poster": "assets/characters/cube-wanderer/cube-wind/v001/web/poster.webp?v=1",
+            "head": "assets/characters/cube-wanderer/cube-wind/v001/web/head.webp?v=1",
+            "width": 384,
+            "height": 576
+          }
+        }
+      },
+      "changes": [
+        "Wind restricted to lower coat tails; pants and upper body fixed",
+        "Cube lowered and centered within palm, smaller, with foreground fingers"
+      ],
+      "gameAssets": {
+        "characterId": "cube-wanderer",
+        "animationId": "cube-wind",
+        "version": "v002",
+        "animation": "assets/characters/cube-wanderer/cube-wind/v002/web/idle.webp?v=2",
+        "poster": "assets/characters/cube-wanderer/cube-wind/v002/web/poster.webp?v=2",
+        "head": "assets/characters/cube-wanderer/cube-wind/v002/web/head.webp?v=2",
+        "width": 384,
+        "height": 576
+      }
+    }
+  },
+  "originalsPreserved": [
+    "assets/characters/cube-wanderer/cube-wind/v001/reference_original.png"
+  ],
+  "gameSlot": "guardian"
+}

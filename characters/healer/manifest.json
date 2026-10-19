@@ -1,0 +1,61 @@
+{
+  "id": "healer",
+  "name": "Healer",
+  "animations": {
+    "crosier-victory": {
+      "animationId": "crosier-victory",
+      "version": "v002",
+      "source": "assets/characters/healer/crosier-victory/v002/healer_crosier_victory.blend",
+      "frames": "assets/characters/healer/crosier-victory/v002/frames/frame_####.png",
+      "animation": "assets/characters/healer/crosier-victory/v002/web/idle.webp?v=1",
+      "poster": "assets/characters/healer/crosier-victory/v002/web/poster.webp?v=1",
+      "head": "assets/characters/healer/crosier-victory/v002/web/head.webp?v=1",
+      "width": 1024,
+      "height": 1536,
+      "fps": 24,
+      "frameCount": 192,
+      "durationSeconds": 8,
+      "technique": "2.5D textured illustration mesh with periodic shape keys and transparent blue radiance",
+      "gameIntegration": "Active in characters/registry.js",
+      "productionAnimation": "assets/characters/healer/crosier-victory/v002/idle.webp",
+      "productionPoster": "assets/characters/healer/crosier-victory/v002/poster.png",
+      "productionHead": "assets/characters/healer/crosier-victory/v002/head.webp",
+      "gameWidth": 384,
+      "gameHeight": 576,
+      "changes": [
+        "Bright cyan crosier center with broader outward blue radiance",
+        "Approximately five times the wrist rotation, with intact V fingers",
+        "Stronger anchored vest and loose-fabric sway"
+      ],
+      "previousVersions": {
+        "v001": {
+          "animationId": "crosier-victory",
+          "version": "v001",
+          "source": "assets/characters/healer/crosier-victory/v001/healer_crosier_victory.blend",
+          "frames": "assets/characters/healer/crosier-victory/v001/frames/frame_####.png",
+          "animation": "assets/characters/healer/crosier-victory/v001/web/idle.webp?v=1",
+          "poster": "assets/characters/healer/crosier-victory/v001/web/poster.webp?v=1",
+          "head": "assets/characters/healer/crosier-victory/v001/web/head.webp?v=1",
+          "width": 1024,
+          "height": 1536,
+          "fps": 24,
+          "frameCount": 192,
+          "durationSeconds": 8,
+          "technique": "2.5D textured illustration mesh with periodic shape keys and transparent blue radiance",
+          "gameIntegration": "Active in characters/registry.js",
+          "productionAnimation": "assets/characters/healer/crosier-victory/v001/idle.webp",
+          "productionPoster": "assets/characters/healer/crosier-victory/v001/poster.png",
+          "productionHead": "assets/characters/healer/crosier-victory/v001/head.webp",
+          "gameWidth": 384,
+          "gameHeight": 576
+        }
+      }
+    }
+  },
+  "legacyAssetsPreserved": [
+    "assets/healer_full.webp",
+    "assets/healer_body.webp",
+    "assets/healer_head.webp"
+  ],
+  "defaultAnimation": "crosier-victory"
+}

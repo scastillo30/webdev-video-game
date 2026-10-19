@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "roster": [
+    "commander",
+    "guardian",
+    "rogue",
+    "mage",
+    "healer",
+    "courier",
+    "swordsman",
+    "bard"
+  ],
+  "pauseResumeAndModals": [
+    "commander",
+    "rogue",
+    "healer"
+  ],
+  "pausedSwitching": [
+    "commander",
+    "rogue",
+    "healer"
+  ],
+  "reducedMotion": [
+    "commander",
+    "rogue",
+    "healer"
+  ],
+  "rapidSwitching": true,
+  "actualAnimatedPixelsAdvance": true,
+  "hiddenDocumentFallback": true,
+  "healerFailureFallback": true,
+  "priorRegistryPreserved": true,
+  "browserErrors": []
+}
