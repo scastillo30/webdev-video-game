@@ -2,6 +2,8 @@
 
 > Architecture migration: the repository now contains an Angular application in `frontend/`, a Go + SQLite character API in `backend/`, and the preserved original game at the repository root. See `ARCHITECTURE.md` for the new development workflow.
 
+Windows users can follow the complete installation and startup guide in [`WINDOWS_SETUP.md`](WINDOWS_SETUP.md).
+
 ## Run
 Open `index.html` in a modern browser. The art assets are in `assets/`. For a zero-setup standalone variant use `webdev_mmorpg_v4.html` (provided separately; all image assets embedded).
 
