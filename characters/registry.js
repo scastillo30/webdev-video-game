@@ -36,5 +36,15 @@ const CHARACTER_ANIMATIONS=Object.freeze({
     "head": "assets/rogue-pointing/head.webp?v=restored-1",
     "width": 384,
     "height": 576
+  },
+  "swordsman": {
+    "characterId": "swordsman",
+    "animationId": "sword-wind",
+    "version": "v001",
+    "animation": "assets/characters/swordsman/sword-wind/v001/idle.webp?v=1",
+    "poster": "assets/characters/swordsman/sword-wind/v001/poster.webp?v=1",
+    "head": "assets/characters/swordsman/sword-wind/v001/head.webp?v=1",
+    "width": 491,
+    "height": 512
   }
 });

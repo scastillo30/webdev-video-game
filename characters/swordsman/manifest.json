@@ -1,0 +1,28 @@
+{
+  "id": "swordsman",
+  "name": "Swordsman",
+  "defaultAnimation": "sword-wind",
+  "animations": {
+    "sword-wind": {
+      "characterId": "swordsman",
+      "animationId": "sword-wind",
+      "version": "v001",
+      "fps": 24,
+      "sourceFrames": 192,
+      "durationMs": 8000,
+      "width": 491,
+      "height": 512,
+      "source": "assets/characters/swordsman/sword-wind/v001/swordsman_sword_wind.blend",
+      "animation": "assets/characters/swordsman/sword-wind/v001/idle.webp",
+      "poster": "assets/characters/swordsman/sword-wind/v001/poster.webp",
+      "head": "assets/characters/swordsman/sword-wind/v001/head.webp",
+      "technique": "Layered 2.5D illustrated puppet; reconstructed hidden artwork",
+      "gameIntegrated": true
+    }
+  },
+  "legacyAssetsPreserved": [
+    "assets/swordsman_full.webp",
+    "assets/swordsman_body.webp",
+    "assets/swordsman_head.webp"
+  ]
+}
