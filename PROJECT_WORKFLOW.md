@@ -10,7 +10,7 @@ Commander and Rogue are different characters. Commander has the smile/sword-gras
 | guardian (cube-wanderer artwork) | 2 | cube-wind / v002 / 8 seconds | assets/characters/cube-wanderer/cube-wind/v002/cube_wanderer_cube_wind.blend |
 | rogue | 3 | pointing / v001 / 6 seconds | animation/character_pointing_breathing.blend |
 | healer | 5 | crosier-victory / v002 / 8 seconds | assets/characters/healer/crosier-victory/v002/healer_crosier_victory.blend |
-| swordsman | 7 | sword-wind / v001 / 8 seconds | assets/characters/swordsman/sword-wind/v001/swordsman_sword_wind.blend |
+| swordsman | 7 | sword-wind / v002 / 8 seconds | assets/characters/swordsman/sword-wind/v002/swordsman_sword_wind.blend |
 
 `characters/<id>/manifest.json` records character identity, animation versions and preserved original assets. `characters/registry.js` is the runtime mapping owned by the integration chat. The two are intentionally separate: production can add an animation to a manifest before integration makes it active.
 

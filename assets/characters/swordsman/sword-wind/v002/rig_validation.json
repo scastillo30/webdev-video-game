@@ -1,0 +1,30 @@
+{
+  "frames": 192,
+  "fps": 24,
+  "durationSeconds": 8,
+  "maxGripDrift": 4.76837158203125e-07,
+  "maxUpperArmLengthError": 1.6547904380104228e-07,
+  "maxForearmLengthError": 1.5522043850246803e-07,
+  "loopTransformError": 0.0,
+  "swordRigid": true,
+  "anatomicalElbowFlexionDegrees": [
+    5.963745095963961,
+    125.96375569234418
+  ],
+  "wristAdjustmentDegrees": [
+    -8,
+    -2
+  ],
+  "shoulderMovementDegrees": [
+    -15,
+    0
+  ],
+  "exportDurationMs": 8000,
+  "webpFrames": 192,
+  "visualReviewFrames": [
+    1,
+    49,
+    97,
+    149
+  ]
+}
