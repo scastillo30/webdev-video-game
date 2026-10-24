@@ -76,6 +76,8 @@ The initial synchronization caches current issue state without replaying old cha
 - Fullscreen is an explicit user control because browsers require a user gesture.
 - `/operations` reports poller/SSE health without exposing Jira credentials. `/diagnostics/soak.html` runs an unattended Game View or Game/Office lifecycle soak and exports JSON evidence.
 - `scripts/build-release.mjs` creates a single-port, platform-specific deployment folder from a clean tree. Runtime assets are discovered from committed UI/config references instead of copying the 1.8 GB production-art directory, and `scripts/verify-release.mjs` validates every packaged file against its SHA-256 manifest.
+- The Go runtime exposes separate liveness and SQLite-aware readiness probes, uses bounded request timeouts without interrupting SSE, handles termination signals gracefully, and applies an explicit CORS allowlist plus browser security headers.
+- `scripts/quality-gate.mjs` is the shared local/CI verification path. `scripts/verify-release-candidate.mjs` additionally requires signed soak evidence and adds its SHA-256 certificate to the verified release manifest.
 
 ## Development
 

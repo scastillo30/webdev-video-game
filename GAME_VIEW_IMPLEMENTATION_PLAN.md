@@ -1,6 +1,6 @@
 # WEBDEV MMORPG — Game View Implementation Plan
 
-Status: **Phases 0–10 implemented; target-hardware soak sign-off remains an operational release gate**
+Status: **Phases 0–12 implemented; target-hardware soak sign-off remains an operational release gate**
 Branch: `codex/game-view-proposal`  
 Scope rule: **Do not modify, regenerate, overwrite, or remap existing character animations or character-owned assets.**
 
@@ -352,6 +352,24 @@ Acceptance: the runner can execute unattended and produce reviewable evidence; t
 - Verify bundle integrity and require a signed-off soak report before release approval.
 
 Acceptance: a clean checkout produces a self-contained verified bundle that starts on one port and exposes Game View, Office View, Operations, and the soak runner.
+
+### Phase 11 — Production runtime hardening
+
+- Add database-aware liveness/readiness endpoints and expose SQLite readiness in the Operations console.
+- Bound HTTP header/body reads while preserving the intentionally long-lived Jira SSE response.
+- Shut down gracefully on operating-system termination signals so active requests and SQLite can close cleanly.
+- Add browser security headers and an explicit configurable cross-origin allowlist.
+
+Acceptance: the packaged server reports database readiness, rejects unapproved cross-origin preflights, stops cleanly, and preserves the shared event stream.
+
+### Phase 12 — Automated quality and release-candidate gates
+
+- Run character preservation, backend, TypeScript, engine, release-tool, whitespace, and production-build checks through one cross-platform command.
+- Execute the same quality gate for every push and pull request in GitHub Actions.
+- Require a clean tree and a signed four-hour soak report before producing a certified release candidate.
+- Bind the soak evidence to the release with a SHA-256 certificate recorded in the bundle manifest.
+
+Acceptance: a release candidate can be produced only after source checks and signed soak evidence pass, and its certificate remains covered by bundle integrity verification.
 
 ## 12. Verification strategy
 

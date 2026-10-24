@@ -105,6 +105,14 @@ The result is written to `release\webdev-mmorpg-windows-amd64`. Copy that folder
 
 Then open `http://localhost:8080`. Configure Jira through process environment variables before starting; do not write the API token into the release folder. The included `release-manifest.json` records checksums and can be revalidated from a repository checkout with `npm run release:verify -- <release-folder>`.
 
+For an approved deployment candidate, first complete and sign the four-hour soak report, then run:
+
+```powershell
+npm run release:candidate -- --soak-report C:\path\to\webdev-tv-soak-report.json --target windows-amd64
+```
+
+This reruns the complete quality gate and records a checksum-only soak certificate in the bundle.
+
 ## Database and configuration
 
 The default SQLite database is created automatically at:

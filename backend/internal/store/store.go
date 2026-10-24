@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"errors"
@@ -43,7 +44,8 @@ func Open(path string) (*Store, error) {
 	}
 	return &Store{db: db}, nil
 }
-func (s *Store) Close() error { return s.db.Close() }
+func (s *Store) Close() error                   { return s.db.Close() }
+func (s *Store) Ping(ctx context.Context) error { return s.db.PingContext(ctx) }
 
 func applyMigrations(db *sql.DB) error {
 	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS schema_migrations (

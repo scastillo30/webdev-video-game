@@ -78,10 +78,66 @@ func TestOperationsStatusIsCredentialSafe(t *testing.T) {
 	if err = json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
 		t.Fatal(err)
 	}
-	if payload.Status != "ok" || payload.UptimeSeconds < 59 || payload.TargetFPS != 30 {
+	if payload.Status != "ok" || payload.UptimeSeconds < 59 || payload.TargetFPS != 30 || payload.Database != "ready" {
 		t.Fatalf("unexpected operations payload: %#v", payload)
 	}
 	if bytes.Contains(response.Body.Bytes(), []byte("apiToken")) || bytes.Contains(response.Body.Bytes(), []byte("email")) {
 		t.Fatalf("operations payload exposed credential fields: %s", response.Body.String())
+	}
+}
+
+func TestHealthAndReadinessMethods(t *testing.T) {
+	database, err := store.Open(filepath.Join(t.TempDir(), "game.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := httptest.NewRecorder()
+	readiness(database)(response, httptest.NewRequest(http.MethodGet, "/api/ready", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("readiness returned %d: %s", response.Code, response.Body.String())
+	}
+	var payload readinessResponse
+	if err = json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Status != "ready" || payload.Database != "ready" || payload.CheckedAt == "" {
+		t.Fatalf("unexpected readiness payload: %#v", payload)
+	}
+
+	response = httptest.NewRecorder()
+	health()(response, httptest.NewRequest(http.MethodPost, "/api/health", nil))
+	if response.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("POST health returned %d", response.Code)
+	}
+
+	if err = database.Close(); err != nil {
+		t.Fatal(err)
+	}
+	response = httptest.NewRecorder()
+	readiness(database)(response, httptest.NewRequest(http.MethodGet, "/api/ready", nil))
+	if response.Code != http.StatusServiceUnavailable {
+		t.Fatalf("closed database readiness returned %d", response.Code)
+	}
+}
+
+func TestSecurityHeadersAndCorsAllowlist(t *testing.T) {
+	handler := securityHeaders(cors(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		write(w, http.StatusOK, map[string]string{"status": "ok"})
+	}), "http://localhost:4200"))
+
+	request := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	request.Header.Set("Origin", "http://localhost:4200")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Header().Get("Access-Control-Allow-Origin") != "http://localhost:4200" || response.Header().Get("X-Content-Type-Options") != "nosniff" || response.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("missing runtime headers: %#v", response.Header())
+	}
+
+	request = httptest.NewRequest(http.MethodOptions, "/api/health", nil)
+	request.Header.Set("Origin", "https://unexpected.example")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusForbidden || response.Header().Get("Access-Control-Allow-Origin") != "" {
+		t.Fatalf("unexpected origin was allowed: code=%d headers=%#v", response.Code, response.Header())
 	}
 }

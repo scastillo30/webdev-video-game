@@ -16,8 +16,10 @@
     "test:engine": "npm --prefix frontend run test:engine",
     "release:build": "node scripts/build-release.mjs",
     "release:verify": "node scripts/verify-release.mjs",
+    "release:candidate": "node scripts/verify-release-candidate.mjs",
     "soak:verify": "node scripts/verify-soak-report.mjs",
-    "test:release-tools": "node --test scripts/release-tools.test.mjs"
+    "test:release-tools": "node --test scripts/release-tools.test.mjs",
+    "quality:check": "node scripts/quality-gate.mjs"
   },
   "devDependencies": { "npm-run-all": "^4.1.5" }
 }

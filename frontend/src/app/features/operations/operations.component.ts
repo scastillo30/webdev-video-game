@@ -22,6 +22,7 @@ interface OperationsStatus {
   connection:JiraConnection;
   issueCount:number;
   eventCount:number;
+  database:string;
   targetFps:number;
   tvModeEnabled:boolean;
 }
@@ -48,8 +49,8 @@ interface OperationsStatus {
           <i aria-hidden="true"></i>
         </article>
         <article class="operations-card">
-          <small>GO SERVICE</small><strong>{{formatUptime(current.uptimeSeconds)}}</strong>
-          <dl><div><dt>Started</dt><dd>{{current.serverStartedAt|date:'medium'}}</dd></div><div><dt>Target frame rate</dt><dd>{{current.targetFps}} FPS</dd></div><div><dt>TV mode</dt><dd>{{current.tvModeEnabled?'Enabled':'Disabled'}}</dd></div></dl>
+          <small>GO + SQLITE</small><strong>{{formatUptime(current.uptimeSeconds)}}</strong>
+          <dl><div><dt>Database</dt><dd>{{current.database}}</dd></div><div><dt>Started</dt><dd>{{current.serverStartedAt|date:'medium'}}</dd></div><div><dt>Target frame rate</dt><dd>{{current.targetFps}} FPS</dd></div><div><dt>TV mode</dt><dd>{{current.tvModeEnabled?'Enabled':'Disabled'}}</dd></div></dl>
         </article>
         <article class="operations-card">
           <small>JIRA CONNECTION</small><strong>{{current.connection.state}}</strong>

@@ -61,13 +61,13 @@ for(const asset of [...runtimeAssets].sort()){
   const destination=join(legacy,asset);mkdirSync(dirname(destination),{recursive:true});copyFileSync(source,destination);
 }
 
-for(const document of ['README.md','ARCHITECTURE.md','WINDOWS_SETUP.md','TV_SOAK_RUNBOOK.md','PHASE_8_9_REPORT.md','PHASE_9_10_REPORT.md'])copyFileSync(join(root,document),join(bundle,document));
+for(const document of ['README.md','ARCHITECTURE.md','WINDOWS_SETUP.md','TV_SOAK_RUNBOOK.md','PHASE_8_9_REPORT.md','PHASE_9_10_REPORT.md','PHASE_11_12_REPORT.md'])copyFileSync(join(root,document),join(bundle,document));
 mkdirSync(join(bundle,'data'),{recursive:true});
 const unixLauncher=`#!/bin/sh\nset -eu\nROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\nexport ANGULAR_DIST="$ROOT/web"\nexport LEGACY_GAME_DIR="$ROOT/legacy"\nexport DB_PATH="${'$'}{DB_PATH:-$ROOT/data/game.db}"\nexport ADDR="${'$'}{ADDR:-:8080}"\nexec "$ROOT/${executable}"\n`;
 const windowsLauncher=`$ErrorActionPreference = "Stop"\n$Root = Split-Path -Parent $MyInvocation.MyCommand.Path\n$env:ANGULAR_DIST = Join-Path $Root "web"\n$env:LEGACY_GAME_DIR = Join-Path $Root "legacy"\nif (-not $env:DB_PATH) { $env:DB_PATH = Join-Path $Root "data\\game.db" }\nif (-not $env:ADDR) { $env:ADDR = ":8080" }\n& (Join-Path $Root "${executable}")\n`;
 if(goos==='windows')writeFileSync(join(bundle,'start.ps1'),windowsLauncher);
 else{writeFileSync(join(bundle,'start.sh'),unixLauncher);chmodSync(join(bundle,'start.sh'),0o755)}
-writeFileSync(join(bundle,'RELEASE_README.txt'),`WEBDEV MMORPG ${target}\n\nStart: ${goos==='windows'?'.\\start.ps1':'./start.sh'}\nOpen: http://localhost:8080\nOperations: http://localhost:8080/operations\nTV soak: http://localhost:8080/diagnostics/soak.html\n\nSet JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN, and JIRA_JQL in the process environment before starting. Never store credentials in this folder.\n`);
+writeFileSync(join(bundle,'RELEASE_README.txt'),`WEBDEV MMORPG ${target}\n\nStart: ${goos==='windows'?'.\\start.ps1':'./start.sh'}\nOpen: http://localhost:8080\nHealth: http://localhost:8080/api/health\nReadiness: http://localhost:8080/api/ready\nOperations: http://localhost:8080/operations\nTV soak: http://localhost:8080/diagnostics/soak.html\n\nSet JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN, and JIRA_JQL in the process environment before starting. Never store credentials in this folder. Set CORS_ALLOWED_ORIGINS only when serving a trusted frontend from a different origin.\n`);
 
 const fileList=[];
 function walk(directory){for(const entry of readdirSync(directory,{withFileTypes:true})){const path=join(directory,entry.name);if(entry.isDirectory())walk(path);else if(entry.isFile()&&entry.name!=='release-manifest.json')fileList.push(path)}}

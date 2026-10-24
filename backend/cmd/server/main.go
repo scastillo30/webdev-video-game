@@ -4,17 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 	"webdev-mmorpg/backend/internal/jira"
 	"webdev-mmorpg/backend/internal/store"
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 	serverStartedAt := time.Now().UTC()
 	dbPath := env("DB_PATH", "data/game.db")
 	_ = os.MkdirAll(filepath.Dir(dbPath), 0755)
@@ -31,9 +36,10 @@ func main() {
 		BaseURL: env("JIRA_BASE_URL", ""), Email: env("JIRA_EMAIL", ""), APIToken: env("JIRA_API_TOKEN", ""), JQL: env("JIRA_JQL", ""),
 	}, nil)
 	jiraService := jira.NewService(jiraSource, db, time.Duration(gameConfigValue.Settings.RefreshIntervalSeconds)*time.Second)
-	jiraService.Start(context.Background())
+	jiraService.Start(ctx)
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) { write(w, 200, map[string]string{"status": "ok"}) })
+	mux.HandleFunc("/api/health", health())
+	mux.HandleFunc("/api/ready", readiness(db))
 	mux.HandleFunc("/api/operations/status", operationsStatus(db, jiraService, serverStartedAt))
 	mux.HandleFunc("/api/characters", collection(db))
 	mux.HandleFunc("/api/characters/", member(db))
@@ -62,7 +68,63 @@ func main() {
 	mux.Handle("/", spa(dist))
 	addr := env("ADDR", ":8080")
 	log.Printf("WEBDEV MMORPG API listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, cors(mux)))
+	server := &http.Server{
+		Addr: addr, Handler: securityHeaders(cors(mux, env("CORS_ALLOWED_ORIGINS", ""))),
+		// WriteTimeout remains disabled because the Jira SSE response is intentionally long-lived.
+		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second,
+		IdleTimeout: 60 * time.Second, MaxHeaderBytes: 1 << 20,
+	}
+	errChannel := make(chan error, 1)
+	go func() { errChannel <- server.ListenAndServe() }()
+	select {
+	case err = <-errChannel:
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	case <-ctx.Done():
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err = server.Shutdown(shutdownCtx); err != nil {
+			log.Printf("graceful shutdown: %v", err)
+		}
+	}
+}
+
+func health() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		write(w, http.StatusOK, map[string]string{"status": "ok"})
+	}
+}
+
+type readinessResponse struct {
+	Status    string `json:"status"`
+	Database  string `json:"database"`
+	JiraState string `json:"jiraState"`
+	CheckedAt string `json:"checkedAt"`
+}
+
+func readiness(db *store.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		response := readinessResponse{Status: "ready", Database: "ready", CheckedAt: time.Now().UTC().Format(time.RFC3339Nano)}
+		if err := db.Ping(r.Context()); err != nil {
+			response.Status = "not_ready"
+			response.Database = "unavailable"
+			write(w, http.StatusServiceUnavailable, response)
+			return
+		}
+		if snapshot, err := db.JiraSnapshot(r.Context(), 1); err == nil {
+			response.JiraState = snapshot.Connection.State
+		}
+		write(w, http.StatusOK, response)
+	}
 }
 
 type operationsResponse struct {
@@ -73,6 +135,7 @@ type operationsResponse struct {
 	Connection    jira.Connection  `json:"connection"`
 	IssueCount    int              `json:"issueCount"`
 	EventCount    int              `json:"eventCount"`
+	Database      string           `json:"database"`
 	TargetFPS     int              `json:"targetFps"`
 	TVModeEnabled bool             `json:"tvModeEnabled"`
 }
@@ -100,7 +163,7 @@ func operationsStatus(db *store.Store, jiraService *jira.Service, startedAt time
 		write(w, http.StatusOK, operationsResponse{
 			Status: status, ServerStarted: startedAt.Format(time.RFC3339Nano), UptimeSeconds: int64(time.Since(startedAt).Seconds()),
 			Jira: jiraService.Diagnostics(), Connection: snapshot.Connection, IssueCount: len(snapshot.Issues), EventCount: len(snapshot.Events),
-			TargetFPS: config.Settings.TargetFPS, TVModeEnabled: config.Settings.TVModeEnabled,
+			Database: "ready", TargetFPS: config.Settings.TargetFPS, TVModeEnabled: config.Settings.TVModeEnabled,
 		})
 	}
 }
@@ -202,14 +265,45 @@ func env(k, d string) string {
 	}
 	return d
 }
-func cors(next http.Handler) http.Handler {
+
+func cors(next http.Handler, allowedOrigins string) http.Handler {
+	allowed := map[string]struct{}{}
+	for _, origin := range strings.Split(allowedOrigins, ",") {
+		if origin = strings.TrimSpace(origin); origin != "" {
+			allowed[origin] = struct{}{}
+		}
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		origin := r.Header.Get("Origin")
+		_, originAllowed := allowed[origin]
+		if origin != "" {
+			w.Header().Add("Vary", "Origin")
+		}
+		if originAllowed {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		}
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Last-Event-ID")
 		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
 		if r.Method == http.MethodOptions {
-			w.WriteHeader(204)
+			if origin != "" && !originAllowed {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+			w.WriteHeader(http.StatusNoContent)
 			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+		w.Header().Set("Referrer-Policy", "same-origin")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			w.Header().Set("Cache-Control", "no-store")
 		}
 		next.ServeHTTP(w, r)
 	})
