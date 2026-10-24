@@ -10,7 +10,9 @@
     "local:frontend:start": "cd frontend && ../.tools/node/bin/node node_modules/@angular/cli/bin/ng.js serve --proxy-config proxy.conf.json",
     "local:frontend:build": "cd frontend && ../.tools/node/bin/node node_modules/@angular/cli/bin/ng.js build",
     "local:backend:start": "cd backend && ../.tools/go/bin/go run ./cmd/server",
-    "local:backend:build": "cd backend && ../.tools/go/bin/go build -o bin/webdev-server ./cmd/server"
+    "local:backend:build": "cd backend && ../.tools/go/bin/go build -o bin/webdev-server ./cmd/server",
+    "verify:characters": "node scripts/verify-character-assets.mjs",
+    "test:backend": "cd backend && go test ./..."
   },
   "devDependencies": { "npm-run-all": "^4.1.5" }
 }

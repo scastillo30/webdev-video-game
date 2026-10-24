@@ -4,7 +4,10 @@ import (
 	"database/sql"
 	"embed"
 	"errors"
+	"fmt"
 	_ "modernc.org/sqlite"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -34,16 +37,61 @@ func Open(path string) (*Store, error) {
 	if _, err = db.Exec("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;"); err != nil {
 		return nil, err
 	}
-	migration, err := migrations.ReadFile("migrations/001_characters.sql")
-	if err != nil {
-		return nil, err
-	}
-	if _, err = db.Exec(string(migration)); err != nil {
+	if err = applyMigrations(db); err != nil {
+		_ = db.Close()
 		return nil, err
 	}
 	return &Store{db: db}, nil
 }
 func (s *Store) Close() error { return s.db.Close() }
+
+func applyMigrations(db *sql.DB) error {
+	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
+		version TEXT PRIMARY KEY,
+		applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+	)`); err != nil {
+		return fmt.Errorf("create schema_migrations: %w", err)
+	}
+	entries, err := migrations.ReadDir("migrations")
+	if err != nil {
+		return fmt.Errorf("read migrations: %w", err)
+	}
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".sql") {
+			names = append(names, entry.Name())
+		}
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		var applied int
+		if err := db.QueryRow("SELECT COUNT(*) FROM schema_migrations WHERE version=?", name).Scan(&applied); err != nil {
+			return fmt.Errorf("check migration %s: %w", name, err)
+		}
+		if applied > 0 {
+			continue
+		}
+		body, err := migrations.ReadFile("migrations/" + name)
+		if err != nil {
+			return fmt.Errorf("read migration %s: %w", name, err)
+		}
+		tx, err := db.Begin()
+		if err != nil {
+			return fmt.Errorf("begin migration %s: %w", name, err)
+		}
+		if _, err = tx.Exec(string(body)); err == nil {
+			_, err = tx.Exec("INSERT INTO schema_migrations(version) VALUES(?)", name)
+		}
+		if err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("apply migration %s: %w", name, err)
+		}
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("commit migration %s: %w", name, err)
+		}
+	}
+	return nil
+}
 
 const fields = "id,name,role,epithet,bio,accent,animation_path,poster_path,thumb_path,comment_thumb_path"
 

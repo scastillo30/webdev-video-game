@@ -1,3 +1,14 @@
-<header><div class="brand">✧ WEBDEV <small>MMORPG · ANGULAR EDITION</small></div><nav><button (click)="showMaintenance=false">GAME</button><button (click)="showMaintenance=true">CHARACTERS</button></nav><span class="stack">ANGULAR · GO · SQLITE</span></header>
-<main *ngIf="!showMaintenance" class="game"><iframe src="/game/index.html?offline=1&gameBuild=9" title="Webdev MMORPG game"></iframe></main>
-<main *ngIf="showMaintenance" class="maintenance"><aside><div class="aside-title">CHARACTER CODEX</div><button class="new" (click)="create()">＋ ADD CHARACTER</button><button *ngFor="let c of characters" (click)="select(c)" [class.active]="selected===c.id"><img [src]="'/game/'+c.thumbPath" alt=""><span>{{c.name}}<small>{{c.role}}</small></span></button></aside><form (ngSubmit)="save()"><h1>{{selected?'MODIFY':'ADD'}} CHARACTER</h1><p class="error" *ngIf="error">{{error}}</p><div class="grid"><label>ID<input name="id" [(ngModel)]="edit.id" [readonly]="!!selected" required pattern="[a-z0-9-]+"></label><label>NAME<input name="name" [(ngModel)]="edit.name" required></label><label>ROLE<input name="role" [(ngModel)]="edit.role" required></label><label>ACCENT<input name="accent" [(ngModel)]="edit.accent"></label></div><label>EPITHET<input name="epithet" [(ngModel)]="edit.epithet"></label><label>BIOGRAPHY<textarea name="bio" [(ngModel)]="edit.bio"></textarea></label><fieldset><legend>STRUCTURED ASSETS</legend><label>ANIMATION<input name="animation" [(ngModel)]="edit.animationPath"></label><label>POSTER<input name="poster" [(ngModel)]="edit.posterPath"></label><label>SMALL THUMB<input name="thumb" [(ngModel)]="edit.thumbPath"></label><label>COMMENT THUMB<input name="commentThumb" [(ngModel)]="edit.commentThumbPath"></label></fieldset><footer><button type="button" class="danger" *ngIf="selected" (click)="remove()">DELETE</button><button type="submit" [disabled]="busy">{{busy?'SAVING…':'SAVE CHARACTER'}}</button></footer></form></main>
+<header class="app-header">
+  <a class="brand" routerLink="/" aria-label="WEBDEV MMORPG Office View">✧ WEBDEV <small>MMORPG · ANGULAR EDITION</small></a>
+  <nav aria-label="Primary navigation">
+    <a routerLink="/" [routerLinkActiveOptions]="{exact:true}" routerLinkActive="active">OFFICE VIEW</a>
+    <a routerLink="/game" routerLinkActive="active"><span aria-hidden="true">⌘</span> GAME VIEW</a>
+    <a routerLink="/characters" routerLinkActive="active">CHARACTERS</a>
+    <a routerLink="/settings/game" routerLinkActive="active">SETTINGS</a>
+  </nav>
+  <span class="stream-state" [attr.data-state]="(jira.connection$ | async)?.state">
+    <i aria-hidden="true"></i>{{(jira.connection$ | async)?.state || 'connecting'}}
+  </span>
+  <span class="stack">ANGULAR · GO · SQLITE</span>
+</header>
+<router-outlet></router-outlet>

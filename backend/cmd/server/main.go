@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -8,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+	"webdev-mmorpg/backend/internal/jira"
 	"webdev-mmorpg/backend/internal/store"
 )
 
@@ -23,8 +26,22 @@ func main() {
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) { write(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("/api/characters", collection(db))
 	mux.HandleFunc("/api/characters/", member(db))
+	jiraSource := jira.NewCloudSource(jira.CloudConfig{
+		BaseURL: env("JIRA_BASE_URL", ""), Email: env("JIRA_EMAIL", ""), APIToken: env("JIRA_API_TOKEN", ""), JQL: env("JIRA_JQL", ""),
+	}, nil)
+	jiraService := jira.NewService(jiraSource, db, envDuration("JIRA_POLL_INTERVAL", 60*time.Second))
+	jiraService.Start(context.Background())
+	mux.HandleFunc("/api/jira/snapshot", jiraService.SnapshotHandler)
+	mux.HandleFunc("/api/jira/events", jiraService.EventsHandler)
 	legacy := env("LEGACY_GAME_DIR", "..")
-	mux.Handle("/game/", http.StripPrefix("/game/", http.FileServer(http.Dir(legacy))))
+	mux.Handle("/legacy-game/", http.StripPrefix("/legacy-game/", http.FileServer(http.Dir(legacy))))
+	mux.HandleFunc("/game/index.html", func(w http.ResponseWriter, r *http.Request) {
+		target := "/legacy-game/index.html"
+		if r.URL.RawQuery != "" {
+			target += "?" + r.URL.RawQuery
+		}
+		http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+	})
 	dist := env("ANGULAR_DIST", "../frontend/dist/webdev-mmorpg/browser")
 	mux.Handle("/", spa(dist))
 	addr := env("ADDR", ":8080")
@@ -107,6 +124,18 @@ func env(k, d string) string {
 		return v
 	}
 	return d
+}
+func envDuration(k string, fallback time.Duration) time.Duration {
+	value := env(k, "")
+	if value == "" {
+		return fallback
+	}
+	parsed, err := time.ParseDuration(value)
+	if err != nil {
+		log.Printf("invalid %s=%q; using %s", k, value, fallback)
+		return fallback
+	}
+	return parsed
 }
 func cors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
