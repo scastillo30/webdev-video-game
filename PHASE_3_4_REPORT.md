@@ -47,7 +47,6 @@ Migration `003_game_profiles.sql` seeds every `jira_account_id` as `NULL`. This 
 - Client-console verification after the final build with no Game View bundle errors.
 - Character ownership/asset guard.
 
-## Deferred to later phases
+## Follow-on status
 
-- Phase 5: persistent Game View settings, Jira mapping editor/API, and expanded TV activity-panel controls.
-- Phase 6: automated engine/E2E coverage, long-duration CPU/memory soak tests, and final bundle/performance tuning.
+Phase 5 is now delivered in the subsequent phases 4–5 change set; see `PHASE_4_5_REPORT.md`. Phase 6 remains reserved for expanded automated engine/E2E coverage, long-duration CPU/memory soak tests, and final bundle/performance tuning.

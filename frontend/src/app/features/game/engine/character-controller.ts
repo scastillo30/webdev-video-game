@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {CharacterPathfinding} from './character-pathfinding';
 import {CharacterStateMachine} from './character-state-machine';
-import {CharacterDirective, CharacterState, GameProfile, GridPoint} from './game.models';
+import {CharacterDirective, CharacterState, GameProfile, GameSettings, GridPoint} from './game.models';
 
 export class CharacterController{
   readonly machine=new CharacterStateMachine();
@@ -13,6 +13,9 @@ export class CharacterController{
   private moving=false;
   private idleAt=0;
   private celebrationSequence=0;
+  private movementEnabled=true;
+  private effectsEnabled=true;
+  private animationSpeed=1;
 
   constructor(
     private readonly scene:Phaser.Scene,
@@ -21,8 +24,10 @@ export class CharacterController{
     private readonly tileSize:number,
     private cell:GridPoint,
     onSelect:(characterId:string)=>void,
-    private readonly reducedMotion=false
+    private readonly reducedMotion=false,
+    settings?:GameSettings
   ){
+    if(settings)this.configure(settings);
     const position=this.world(cell);
     this.halo=scene.add.ellipse(0,-2,58,22,0x69d5ff,.12).setStrokeStyle(1,0xe7c77e,.2).setVisible(false);
     const shadow=scene.add.ellipse(0,-1,44,13,0x000000,.45);
@@ -37,13 +42,19 @@ export class CharacterController{
     this.container.on('pointerdown',()=>onSelect(profile.characterId));
     this.container.on('pointerover',()=>this.halo.setVisible(true));
     this.container.on('pointerout',()=>{if(!this.container.getData('focused'))this.halo.setVisible(false)});
-    if(!reducedMotion)scene.tweens.add({targets:this.image,y:-51,duration:1600+Math.random()*400,yoyo:true,repeat:-1,ease:'Sine.inOut'});
+    if(!reducedMotion)scene.tweens.add({targets:this.image,y:-51,duration:(1600+Math.random()*400)/this.animationSpeed,yoyo:true,repeat:-1,ease:'Sine.inOut'});
     this.updateDepth();this.scheduleIdle(scene.time.now);
   }
 
   get currentCell():GridPoint{return{...this.cell}}
   get isMoving():boolean{return this.moving}
   get worldPosition():GridPoint{return{x:this.container.x,y:this.container.y}}
+
+  configure(settings:GameSettings):void{
+    this.movementEnabled=settings.movementEnabled;
+    this.effectsEnabled=settings.effectsEnabled;
+    this.animationSpeed=settings.animationSpeed;
+  }
 
   destroy():void{
     this.scene.tweens.killTweensOf(this.image);
@@ -75,12 +86,13 @@ export class CharacterController{
     if(this.moving){this.scene.tweens.killTweensOf(this.container);this.moving=false}
     const path=this.pathfinding.find(this.cell,target,reserved);
     if(!path.length){onComplete();return}
+    if(!this.movementEnabled){onComplete();return}
     if(this.reducedMotion){this.cell={...path[path.length-1]};const world=this.world(this.cell);this.container.setPosition(world.x,world.y);this.updateDepth();onComplete();return}
     this.machine.transition('WALKING');this.moving=true;this.showBubble('On my way…');
     const advance=(index:number):void=>{
       const next=path[index];if(!next){this.moving=false;this.cell={...target};this.hideBubble(finalState==='IDLE');onComplete();return}
       const world=this.world(next),delta=world.x-this.container.x;this.image.setFlipX(delta<0);
-      this.scene.tweens.add({targets:this.container,x:world.x,y:world.y,duration:230,ease:'Sine.inOut',onUpdate:()=>this.updateDepth(),onComplete:()=>{this.cell={...next};advance(index+1)}});
+      this.scene.tweens.add({targets:this.container,x:world.x,y:world.y,duration:230/this.animationSpeed,ease:'Sine.inOut',onUpdate:()=>this.updateDepth(),onComplete:()=>{this.cell={...next};advance(index+1)}});
     };
     advance(0);
   }
@@ -105,7 +117,7 @@ export class CharacterController{
   private celebrate():void{
     const sequence=++this.celebrationSequence;
     if(this.reducedMotion){this.showBubble('Task completed!');this.scene.time.delayedCall(1600,()=>{if(sequence===this.celebrationSequence&&this.machine.state==='CELEBRATING')this.setState('IDLE','')});return}
-    for(let index=0;index<8;index++){
+    if(this.effectsEnabled)for(let index=0;index<8;index++){
       const angle=(Math.PI*2*index)/8,particle=this.scene.add.circle(this.container.x,this.container.y-62,3,index%2?0x69d5ff:0xffd878,1).setDepth(5000);
       this.scene.tweens.add({targets:particle,x:particle.x+Math.cos(angle)*46,y:particle.y+Math.sin(angle)*38,alpha:0,scale:1.8,duration:900,onComplete:()=>particle.destroy()});
     }

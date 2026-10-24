@@ -14,6 +14,28 @@ export interface GameProfile {
   enabled: boolean;
 }
 
+export interface GameSettings {
+  scene: 'castle-command-center';
+  movementEnabled: boolean;
+  effectsEnabled: boolean;
+  animationSpeed: number;
+  spectatorEnabled: boolean;
+  rotationIntervalSeconds: number;
+  tvScale: number;
+  soundEnabled: boolean;
+}
+
+export interface StatusBehaviorMapping {
+  status: string;
+  behavior: CharacterState;
+}
+
+export interface GameConfig {
+  settings: GameSettings;
+  profiles: GameProfile[];
+  statusMappings: StatusBehaviorMapping[];
+}
+
 export interface GridPoint {x:number;y:number}
 
 export interface CharacterDirective {
@@ -33,6 +55,7 @@ export interface SpectatorItem {
 export interface SpectatorState {
   active: SpectatorItem | null;
   focusCharacterId: string | null;
+  autoEnabled: boolean;
   paused: boolean;
   pending: number;
 }

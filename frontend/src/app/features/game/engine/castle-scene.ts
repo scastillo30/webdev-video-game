@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {CharacterController} from './character-controller';
 import {CharacterPathfinding} from './character-pathfinding';
-import {CharacterDirective, GameProfile, GridPoint} from './game.models';
+import {CharacterDirective, GameProfile, GameSettings, GridPoint} from './game.models';
 
 export const CASTLE_WIDTH=1440;
 export const CASTLE_HEIGHT=720;
@@ -25,11 +25,13 @@ export class CastleScene extends Phaser.Scene{
   private pathfinding!:CharacterPathfinding;
   private focusedCharacterId:string|null=null;
   private lastUpdate=0;
+  private readonly ambientTweens:Phaser.Tweens.Tween[]=[];
 
   constructor(
     private readonly profiles:GameProfile[],
     private readonly onSelect:(characterId:string)=>void,
     private readonly reducedMotion:boolean,
+    private settings:GameSettings,
     private readonly onReady:()=>void
   ){super({key:'castle-command-center'})}
 
@@ -44,7 +46,7 @@ export class CastleScene extends Phaser.Scene{
     this.pathfinding=new CharacterPathfinding(COLUMNS,ROWS,this.blocked);
     for(const profile of this.profiles.filter(item=>item.enabled)){
       const home=this.anchor(profile.homeLocation);
-      this.controllers.set(profile.characterId,new CharacterController(this,profile,this.pathfinding,TILE_SIZE,home,this.onSelect,this.reducedMotion));
+      this.controllers.set(profile.characterId,new CharacterController(this,profile,this.pathfinding,TILE_SIZE,home,this.onSelect,this.reducedMotion,this.settings));
     }
     this.onReady();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>this.destroyControllers());
@@ -65,6 +67,12 @@ export class CastleScene extends Phaser.Scene{
       this.directiveSignatures.set(directive.characterId,signature);
       controller.apply(directive,this.destination(controller.profile,directive),this.reserved(controller.profile.characterId));
     }
+  }
+
+  configure(settings:GameSettings):void{
+    this.settings=settings;
+    for(const controller of this.controllers.values())controller.configure(settings);
+    for(const tween of this.ambientTweens)settings.effectsEnabled?tween.resume():tween.pause();
   }
 
   focusCharacter(characterId:string|null):void{
@@ -123,14 +131,14 @@ export class CastleScene extends Phaser.Scene{
     const x=point.x*TILE_SIZE+TILE_SIZE/2,y=point.y*TILE_SIZE+TILE_SIZE/2;
     const ring=this.add.ellipse(x,y,42,20,color,.12).setStrokeStyle(1,color,.65).setDepth(3);
     this.add.text(x,y+17,label,{fontFamily:'Manrope,sans-serif',fontSize:'7px',color:'#83a9bd'}).setOrigin(.5).setDepth(4);
-    if(!this.reducedMotion)this.tweens.add({targets:ring,alpha:.45,scaleX:1.18,scaleY:1.18,duration:1800,yoyo:true,repeat:-1,ease:'Sine.inOut'});
+    if(!this.reducedMotion)this.ambientTweens.push(this.tweens.add({targets:ring,alpha:.45,scaleX:1.18,scaleY:1.18,duration:1800/this.settings.animationSpeed,yoyo:true,repeat:-1,ease:'Sine.inOut',paused:!this.settings.effectsEnabled}));
   }
 
   private addTorch(point:GridPoint):void{
     const x=point.x*TILE_SIZE+TILE_SIZE/2,y=point.y*TILE_SIZE+6;
     const flame=this.add.circle(x,y,5,0xffc55c,.9).setDepth(5);
     this.add.circle(x,y,14,0xff9d36,.08).setDepth(4);
-    if(!this.reducedMotion)this.tweens.add({targets:flame,scaleX:.7,scaleY:1.4,alpha:.62,duration:420+point.x*13,yoyo:true,repeat:-1});
+    if(!this.reducedMotion)this.ambientTweens.push(this.tweens.add({targets:flame,scaleX:.7,scaleY:1.4,alpha:.62,duration:(420+point.x*13)/this.settings.animationSpeed,yoyo:true,repeat:-1,paused:!this.settings.effectsEnabled}));
   }
 
   private createFallbackTextures():void{
@@ -153,7 +161,7 @@ export class CastleScene extends Phaser.Scene{
   }
 
   private tryIdleMove(controller:CharacterController):void{
-    if(this.focusedCharacterId===controller.profile.characterId)return;
+    if(!this.settings.movementEnabled||this.focusedCharacterId===controller.profile.characterId)return;
     const origin=this.anchor(controller.profile.homeLocation);
     const choices=[{x:origin.x+1,y:origin.y},{x:origin.x-1,y:origin.y},{x:origin.x,y:origin.y+1},{x:origin.x,y:origin.y-1}]
       .filter(point=>!this.blocked.has(cellKey(point))&&!this.reserved(controller.profile.characterId).has(cellKey(point)));

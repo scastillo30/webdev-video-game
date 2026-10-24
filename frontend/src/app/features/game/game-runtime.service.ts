@@ -2,7 +2,7 @@ import {Injectable, NgZone, inject, signal} from '@angular/core';
 import Phaser from 'phaser';
 import {Subject} from 'rxjs';
 import {CastleScene, CASTLE_HEIGHT, CASTLE_WIDTH} from './engine/castle-scene';
-import {CharacterDirective, GameProfile} from './engine/game.models';
+import {CharacterDirective, GameProfile, GameSettings} from './engine/game.models';
 
 @Injectable()
 export class GameRuntimeService{
@@ -12,6 +12,7 @@ export class GameRuntimeService{
   private pendingDirectives:CharacterDirective[]=[];
   private pendingFocus:string|null=null;
   private manuallyPaused=false;
+  private settings:GameSettings={scene:'castle-command-center',movementEnabled:true,effectsEnabled:true,animationSpeed:1,spectatorEnabled:true,rotationIntervalSeconds:15,tvScale:1,soundEnabled:false};
   private readonly selectionSubject=new Subject<string>();
   readonly selection$=this.selectionSubject.asObservable();
   readonly running=signal(false);
@@ -26,7 +27,8 @@ export class GameRuntimeService{
         profiles,
         characterId=>this.zone.run(()=>this.selectionSubject.next(characterId)),
         this.reducedMotion(),
-        ()=>{this.running.set(true);this.scene?.applyDirectives(this.pendingDirectives);this.scene?.focusCharacter(this.pendingFocus)}
+        this.settings,
+        ()=>{this.running.set(true);this.scene?.configure(this.settings);this.scene?.applyDirectives(this.pendingDirectives);this.scene?.focusCharacter(this.pendingFocus)}
       );
       this.game=new Phaser.Game({
         type:Phaser.AUTO,
@@ -42,6 +44,11 @@ export class GameRuntimeService{
       });
       document.addEventListener('visibilitychange',this.handleVisibility);
     });
+  }
+
+  configure(settings:GameSettings):void{
+    this.settings=settings;
+    if(this.scene?.scene?.isActive())this.scene.configure(settings);
   }
 
   applyDirectives(directives:CharacterDirective[]):void{

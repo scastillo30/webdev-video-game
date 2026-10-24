@@ -26,6 +26,7 @@ func main() {
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) { write(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("/api/characters", collection(db))
 	mux.HandleFunc("/api/characters/", member(db))
+	mux.HandleFunc("/api/game/config", gameConfig(db))
 	mux.HandleFunc("/api/game/profiles", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -55,6 +56,23 @@ func main() {
 	addr := env("ADDR", ":8080")
 	log.Printf("WEBDEV MMORPG API listening on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, cors(mux)))
+}
+func gameConfig(db *store.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			value, err := db.GetGameConfig(r.Context())
+			respond(w, value, err)
+		case http.MethodPut:
+			var config store.GameConfig
+			if decode(w, r, &config) {
+				value, err := db.SaveGameConfig(r.Context(), config)
+				respond(w, value, err)
+			}
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	}
 }
 func collection(db *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -11,7 +11,8 @@ Browser
       │   ├─ character controllers + A* collision grid
       │   └─ Jira behavior mapper + fair spectator director
       ├─ Character maintenance → /characters
-      ├─ Game settings shell → /settings/game
+      ├─ Game settings → /settings/game
+      │   └─ validated Game View, spectator, Jira mapping, and status behavior controls
       └─ Shared Jira store → /api/jira/snapshot + /api/jira/events (SSE)
                                   └─ Go HTTP API (:8080)
                                       ├─ one Jira adapter/poller
@@ -25,7 +26,9 @@ Office View and Game View consume one root-scoped Angular Jira store. The store 
 
 Game View creates exactly one Phaser instance while `/game` is mounted and destroys it on route exit. The canvas pauses when the document is hidden. Angular retains responsibility for the accessible toolbar and activity panel; Phaser owns only the castle simulation. The scene uses a collision grid, named anchors, A* paths, per-character state machines, destination reservations, and bounded effects.
 
-The spectator director accepts only events whose author has an explicit stable Jira-account mapping. Assignee state can position a mapped character at a workstation, but it never changes event authorship. Event IDs are deduplicated, pending events from one author are grouped into one appearance, and characters rotate fairly at a 15-second interval. Manual focus pauses rotation without stopping the shared Jira store.
+The spectator director accepts only events whose author has an explicit stable Jira-account mapping. Assignee state can position a mapped character at a workstation, but it never changes event authorship. Event IDs are deduplicated, pending events from one author are grouped into one appearance, and characters rotate fairly at a configurable interval (15 seconds by default). Manual focus pauses rotation without stopping the shared Jira store.
+
+Game View configuration is read from `GET /api/game/config` and saved atomically with `PUT /api/game/config`. The API validates the supported scene, animation speed, spectator interval, TV text scale, all eight character profiles, unique stable Jira account mappings, named castle anchors, and Jira-status behavior mappings before committing the transaction. The settings page never writes character-owned asset paths; it only displays the approved profile visuals while editing placement, enablement, and Jira identity mapping.
 
 ## Character ownership
 
@@ -42,8 +45,10 @@ SQLite stores editable application metadata. `characters/<id>/manifest.json` and
 - `GET /api/jira/snapshot`
 - `GET /api/jira/events` (Server-Sent Events)
 - `GET /api/game/profiles`
+- `GET /api/game/config`
+- `PUT /api/game/config`
 
-The Go service applies ordered, embedded, forward-only migrations at startup and records them in `schema_migrations`. All writes use parameterized SQL. Jira issue state and deduplicated activity events are stored separately. `character_game_profiles` stores Game View placement, approved visual references, enablement, and an optional unique Jira account ID. Seeded Jira mappings are deliberately null.
+The Go service applies ordered, embedded, forward-only migrations at startup and records them in `schema_migrations`. All writes use parameterized SQL. Jira issue state and deduplicated activity events are stored separately. `character_game_profiles` stores Game View placement, approved visual references, enablement, and an optional unique Jira account ID. `game_settings` stores runtime and display preferences, while `jira_status_behavior_mappings` stores exact status-to-behavior overrides. Seeded Jira mappings are deliberately null.
 
 ## Jira configuration
 

@@ -1,12 +1,12 @@
 import {DatePipe, NgFor, NgIf} from '@angular/common';
 import {AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, inject} from '@angular/core';
 import {combineLatest, Subscription} from 'rxjs';
-import {emptyJiraSnapshot, JiraIssueSnapshot, JiraSnapshot} from '../../core/jira/jira.models';
+import {emptyJiraSnapshot, JiraActivityEvent, JiraIssueSnapshot, JiraSnapshot} from '../../core/jira/jira.models';
 import {JiraStoreService} from '../../core/jira/jira-store.service';
-import {CharacterDirective, GameProfile, SpectatorState} from './engine/game.models';
+import {CharacterDirective, GameProfile, GameSettings, SpectatorState, StatusBehaviorMapping} from './engine/game.models';
 import {GameRuntimeService} from './game-runtime.service';
 import {GameBehaviorService} from './services/game-behavior.service';
-import {GameProfileService} from './services/game-profile.service';
+import {GameConfigService} from './services/game-config.service';
 import {SpectatorDirectorService} from './services/spectator-director.service';
 
 @Component({
@@ -15,14 +15,14 @@ import {SpectatorDirectorService} from './services/spectator-director.service';
   imports:[DatePipe,NgFor,NgIf],
   providers:[GameRuntimeService,GameBehaviorService,SpectatorDirectorService],
   template:`
-    <main class="game-view">
+    <main class="game-view" [style.--tv-scale]="settings.tvScale">
       <section class="game-scene-shell" aria-labelledby="gameTitle">
         <div class="game-toolbar">
           <div><small>GAME VIEW · PHASER 3</small><h1 id="gameTitle">CASTLE COMMAND CENTER</h1></div>
           <div class="game-health" [attr.data-state]="snapshot.connection.state">
             <i aria-hidden="true"></i>
             <span>{{snapshot.connection.configured ? snapshot.connection.state : 'not configured'}}</span>
-            <b>{{enabledProfiles.length}} HEROES</b>
+            <b>{{enabledProfiles.length}} HEROES · {{settings.rotationIntervalSeconds}}S</b>
           </div>
         </div>
         <div #gameHost class="phaser-host" aria-label="Top-down castle command center with eight roster characters"></div>
@@ -47,6 +47,7 @@ import {SpectatorDirectorService} from './services/spectator-director.service';
               <small *ngIf="presentation.active">JIRA USER · {{presentation.active.event.authorName || 'IDENTITY HIDDEN'}}</small>
             </div>
             <ng-container *ngIf="presentation.active as item; else selectedIdle">
+              <strong class="activity-dialogue">{{dialogueFor(item.event)}}</strong>
               <a class="ticket-title" [href]="item.event.issueUrl" target="_blank" rel="noopener noreferrer">
                 <b>{{item.event.issueKey}}</b> {{item.event.issueSummary}}
               </a>
@@ -72,8 +73,8 @@ import {SpectatorDirectorService} from './services/spectator-director.service';
         </ng-template>
 
         <div class="spectator-controls">
-          <span>{{presentation.pending}} PENDING</span>
-          <button type="button" (click)="toggleRotation()" [attr.aria-pressed]="presentation.paused">
+          <span>{{presentation.autoEnabled ? presentation.pending + ' PENDING' : 'SPECTATOR OFF'}}</span>
+          <button type="button" (click)="toggleRotation()" [disabled]="!presentation.autoEnabled" [attr.aria-pressed]="presentation.paused">
             {{presentation.paused ? '▶ RESUME' : 'Ⅱ PAUSE'}}
           </button>
           <button type="button" (click)="next()">NEXT →</button>
@@ -86,24 +87,30 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   @ViewChild('gameHost',{static:true})private gameHost!:ElementRef<HTMLElement>;
   protected readonly jira=inject(JiraStoreService);
   protected readonly runtime=inject(GameRuntimeService);
-  private readonly profiles=inject(GameProfileService);
+  private readonly configService=inject(GameConfigService);
   private readonly behavior=inject(GameBehaviorService);
   private readonly director=inject(SpectatorDirectorService);
   private readonly subscriptions=new Subscription();
   private baseDirectives:CharacterDirective[]=[];
   private issues:JiraIssueSnapshot[]=[];
+  private statusMappings:StatusBehaviorMapping[]=[];
   protected enabledProfiles:GameProfile[]=[];
+  protected settings:GameSettings={scene:'castle-command-center',movementEnabled:true,effectsEnabled:true,animationSpeed:1,spectatorEnabled:true,rotationIntervalSeconds:15,tvScale:1,soundEnabled:false};
   protected snapshot:JiraSnapshot=emptyJiraSnapshot();
-  protected presentation:SpectatorState={active:null,focusCharacterId:null,paused:false,pending:0};
+  protected presentation:SpectatorState={active:null,focusCharacterId:null,autoEnabled:true,paused:false,pending:0};
   protected activeProfile:GameProfile|null=null;
 
   ngAfterViewInit():void{
-    this.subscriptions.add(combineLatest([this.profiles.profiles$,this.jira.snapshot$]).subscribe(([profiles,snapshot])=>{
+    this.subscriptions.add(combineLatest([this.configService.config$,this.jira.snapshot$]).subscribe(([config,snapshot])=>{
       this.snapshot=snapshot;
-      this.enabledProfiles=profiles.filter(profile=>profile.enabled);
+      this.settings=config.settings;
+      this.statusMappings=config.statusMappings;
+      this.enabledProfiles=config.profiles.filter(profile=>profile.enabled);
       this.issues=snapshot.issues;
+      this.runtime.configure(config.settings);
       if(!this.runtime.running())this.runtime.start(this.gameHost.nativeElement,this.enabledProfiles);
-      const result=this.behavior.derive(snapshot,this.enabledProfiles);
+      this.director.configure(config.settings.spectatorEnabled,config.settings.rotationIntervalSeconds);
+      const result=this.behavior.derive(snapshot,this.enabledProfiles,this.statusMappings);
       this.baseDirectives=result.directives;
       this.director.ingest(result.spectatorItems);
       this.renderPresentation();
@@ -120,6 +127,14 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   protected next():void{this.director.next()}
   protected selectCharacter(characterId:string):void{this.director.manualFocus(characterId)}
 
+  protected dialogueFor(event:JiraActivityEvent):string{
+    const action=event.action.toUpperCase();
+    if(action==='MOVED'&&event.previousStatus&&event.newStatus)return`I moved ${event.issueKey} from ${event.previousStatus} to ${event.newStatus}.`;
+    if(/CLOSED|RESOLVED|COMPLETED|DONE/.test(action))return`I closed ${event.issueKey}.`;
+    if(action==='UPDATED')return`I updated ${event.issueKey}.`;
+    return`My latest activity was on ${event.issueKey}.`;
+  }
+
   protected relativeTime(value:string):string{
     const elapsed=Date.now()-Date.parse(value);
     if(!Number.isFinite(elapsed))return'Unknown time';
@@ -135,7 +150,7 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   }
 
   private renderPresentation():void{
-    const active=this.presentation.active?this.behavior.directiveFor(this.presentation.active,this.issues):null;
+    const active=this.presentation.active?this.behavior.directiveFor(this.presentation.active,this.issues,this.statusMappings):null;
     const directives=active?[...this.baseDirectives.filter(item=>item.characterId!==active.characterId),active]:this.baseDirectives;
     this.runtime.applyDirectives(directives);
     this.runtime.focusCharacter(this.presentation.focusCharacterId);
