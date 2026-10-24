@@ -5,6 +5,7 @@
     <a routerLink="/game" routerLinkActive="active"><span aria-hidden="true">⌘</span> GAME VIEW</a>
     <a routerLink="/characters" routerLinkActive="active">CHARACTERS</a>
     <a routerLink="/settings/game" routerLinkActive="active">SETTINGS</a>
+    <a routerLink="/operations" routerLinkActive="active">OPERATIONS</a>
   </nav>
   <span class="stream-state" [attr.data-state]="(jira.connection$ | async)?.state">
     <i aria-hidden="true"></i>{{(jira.connection$ | async)?.state || 'connecting'}}

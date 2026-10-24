@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>WEBDEV MMORPG · TV Soak Runner</title>
+  <style>
+    :root{color-scheme:dark;--ink:#040a13;--panel:#0a1928;--gold:#ddb868;--cyan:#72d9f7;--line:#395166;--ok:#72dfb8;--bad:#ef8a9a}*{box-sizing:border-box}body{margin:0;min-height:100vh;color:#e9eef4;background:radial-gradient(circle at 50% -10%,#173b57,#06101d 48%,#02060d);font:13px system-ui,sans-serif}.shell{width:min(1500px,calc(100% - 32px));margin:auto;padding:28px 0 42px}header{display:flex;align-items:end;justify-content:space-between;gap:24px;padding-bottom:18px;border-bottom:1px solid #826a45}header small,.eyebrow{color:var(--cyan);font-size:9px;font-weight:800;letter-spacing:.19em}h1{margin:5px 0 3px;color:#f1d49c;font:700 clamp(25px,3vw,38px) Georgia,serif}header p{margin:0;color:#91a9b8;font-size:11px}.controls{display:flex;flex-wrap:wrap;gap:8px}.controls label{display:grid;gap:4px;color:#85a6b8;font-size:8px;font-weight:800;letter-spacing:.08em}.controls input,.controls select,.controls button{height:38px;padding:0 11px;border:1px solid #455e72;border-radius:2px;color:#e7eef2;background:#081725;font:700 11px system-ui}.controls input{width:92px}.controls button{cursor:pointer;color:#f3d69e;border-color:#a4844d}.controls button.secondary{color:#a9c4d1;border-color:#496075}.controls button:disabled{cursor:not-allowed;opacity:.45}.status-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0}.metric{padding:14px;border:1px solid var(--line);background:rgba(9,25,40,.94)}.metric small{display:block;color:#7f9cac;font-size:8px;letter-spacing:.1em}.metric b{display:block;margin-top:5px;color:#eed098;font:700 22px Georgia,serif}.metric[data-state="pass"] b{color:var(--ok)}.metric[data-state="fail"] b{color:var(--bad)}.stage{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;min-height:590px}.viewport{position:relative;overflow:hidden;border:1px solid #9c7d49;background:#02060b;box-shadow:0 20px 60px rgba(0,0,0,.35)}iframe{width:100%;height:100%;min-height:590px;border:0;background:#030810}.route-label{position:absolute;z-index:3;top:10px;left:10px;padding:7px 9px;border:1px solid #4b6273;color:#9fdcf0;background:rgba(4,13,23,.92);font-size:8px;font-weight:800;letter-spacing:.1em}.log{overflow:auto;max-height:590px;padding:13px;border:1px solid var(--line);background:rgba(5,15,25,.96)}.log h2{margin:0 0 10px;color:#e9ca90;font:700 14px Georgia,serif}.log ol{display:grid;gap:6px;margin:0;padding:0;list-style:none}.log li{padding:8px;border-left:2px solid #3d596d;color:#94adba;background:#091826;font:11px/1.45 ui-monospace,monospace}.log li.pass{border-color:var(--ok)}.log li.fail{border-color:var(--bad);color:#ffb5bf}.note{margin:14px 0 0;padding:12px 14px;border:1px solid #594e3c;color:#a9bac4;background:#0a1723;font-size:10px;line-height:1.6}.note b{color:#f0ce91}@media(max-width:900px){header{align-items:start;flex-direction:column}.stage{grid-template-columns:1fr}.status-row{grid-template-columns:repeat(2,1fr)}.log{max-height:280px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div><small>PHASE 9 · CONTINUOUS DISPLAY VALIDATION</small><h1>TV Soak Runner</h1><p>Unattended lifecycle and stability sampling for Game View.</p></div>
+      <form class="controls" id="controls">
+        <label>DURATION (MIN)<input id="duration" type="number" min="1" max="1440" value="240"></label>
+        <label>SAMPLE (SEC)<input id="sample" type="number" min="5" max="300" value="15"></label>
+        <label>CYCLE (MIN)<input id="cycle" type="number" min="1" max="120" value="5"></label>
+        <label>MODE<select id="mode"><option value="steady">Steady Game</option><option value="cycle">Game ↔ Office</option></select></label>
+        <button id="start" type="submit">START SOAK</button><button id="stop" class="secondary" type="button" disabled>STOP</button><button id="download" class="secondary" type="button" disabled>DOWNLOAD REPORT</button>
+      </form>
+    </header>
+    <section class="status-row" aria-live="polite">
+      <article class="metric" id="resultMetric"><small>RESULT</small><b id="result">READY</b></article>
+      <article class="metric"><small>ELAPSED</small><b id="elapsed">00:00:00</b></article>
+      <article class="metric"><small>SAMPLES</small><b id="samples">0</b></article>
+      <article class="metric"><small>MAX HEAP</small><b id="heap">N/A</b></article>
+      <article class="metric"><small>MAX EVENT LAG</small><b id="lag">0 ms</b></article>
+    </section>
+    <section class="stage">
+      <div class="viewport"><span class="route-label" id="route">NOT STARTED</span><iframe id="target" title="Application under soak test"></iframe></div>
+      <aside class="log"><h2>Run Log</h2><ol id="log"></ol></aside>
+    </section>
+    <p class="note"><b>Hardware gate:</b> keep Activity Monitor or Task Manager visible during the run and record CPU/GPU observations in the downloaded report notes. Browser heap is sampled only when Chromium exposes <code>performance.memory</code>; absence of that API is reported as unsupported, never as zero usage.</p>
+  </main>
+  <script src="/diagnostics/soak.js" defer></script>
+</body>
+</html>

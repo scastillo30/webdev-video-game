@@ -8,6 +8,8 @@ Windows users can follow the complete installation and startup guide in [`WINDOW
 
 For the current Angular + Go application, install dependencies once with `npm run frontend:install`, then start the API with `npm run local:backend:start` and the UI in a second terminal with `npm run local:frontend:start`. Open `http://localhost:4200`; Game View is available at `/game` and its persistent controls at `/settings/game`. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the complete workflow.
 
+Operational readiness is available at `/operations`. Run the unattended television stability check at `/diagnostics/soak.html`; see [`TV_SOAK_RUNBOOK.md`](TV_SOAK_RUNBOOK.md) before using its result as release evidence.
+
 The preserved original game can still be opened from `index.html` in a modern browser. Its art assets are in `assets/`. For a zero-setup standalone variant use `webdev_mmorpg_v4.html` (provided separately; all image assets embedded).
 
 The scene works offline using HTML/CSS and Canvas. When internet is available it may optionally load Three.js from a CDN for GPU-driven overlay particles; visit with `?offline=1` to skip that request.

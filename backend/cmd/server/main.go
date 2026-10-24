@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+	serverStartedAt := time.Now().UTC()
 	dbPath := env("DB_PATH", "data/game.db")
 	_ = os.MkdirAll(filepath.Dir(dbPath), 0755)
 	db, err := store.Open(dbPath)
@@ -33,6 +34,7 @@ func main() {
 	jiraService.Start(context.Background())
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) { write(w, 200, map[string]string{"status": "ok"}) })
+	mux.HandleFunc("/api/operations/status", operationsStatus(db, jiraService, serverStartedAt))
 	mux.HandleFunc("/api/characters", collection(db))
 	mux.HandleFunc("/api/characters/", member(db))
 	mux.HandleFunc("/api/game/config", gameConfig(db, jiraService))
@@ -46,6 +48,7 @@ func main() {
 	})
 	mux.HandleFunc("/api/jira/snapshot", jiraService.SnapshotHandler)
 	mux.HandleFunc("/api/jira/events", jiraService.EventsHandler)
+	mux.HandleFunc("/api/jira/refresh", jiraService.RefreshHandler)
 	legacy := env("LEGACY_GAME_DIR", "..")
 	mux.Handle("/legacy-game/", http.StripPrefix("/legacy-game/", http.FileServer(http.Dir(legacy))))
 	mux.HandleFunc("/game/index.html", func(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +64,47 @@ func main() {
 	log.Printf("WEBDEV MMORPG API listening on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, cors(mux)))
 }
+
+type operationsResponse struct {
+	Status        string           `json:"status"`
+	ServerStarted string           `json:"serverStartedAt"`
+	UptimeSeconds int64            `json:"uptimeSeconds"`
+	Jira          jira.Diagnostics `json:"jira"`
+	Connection    jira.Connection  `json:"connection"`
+	IssueCount    int              `json:"issueCount"`
+	EventCount    int              `json:"eventCount"`
+	TargetFPS     int              `json:"targetFps"`
+	TVModeEnabled bool             `json:"tvModeEnabled"`
+}
+
+func operationsStatus(db *store.Store, jiraService *jira.Service, startedAt time.Time) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		snapshot, err := db.JiraSnapshot(r.Context(), 100)
+		if err != nil {
+			write(w, http.StatusInternalServerError, map[string]string{"error": "Jira snapshot unavailable"})
+			return
+		}
+		config, err := db.GetGameConfig(r.Context())
+		if err != nil {
+			write(w, http.StatusInternalServerError, map[string]string{"error": "game configuration unavailable"})
+			return
+		}
+		status := "ok"
+		if snapshot.Connection.Configured && snapshot.Connection.State != "live" {
+			status = "degraded"
+		}
+		write(w, http.StatusOK, operationsResponse{
+			Status: status, ServerStarted: startedAt.Format(time.RFC3339Nano), UptimeSeconds: int64(time.Since(startedAt).Seconds()),
+			Jira: jiraService.Diagnostics(), Connection: snapshot.Connection, IssueCount: len(snapshot.Issues), EventCount: len(snapshot.Events),
+			TargetFPS: config.Settings.TargetFPS, TVModeEnabled: config.Settings.TVModeEnabled,
+		})
+	}
+}
+
 func gameConfig(db *store.Store, jiraService *jira.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {

@@ -1,6 +1,6 @@
 # WEBDEV MMORPG — Game View Implementation Plan
 
-Status: **Phases 0–7 implemented; extended production soak remains an operational release gate**
+Status: **Phases 0–9 implemented; target-hardware soak execution remains an operational release gate**
 Branch: `codex/game-view-proposal`  
 Scope rule: **Do not modify, regenerate, overwrite, or remap existing character animations or character-owned assets.**
 
@@ -318,6 +318,30 @@ Acceptance: panel and settings meet the proposal at 1080p and 4K.
 - Add backend, Angular, and engine tests plus an end-to-end smoke suite.
 
 Acceptance: no duplicate renderer/SSE instances, resources release on Office View return, builds/tests pass, and a multi-hour soak test shows stable memory and CPU.
+
+### Phase 7 — Persistent display and Jira selection controls
+
+- Persist Jira scope, featured-ticket policy, refresh cadence, TV mode, fullscreen visibility, and frame-rate cap.
+- Apply Game View filters after the shared normalized Jira stream.
+- Preserve cached data as explicitly stale when Jira refreshes fail.
+
+Acceptance: validated settings survive restart, one poller accepts cadence changes, and production builds plus deterministic engine tests pass.
+
+### Phase 8 — Operational readiness console
+
+- Expose credential-safe service, poller, SSE subscriber, issue, event, and display telemetry.
+- Add a protected-method manual Jira refresh endpoint without creating another poller.
+- Add an Operations route for readiness checks and operator handoff.
+
+Acceptance: operators can distinguish healthy, degraded, disconnected, and unconfigured states without reading credentials or server internals.
+
+### Phase 9 — Repeatable TV soak and release evidence
+
+- Add a standalone browser soak runner with steady Game View and route-cycle modes.
+- Check canvas mount/teardown invariants, API availability, event-loop lag, and browser heap when supported.
+- Export a timestamped JSON report and document the target-hardware CPU/GPU observation procedure.
+
+Acceptance: the runner can execute unattended and produce reviewable evidence; the release gate closes only after a multi-hour run on the actual television host.
 
 ## 12. Verification strategy
 

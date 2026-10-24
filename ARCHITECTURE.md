@@ -46,9 +46,11 @@ SQLite stores editable application metadata. `characters/<id>/manifest.json` and
 - `DELETE /api/characters/{id}`
 - `GET /api/jira/snapshot`
 - `GET /api/jira/events` (Server-Sent Events)
+- `POST /api/jira/refresh` (serialized operator-triggered refresh)
 - `GET /api/game/profiles`
 - `GET /api/game/config`
 - `PUT /api/game/config`
+- `GET /api/operations/status` (credential-safe readiness telemetry)
 
 The Go service applies ordered, embedded, forward-only migrations at startup and records them in `schema_migrations`. All writes use parameterized SQL. Jira issue state and deduplicated activity events are stored separately. `character_game_profiles` stores Game View placement, approved visual references, enablement, and an optional unique Jira account ID. `game_settings` stores runtime and display preferences, while `jira_status_behavior_mappings` stores exact status-to-behavior overrides. Seeded Jira mappings are deliberately null.
 
@@ -72,6 +74,7 @@ The initial synchronization caches current issue state without replaying old cha
 - Texture keys are stable, ambient effects are bounded, and celebration particles are short-lived.
 - A failed Jira refresh preserves cached issue state but marks it `stale`; cached data is never presented as live.
 - Fullscreen is an explicit user control because browsers require a user gesture.
+- `/operations` reports poller/SSE health without exposing Jira credentials. `/diagnostics/soak.html` runs an unattended Game View or Game/Office lifecycle soak and exports JSON evidence.
 
 ## Development
 
