@@ -26,6 +26,14 @@ func main() {
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) { write(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("/api/characters", collection(db))
 	mux.HandleFunc("/api/characters/", member(db))
+	mux.HandleFunc("/api/game/profiles", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		profiles, err := db.ListGameProfiles()
+		respond(w, profiles, err)
+	})
 	jiraSource := jira.NewCloudSource(jira.CloudConfig{
 		BaseURL: env("JIRA_BASE_URL", ""), Email: env("JIRA_EMAIL", ""), APIToken: env("JIRA_API_TOKEN", ""), JQL: env("JIRA_JQL", ""),
 	}, nil)

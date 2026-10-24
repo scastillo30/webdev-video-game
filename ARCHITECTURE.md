@@ -6,7 +6,10 @@
 Browser
   └─ Angular application (:4200 in development)
       ├─ Office View → / (legacy presentation bridged at /legacy-game/)
-      ├─ Game View shell → /game
+      ├─ Game View → /game
+      │   ├─ Phaser castle scene (outside Angular change detection)
+      │   ├─ character controllers + A* collision grid
+      │   └─ Jira behavior mapper + fair spectator director
       ├─ Character maintenance → /characters
       ├─ Game settings shell → /settings/game
       └─ Shared Jira store → /api/jira/snapshot + /api/jira/events (SSE)
@@ -19,6 +22,10 @@ Browser
 The existing Office View remains intact at the repository root during migration. The Go server exposes it under `/legacy-game/`; Angular owns `/game`. A compatibility redirect keeps old `/game/index.html` bookmarks working.
 
 Office View and Game View consume one root-scoped Angular Jira store. The store opens one SSE connection to Go and survives route changes. While Office View remains in the legacy iframe, Angular passes the normalized stream through a same-origin, versioned `postMessage` bridge; the iframe disables its own Jira adapter polling in this mode.
+
+Game View creates exactly one Phaser instance while `/game` is mounted and destroys it on route exit. The canvas pauses when the document is hidden. Angular retains responsibility for the accessible toolbar and activity panel; Phaser owns only the castle simulation. The scene uses a collision grid, named anchors, A* paths, per-character state machines, destination reservations, and bounded effects.
+
+The spectator director accepts only events whose author has an explicit stable Jira-account mapping. Assignee state can position a mapped character at a workstation, but it never changes event authorship. Event IDs are deduplicated, pending events from one author are grouped into one appearance, and characters rotate fairly at a 15-second interval. Manual focus pauses rotation without stopping the shared Jira store.
 
 ## Character ownership
 
@@ -34,8 +41,9 @@ SQLite stores editable application metadata. `characters/<id>/manifest.json` and
 - `DELETE /api/characters/{id}`
 - `GET /api/jira/snapshot`
 - `GET /api/jira/events` (Server-Sent Events)
+- `GET /api/game/profiles`
 
-The Go service applies ordered, embedded, forward-only migrations at startup and records them in `schema_migrations`. All writes use parameterized SQL. Jira issue state and deduplicated activity events are stored separately.
+The Go service applies ordered, embedded, forward-only migrations at startup and records them in `schema_migrations`. All writes use parameterized SQL. Jira issue state and deduplicated activity events are stored separately. `character_game_profiles` stores Game View placement, approved visual references, enablement, and an optional unique Jira account ID. Seeded Jira mappings are deliberately null.
 
 ## Jira configuration
 
@@ -55,7 +63,7 @@ The initial synchronization caches current issue state without replaying old cha
 2. Run `npm run frontend:install` once when dependencies change.
 3. Run `npm run local:backend:start` (or `npm run backend:start` when Go is globally available).
 4. In another terminal run `npm run local:frontend:start` (or `npm run frontend:start` when Node is globally available).
-5. Open `http://localhost:4200`. Office View is `/`; the new Phase 2 Game View shell is `/game`.
+5. Open `http://localhost:4200`. Office View is `/`; the Phaser Game View is `/game`.
 
 For production, run `npm run frontend:build`, then start the Go server. It serves the Angular build, API, and legacy game from one process.
 

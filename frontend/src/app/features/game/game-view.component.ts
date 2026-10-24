@@ -1,42 +1,143 @@
-import {AsyncPipe, DatePipe, NgIf} from '@angular/common';
-import {Component, OnDestroy, OnInit, inject} from '@angular/core';
+import {DatePipe, NgFor, NgIf} from '@angular/common';
+import {AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, inject} from '@angular/core';
+import {combineLatest, Subscription} from 'rxjs';
+import {emptyJiraSnapshot, JiraIssueSnapshot, JiraSnapshot} from '../../core/jira/jira.models';
 import {JiraStoreService} from '../../core/jira/jira-store.service';
+import {CharacterDirective, GameProfile, SpectatorState} from './engine/game.models';
 import {GameRuntimeService} from './game-runtime.service';
+import {GameBehaviorService} from './services/game-behavior.service';
+import {GameProfileService} from './services/game-profile.service';
+import {SpectatorDirectorService} from './services/spectator-director.service';
 
 @Component({
-  selector: 'app-game-view',
-  standalone: true,
-  imports: [AsyncPipe, DatePipe, NgIf],
-  providers: [GameRuntimeService],
-  template: `
+  selector:'app-game-view',
+  standalone:true,
+  imports:[DatePipe,NgFor,NgIf],
+  providers:[GameRuntimeService,GameBehaviorService,SpectatorDirectorService],
+  template:`
     <main class="game-view">
       <section class="game-scene-shell" aria-labelledby="gameTitle">
-        <div class="scene-grid" aria-hidden="true"></div>
-        <div class="scene-crest" aria-hidden="true">✦</div>
-        <div class="scene-copy">
-          <p>PHASE II · SHARED STREAM ONLINE</p>
-          <h1 id="gameTitle">CASTLE COMMAND CENTER</h1>
-          <span>The scene lifecycle and Jira event foundation are ready for the Phase III renderer.</span>
+        <div class="game-toolbar">
+          <div><small>GAME VIEW · PHASER 3</small><h1 id="gameTitle">CASTLE COMMAND CENTER</h1></div>
+          <div class="game-health" [attr.data-state]="snapshot.connection.state">
+            <i aria-hidden="true"></i>
+            <span>{{snapshot.connection.configured ? snapshot.connection.state : 'not configured'}}</span>
+            <b>{{enabledProfiles.length}} HEROES</b>
+          </div>
         </div>
-        <div class="scene-status"><i></i>{{runtime.running() ? 'SCENE ACTIVE' : 'SCENE STOPPED'}}</div>
+        <div #gameHost class="phaser-host" aria-label="Top-down castle command center with eight roster characters"></div>
+        <div class="scene-loading" *ngIf="!runtime.running()" aria-live="polite">SUMMONING THE PARTY…</div>
+        <div class="motion-note" *ngIf="runtime.reducedMotion()">REDUCED MOTION · INSTANT TRAVEL</div>
+        <div class="hero-shortcuts" aria-label="Focus a party character">
+          <button *ngFor="let hero of enabledProfiles" type="button" (click)="selectCharacter(hero.characterId)"
+            [attr.aria-label]="'Focus ' + hero.displayName" [attr.aria-pressed]="presentation.focusCharacterId === hero.characterId">
+            {{hero.displayName}}
+          </button>
+        </div>
       </section>
-      <section class="game-stream-panel" *ngIf="jira.snapshot$ | async as snapshot" aria-live="polite">
-        <div class="stream-portrait">✧</div>
-        <div class="stream-copy">
-          <small>SHARED JIRA EVENT STREAM</small>
-          <strong>{{snapshot.connection.configured ? snapshot.connection.state : 'NOT CONFIGURED'}}</strong>
-          <span>{{snapshot.connection.message || 'Waiting for Jira configuration'}}</span>
+
+      <section class="game-activity-panel" aria-live="polite">
+        <ng-container *ngIf="activeProfile as character; else overviewPanel">
+          <div class="activity-portrait">
+            <img [src]="'/legacy-game/' + character.portraitAsset" [alt]="character.displayName + ' portrait'">
+          </div>
+          <div class="activity-copy">
+            <div class="activity-heading">
+              <span>{{character.characterClass}} · {{character.displayName}}</span>
+              <small *ngIf="presentation.active">JIRA USER · {{presentation.active.event.authorName || 'IDENTITY HIDDEN'}}</small>
+            </div>
+            <ng-container *ngIf="presentation.active as item; else selectedIdle">
+              <a class="ticket-title" [href]="item.event.issueUrl" target="_blank" rel="noopener noreferrer">
+                <b>{{item.event.issueKey}}</b> {{item.event.issueSummary}}
+              </a>
+              <div class="activity-meta">
+                <span class="action-badge">ACTION: {{item.event.action}}</span>
+                <span class="status-badge">STATUS: {{item.event.currentStatus || item.event.newStatus || 'PENDING SYNC'}}</span>
+                <time [dateTime]="item.event.occurredAt" [title]="item.event.occurredAt | date:'medium'">{{relativeTime(item.event.occurredAt)}}</time>
+                <em *ngIf="item.groupedEventCount > 1">{{item.groupedEventCount}} grouped events</em>
+              </div>
+            </ng-container>
+            <ng-template #selectedIdle>
+              <strong class="idle-copy">Manual focus · no mapped Jira activity available for this character.</strong>
+            </ng-template>
+          </div>
+        </ng-container>
+
+        <ng-template #overviewPanel>
+          <div class="activity-portrait activity-crest">✦</div>
+          <div class="activity-copy">
+            <div class="activity-heading"><span>PARTY OVERVIEW</span><small>SHARED JIRA EVENT STREAM</small></div>
+            <strong class="idle-copy">{{snapshot.connection.message || 'The party is idle. New mapped activity will enter the spectator queue.'}}</strong>
+          </div>
+        </ng-template>
+
+        <div class="spectator-controls">
+          <span>{{presentation.pending}} PENDING</span>
+          <button type="button" (click)="toggleRotation()" [attr.aria-pressed]="presentation.paused">
+            {{presentation.paused ? '▶ RESUME' : 'Ⅱ PAUSE'}}
+          </button>
+          <button type="button" (click)="next()">NEXT →</button>
         </div>
-        <div class="stream-metrics"><b>{{snapshot.issues.length}}</b><span>ISSUES</span></div>
-        <div class="stream-metrics"><b>{{snapshot.events.length}}</b><span>EVENTS</span></div>
-        <time *ngIf="snapshot.connection.lastSuccessAt" [dateTime]="snapshot.connection.lastSuccessAt">{{snapshot.connection.lastSuccessAt | date:'short'}}</time>
       </section>
     </main>
   `
 })
-export class GameViewComponent implements OnInit, OnDestroy {
-  protected readonly jira = inject(JiraStoreService);
-  protected readonly runtime = inject(GameRuntimeService);
-  ngOnInit(): void { this.runtime.start(); }
-  ngOnDestroy(): void { this.runtime.stop(); }
+export class GameViewComponent implements AfterViewInit,OnDestroy{
+  @ViewChild('gameHost',{static:true})private gameHost!:ElementRef<HTMLElement>;
+  protected readonly jira=inject(JiraStoreService);
+  protected readonly runtime=inject(GameRuntimeService);
+  private readonly profiles=inject(GameProfileService);
+  private readonly behavior=inject(GameBehaviorService);
+  private readonly director=inject(SpectatorDirectorService);
+  private readonly subscriptions=new Subscription();
+  private baseDirectives:CharacterDirective[]=[];
+  private issues:JiraIssueSnapshot[]=[];
+  protected enabledProfiles:GameProfile[]=[];
+  protected snapshot:JiraSnapshot=emptyJiraSnapshot();
+  protected presentation:SpectatorState={active:null,focusCharacterId:null,paused:false,pending:0};
+  protected activeProfile:GameProfile|null=null;
+
+  ngAfterViewInit():void{
+    this.subscriptions.add(combineLatest([this.profiles.profiles$,this.jira.snapshot$]).subscribe(([profiles,snapshot])=>{
+      this.snapshot=snapshot;
+      this.enabledProfiles=profiles.filter(profile=>profile.enabled);
+      this.issues=snapshot.issues;
+      if(!this.runtime.running())this.runtime.start(this.gameHost.nativeElement,this.enabledProfiles);
+      const result=this.behavior.derive(snapshot,this.enabledProfiles);
+      this.baseDirectives=result.directives;
+      this.director.ingest(result.spectatorItems);
+      this.renderPresentation();
+    }));
+    this.subscriptions.add(this.director.state$.subscribe(state=>{
+      this.presentation=state;
+      this.activeProfile=this.enabledProfiles.find(profile=>profile.characterId===state.focusCharacterId)??null;
+      this.renderPresentation();
+    }));
+    this.subscriptions.add(this.runtime.selection$.subscribe(characterId=>this.director.manualFocus(characterId)));
+  }
+
+  protected toggleRotation():void{this.presentation.paused?this.director.resume():this.director.pause()}
+  protected next():void{this.director.next()}
+  protected selectCharacter(characterId:string):void{this.director.manualFocus(characterId)}
+
+  protected relativeTime(value:string):string{
+    const elapsed=Date.now()-Date.parse(value);
+    if(!Number.isFinite(elapsed))return'Unknown time';
+    const minutes=Math.max(0,Math.floor(elapsed/60_000));
+    if(minutes<1)return'Just now';
+    if(minutes<60)return`${minutes}m ago`;
+    const hours=Math.floor(minutes/60);if(hours<24)return`${hours}h ago`;
+    return`${Math.floor(hours/24)}d ago`;
+  }
+
+  ngOnDestroy():void{
+    this.subscriptions.unsubscribe();this.director.stop();this.runtime.stop();
+  }
+
+  private renderPresentation():void{
+    const active=this.presentation.active?this.behavior.directiveFor(this.presentation.active,this.issues):null;
+    const directives=active?[...this.baseDirectives.filter(item=>item.characterId!==active.characterId),active]:this.baseDirectives;
+    this.runtime.applyDirectives(directives);
+    this.runtime.focusCharacter(this.presentation.focusCharacterId);
+  }
 }
