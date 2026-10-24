@@ -16,3 +16,4 @@ assets/**/*.zip
 dist/
 .angular/
 .tools/
+release/

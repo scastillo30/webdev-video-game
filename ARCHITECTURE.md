@@ -75,6 +75,7 @@ The initial synchronization caches current issue state without replaying old cha
 - A failed Jira refresh preserves cached issue state but marks it `stale`; cached data is never presented as live.
 - Fullscreen is an explicit user control because browsers require a user gesture.
 - `/operations` reports poller/SSE health without exposing Jira credentials. `/diagnostics/soak.html` runs an unattended Game View or Game/Office lifecycle soak and exports JSON evidence.
+- `scripts/build-release.mjs` creates a single-port, platform-specific deployment folder from a clean tree. Runtime assets are discovered from committed UI/config references instead of copying the 1.8 GB production-art directory, and `scripts/verify-release.mjs` validates every packaged file against its SHA-256 manifest.
 
 ## Development
 

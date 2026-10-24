@@ -79,7 +79,7 @@
 
   function download(){
     if(!lastRun)return;
-    const report={...lastRun,timers:undefined,notes:'Add target-host CPU/GPU and fan observations here.'};
+    const report={...lastRun,timers:undefined,hardwareReview:{observer:'',notes:'',cpuObservation:'',gpuObservation:'',thermalObservation:''},notes:'Fill hardwareReview, then set manualHardwareReviewRequired to false after sign-off.'};
     const link=document.createElement('a');link.href=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));link.download=`webdev-tv-soak-${lastRun.startedAt.replace(/[:.]/g,'-')}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);
   }
 

@@ -1,1 +1,33 @@
-{"version":1,"projects":{"webdev-mmorpg":{"projectType":"application","root":"","sourceRoot":"src","architect":{"build":{"builder":"@angular-devkit/build-angular:application","options":{"outputPath":"dist/webdev-mmorpg","index":"src/index.html","browser":"src/main.ts","tsConfig":"tsconfig.app.json","styles":["src/styles.css"],"assets":[{"glob":"**/*","input":"public"}]}},"serve":{"builder":"@angular-devkit/build-angular:dev-server","options":{"buildTarget":"webdev-mmorpg:build"}}}}},"cli":{"analytics":false}}
+{
+  "version": 1,
+  "projects": {
+    "webdev-mmorpg": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist/webdev-mmorpg",
+            "index": "src/index.html",
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "styles": ["src/styles.css"],
+            "assets": [{"glob": "**/*", "input": "public"}],
+            "optimization": {
+              "scripts": true,
+              "styles": {"minify": true, "inlineCritical": true},
+              "fonts": false
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {"buildTarget": "webdev-mmorpg:build"}
+        }
+      }
+    }
+  },
+  "cli": {"analytics": false}
+}

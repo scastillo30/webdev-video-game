@@ -13,7 +13,11 @@
     "local:backend:build": "cd backend && ../.tools/go/bin/go build -o bin/webdev-server ./cmd/server",
     "verify:characters": "node scripts/verify-character-assets.mjs",
     "test:backend": "cd backend && go test ./...",
-    "test:engine": "npm --prefix frontend run test:engine"
+    "test:engine": "npm --prefix frontend run test:engine",
+    "release:build": "node scripts/build-release.mjs",
+    "release:verify": "node scripts/verify-release.mjs",
+    "soak:verify": "node scripts/verify-soak-report.mjs",
+    "test:release-tools": "node --test scripts/release-tools.test.mjs"
   },
   "devDependencies": { "npm-run-all": "^4.1.5" }
 }

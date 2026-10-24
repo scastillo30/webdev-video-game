@@ -10,6 +10,10 @@ For the current Angular + Go application, install dependencies once with `npm ru
 
 Operational readiness is available at `/operations`. Run the unattended television stability check at `/diagnostics/soak.html`; see [`TV_SOAK_RUNBOOK.md`](TV_SOAK_RUNBOOK.md) before using its result as release evidence.
 
+## Production release bundle
+
+From a clean checkout, `npm run release:build` creates a verified bundle for the current operating system under `release/`. Cross-compile with `npm run release:build -- --target windows-amd64`, `linux-amd64`, or `darwin-arm64`. The bundle contains the Go server, compiled Angular application, preserved Office View runtime files, only referenced runtime images, platform startup script, and a SHA-256 manifest. It never copies Jira credentials.
+
 The preserved original game can still be opened from `index.html` in a modern browser. Its art assets are in `assets/`. For a zero-setup standalone variant use `webdev_mmorpg_v4.html` (provided separately; all image assets embedded).
 
 The scene works offline using HTML/CSS and Canvas. When internet is available it may optionally load Three.js from a CDN for GPU-driven overlay particles; visit with `?offline=1` to skip that request.

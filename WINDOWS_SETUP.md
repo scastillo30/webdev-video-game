@@ -89,6 +89,22 @@ npm run backend:start
 
 Open [http://localhost:8080](http://localhost:8080). In this mode, Go serves the compiled Angular application, API, and preserved game from one port.
 
+## Create a self-contained Windows release
+
+From a clean repository checkout, build and verify a Windows x64 bundle:
+
+```powershell
+npm run release:build -- --target windows-amd64
+```
+
+The result is written to `release\webdev-mmorpg-windows-amd64`. Copy that folder to the display host, open PowerShell inside it, and run:
+
+```powershell
+.\start.ps1
+```
+
+Then open `http://localhost:8080`. Configure Jira through process environment variables before starting; do not write the API token into the release folder. The included `release-manifest.json` records checksums and can be revalidated from a repository checkout with `npm run release:verify -- <release-folder>`.
+
 ## Database and configuration
 
 The default SQLite database is created automatically at:

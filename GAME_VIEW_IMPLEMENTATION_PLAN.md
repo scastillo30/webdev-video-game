@@ -1,6 +1,6 @@
 # WEBDEV MMORPG — Game View Implementation Plan
 
-Status: **Phases 0–9 implemented; target-hardware soak execution remains an operational release gate**
+Status: **Phases 0–10 implemented; target-hardware soak sign-off remains an operational release gate**
 Branch: `codex/game-view-proposal`  
 Scope rule: **Do not modify, regenerate, overwrite, or remap existing character animations or character-owned assets.**
 
@@ -342,6 +342,16 @@ Acceptance: operators can distinguish healthy, degraded, disconnected, and uncon
 - Export a timestamped JSON report and document the target-hardware CPU/GPU observation procedure.
 
 Acceptance: the runner can execute unattended and produce reviewable evidence; the release gate closes only after a multi-hour run on the actual television host.
+
+### Phase 10 — Reproducible production packaging
+
+- Make Angular production builds deterministic without build-time font downloads.
+- Package the Go server, Angular application, preserved Office View, and only runtime-referenced assets for Windows, macOS, or Linux.
+- Generate platform startup scripts and a SHA-256 manifest without storing Jira credentials.
+- Refuse clean release creation from a dirty tree unless explicitly creating a non-release test bundle.
+- Verify bundle integrity and require a signed-off soak report before release approval.
+
+Acceptance: a clean checkout produces a self-contained verified bundle that starts on one port and exposes Game View, Office View, Operations, and the soak runner.
 
 ## 12. Verification strategy
 

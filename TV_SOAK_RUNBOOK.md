@@ -15,7 +15,13 @@ Use this runbook on the computer that will drive the office television. A short 
 2. Select **Game ↔ Office**, four hours, a 15-second sample interval, and a five-minute route cycle.
 3. Start the soak and leave the browser tab visible on the television for the complete run.
 4. At the start, midpoint, and end, record browser CPU, memory, GPU usage, fan behavior, visual stutter, and any display sleep or fullscreen issue.
-5. Download the JSON report when the run completes and add the manual observations to its `notes` field.
+5. Download the JSON report when the run completes and add the manual observations to its `hardwareReview` fields.
+
+In the downloaded JSON, fill `hardwareReview.observer` and `hardwareReview.notes`, add the CPU/GPU/thermal observations, and set `manualHardwareReviewRequired` to `false` only after the reviewer accepts the run. Validate it from the repository root:
+
+```powershell
+npm run soak:verify -- C:\path\to\webdev-tv-soak-report.json
+```
 
 An unattended run can start from:
 
