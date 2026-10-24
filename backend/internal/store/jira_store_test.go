@@ -18,8 +18,8 @@ func TestMigrationsAndJiraEventDeduplication(t *testing.T) {
 	if err := database.db.QueryRow("SELECT COUNT(*) FROM schema_migrations").Scan(&migrationsApplied); err != nil {
 		t.Fatal(err)
 	}
-	if migrationsApplied < 4 {
-		t.Fatalf("expected all four migrations, got %d", migrationsApplied)
+	if migrationsApplied < 5 {
+		t.Fatalf("expected all five migrations, got %d", migrationsApplied)
 	}
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	event := jira.ActivityEvent{EventID: "A-1:h1:0", IssueKey: "A-1", AuthorID: jira.String("author"), AssigneeID: jira.String("assignee"), Action: "MOVED", OccurredAt: now, IssueSummary: "Test"}

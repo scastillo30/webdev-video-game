@@ -22,11 +22,20 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	gameConfigValue, err := db.GetGameConfig(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	jiraSource := jira.NewCloudSource(jira.CloudConfig{
+		BaseURL: env("JIRA_BASE_URL", ""), Email: env("JIRA_EMAIL", ""), APIToken: env("JIRA_API_TOKEN", ""), JQL: env("JIRA_JQL", ""),
+	}, nil)
+	jiraService := jira.NewService(jiraSource, db, time.Duration(gameConfigValue.Settings.RefreshIntervalSeconds)*time.Second)
+	jiraService.Start(context.Background())
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) { write(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("/api/characters", collection(db))
 	mux.HandleFunc("/api/characters/", member(db))
-	mux.HandleFunc("/api/game/config", gameConfig(db))
+	mux.HandleFunc("/api/game/config", gameConfig(db, jiraService))
 	mux.HandleFunc("/api/game/profiles", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -35,11 +44,6 @@ func main() {
 		profiles, err := db.ListGameProfiles()
 		respond(w, profiles, err)
 	})
-	jiraSource := jira.NewCloudSource(jira.CloudConfig{
-		BaseURL: env("JIRA_BASE_URL", ""), Email: env("JIRA_EMAIL", ""), APIToken: env("JIRA_API_TOKEN", ""), JQL: env("JIRA_JQL", ""),
-	}, nil)
-	jiraService := jira.NewService(jiraSource, db, envDuration("JIRA_POLL_INTERVAL", 60*time.Second))
-	jiraService.Start(context.Background())
 	mux.HandleFunc("/api/jira/snapshot", jiraService.SnapshotHandler)
 	mux.HandleFunc("/api/jira/events", jiraService.EventsHandler)
 	legacy := env("LEGACY_GAME_DIR", "..")
@@ -57,7 +61,7 @@ func main() {
 	log.Printf("WEBDEV MMORPG API listening on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, cors(mux)))
 }
-func gameConfig(db *store.Store) http.HandlerFunc {
+func gameConfig(db *store.Store, jiraService *jira.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -67,6 +71,9 @@ func gameConfig(db *store.Store) http.HandlerFunc {
 			var config store.GameConfig
 			if decode(w, r, &config) {
 				value, err := db.SaveGameConfig(r.Context(), config)
+				if err == nil {
+					jiraService.SetPollInterval(time.Duration(value.Settings.RefreshIntervalSeconds) * time.Second)
+				}
 				respond(w, value, err)
 			}
 		default:
@@ -150,18 +157,6 @@ func env(k, d string) string {
 		return v
 	}
 	return d
-}
-func envDuration(k string, fallback time.Duration) time.Duration {
-	value := env(k, "")
-	if value == "" {
-		return fallback
-	}
-	parsed, err := time.ParseDuration(value)
-	if err != nil {
-		log.Printf("invalid %s=%q; using %s", k, value, fallback)
-		return fallback
-	}
-	return parsed
 }
 func cors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

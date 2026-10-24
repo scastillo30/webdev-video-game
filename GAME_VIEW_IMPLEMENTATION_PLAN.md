@@ -1,6 +1,6 @@
 # WEBDEV MMORPG — Game View Implementation Plan
 
-Status: **Proposed for approval**  
+Status: **Phases 0–7 implemented; extended production soak remains an operational release gate**
 Branch: `codex/game-view-proposal`  
 Scope rule: **Do not modify, regenerate, overwrite, or remap existing character animations or character-owned assets.**
 

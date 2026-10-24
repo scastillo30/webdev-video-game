@@ -2,7 +2,7 @@ import {Injectable, NgZone, inject, signal} from '@angular/core';
 import Phaser from 'phaser';
 import {Subject} from 'rxjs';
 import {CastleScene, CASTLE_HEIGHT, CASTLE_WIDTH} from './engine/castle-scene';
-import {CharacterDirective, GameProfile, GameSettings} from './engine/game.models';
+import {CharacterDirective, defaultGameSettings, GameProfile, GameSettings} from './engine/game.models';
 
 @Injectable()
 export class GameRuntimeService{
@@ -12,7 +12,7 @@ export class GameRuntimeService{
   private pendingDirectives:CharacterDirective[]=[];
   private pendingFocus:string|null=null;
   private manuallyPaused=false;
-  private settings:GameSettings={scene:'castle-command-center',movementEnabled:true,effectsEnabled:true,animationSpeed:1,spectatorEnabled:true,rotationIntervalSeconds:15,tvScale:1,soundEnabled:false};
+  private settings:GameSettings=defaultGameSettings();
   private readonly selectionSubject=new Subject<string>();
   readonly selection$=this.selectionSubject.asObservable();
   readonly running=signal(false);
@@ -38,7 +38,7 @@ export class GameRuntimeService{
         backgroundColor:'#050b15',
         transparent:false,
         scene:[this.scene],
-        fps:{target:60,forceSetTimeOut:false},
+        fps:{target:this.settings.targetFps,limit:this.settings.targetFps,forceSetTimeOut:false},
         scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:CASTLE_WIDTH,height:CASTLE_HEIGHT},
         render:{antialias:true,pixelArt:false,roundPixels:true,powerPreference:'low-power'}
       });

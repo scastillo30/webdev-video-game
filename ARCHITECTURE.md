@@ -28,7 +28,9 @@ Game View creates exactly one Phaser instance while `/game` is mounted and destr
 
 The spectator director accepts only events whose author has an explicit stable Jira-account mapping. Assignee state can position a mapped character at a workstation, but it never changes event authorship. Event IDs are deduplicated, pending events from one author are grouped into one appearance, and characters rotate fairly at a configurable interval (15 seconds by default). Manual focus pauses rotation without stopping the shared Jira store.
 
-Game View configuration is read from `GET /api/game/config` and saved atomically with `PUT /api/game/config`. The API validates the supported scene, animation speed, spectator interval, TV text scale, all eight character profiles, unique stable Jira account mappings, named castle anchors, and Jira-status behavior mappings before committing the transaction. The settings page never writes character-owned asset paths; it only displays the approved profile visuals while editing placement, enablement, and Jira identity mapping.
+Game View configuration is read from `GET /api/game/config` and saved atomically with `PUT /api/game/config`. The API validates the supported scene, animation speed, frame-rate cap, spectator and Jira refresh intervals, TV text scale, Jira project and issue-type filters, featured-ticket rule, all eight character profiles, unique stable Jira account mappings, named castle anchors, and Jira-status behavior mappings before committing the transaction. The settings page never writes character-owned asset paths; it only displays the approved profile visuals while editing placement, enablement, and Jira identity mapping.
+
+The Game View applies project and issue-type scope after the shared normalized Jira stream, so Office View and Game View still use one backend poller. When a mapped character has multiple tickets, the configured deterministic rule selects the most recently updated, highest-priority, or nearest-due ticket. The Go Jira service reads its refresh cadence from SQLite and accepts validated live interval updates without restarting the server.
 
 ## Character ownership
 
@@ -58,9 +60,18 @@ The server is explicitly disconnected when these variables are absent; demo fixt
 - `JIRA_EMAIL` — Jira Cloud account email
 - `JIRA_API_TOKEN` — server-side token; never exposed to Angular
 - `JIRA_JQL` — issue scope used by the single poller
-- `JIRA_POLL_INTERVAL` — optional Go duration, default `60s`, minimum `10s`
+
+The poll cadence is persisted in SQLite and managed from **Settings → Game → Jira Scope & Selection**. It defaults to 60 seconds, accepts 10–3600 seconds, and updates the existing poller without starting a second one. Project and issue-type filters on that screen affect Game View presentation only; `JIRA_JQL` remains the backend ingestion boundary shared by both views.
 
 The initial synchronization caches current issue state without replaying old changelog transitions. Later polls produce stable event IDs from the Jira issue key, changelog history ID, and changed-field index.
+
+## Continuous-display profile
+
+- Phaser is lazy-loaded, runs outside Angular change detection, and is capped at a configurable 24, 30, or 60 FPS; the balanced default is 30 FPS.
+- The renderer sleeps while the document is hidden and is destroyed when Game View unmounts.
+- Texture keys are stable, ambient effects are bounded, and celebration particles are short-lived.
+- A failed Jira refresh preserves cached issue state but marks it `stale`; cached data is never presented as live.
+- Fullscreen is an explicit user control because browsers require a user gesture.
 
 ## Development
 

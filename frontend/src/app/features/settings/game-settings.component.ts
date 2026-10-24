@@ -6,7 +6,7 @@ import {CharacterState, GameConfig, GameProfile, StatusBehaviorMapping} from '..
 import {GameConfigService} from '../game/services/game-config.service';
 
 const cloneConfig=(config:GameConfig):GameConfig=>({
-  settings:{...config.settings},
+  settings:{...config.settings,jiraProjects:[...config.settings.jiraProjects],jiraIssueTypes:[...config.settings.jiraIssueTypes]},
   profiles:config.profiles.map(profile=>({...profile})),
   statusMappings:config.statusMappings.map(mapping=>({...mapping}))
 });
@@ -32,6 +32,7 @@ const cloneConfig=(config:GameConfig):GameConfig=>({
           <div class="settings-grid settings-grid-four">
             <label>SCENE<select name="scene" [(ngModel)]="config.settings.scene"><option value="castle-command-center">Castle Command Center</option></select></label>
             <label>ANIMATION SPEED<input name="animationSpeed" type="number" min="0.5" max="2" step="0.1" [(ngModel)]="config.settings.animationSpeed" required></label>
+            <label>FRAME RATE CAP<select name="targetFps" [(ngModel)]="config.settings.targetFps"><option [ngValue]="24">24 FPS · ECO</option><option [ngValue]="30">30 FPS · BALANCED</option><option [ngValue]="60">60 FPS · SMOOTH</option></select></label>
             <label class="toggle-setting"><input name="movementEnabled" type="checkbox" [(ngModel)]="config.settings.movementEnabled"><span>MOVEMENT ENABLED<small>Characters use A* routes.</small></span></label>
             <label class="toggle-setting"><input name="effectsEnabled" type="checkbox" [(ngModel)]="config.settings.effectsEnabled"><span>ENVIRONMENT EFFECTS<small>Torches, station glow, celebrations.</small></span></label>
           </div>
@@ -43,12 +44,24 @@ const cloneConfig=(config:GameConfig):GameConfig=>({
             <label class="toggle-setting"><input name="spectatorEnabled" type="checkbox" [(ngModel)]="config.settings.spectatorEnabled"><span>AUTOMATIC SPECTATOR<small>Fair rotation between mapped users.</small></span></label>
             <label>ROTATION SECONDS<input name="rotationInterval" type="number" min="5" max="300" [(ngModel)]="config.settings.rotationIntervalSeconds" required></label>
             <label>TV TEXT SCALE<input name="tvScale" type="number" min="0.8" max="1.4" step="0.05" [(ngModel)]="config.settings.tvScale" required></label>
+            <label class="toggle-setting"><input name="tvModeEnabled" type="checkbox" [(ngModel)]="config.settings.tvModeEnabled"><span>TV MODE<small>Optimized dialogue hierarchy.</small></span></label>
+            <label class="toggle-setting"><input name="fullscreenEnabled" type="checkbox" [(ngModel)]="config.settings.fullscreenEnabled"><span>FULLSCREEN CONTROL<small>Show the in-game control.</small></span></label>
             <label class="toggle-setting"><input name="soundEnabled" type="checkbox" [(ngModel)]="config.settings.soundEnabled"><span>SOUND ENABLED<small>Reserved for scene cues.</small></span></label>
           </div>
         </section>
 
         <section class="settings-card">
-          <div class="settings-card-title"><span>03</span><div><h2>Jira User → Character</h2><p>Use the stable Jira account ID. Blank means intentionally unmapped.</p></div></div>
+          <div class="settings-card-title"><span>03</span><div><h2>Jira Scope & Selection</h2><p>Blank project or issue-type filters include everything from the shared server stream.</p></div></div>
+          <div class="settings-grid settings-grid-four">
+            <label>PROJECT KEYS<input name="jiraProjects" [(ngModel)]="projectKeysText" placeholder="PLANNA, LIVEBUG"></label>
+            <label>ISSUE TYPES<input name="jiraIssueTypes" [(ngModel)]="issueTypesText" placeholder="Bug, Story, Task"></label>
+            <label>FEATURED TICKET<select name="featuredTicketRule" [(ngModel)]="config.settings.featuredTicketRule"><option value="recently-updated">Recently updated</option><option value="highest-priority">Highest priority</option><option value="nearest-due-date">Nearest due date</option></select></label>
+            <label>REFRESH SECONDS<input name="refreshInterval" type="number" min="10" max="3600" [(ngModel)]="config.settings.refreshIntervalSeconds" required></label>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <div class="settings-card-title"><span>04</span><div><h2>Jira User → Character</h2><p>Use the stable Jira account ID. Blank means intentionally unmapped.</p></div></div>
           <div class="mapping-table" role="table" aria-label="Jira character mappings">
             <div class="mapping-row mapping-head" role="row"><span>Character</span><span>Jira account ID</span><span>Home</span><span>Workstation</span><span>Enabled</span></div>
             <div class="mapping-row" role="row" *ngFor="let profile of config.profiles;trackBy:trackProfile">
@@ -62,7 +75,7 @@ const cloneConfig=(config:GameConfig):GameConfig=>({
         </section>
 
         <section class="settings-card">
-          <div class="settings-card-title"><span>04</span><div><h2>Jira Status Behaviors</h2><p>Exact Jira status names override the safe default behavior classifier.</p></div><button type="button" class="small-action" (click)="addStatus()">＋ ADD STATUS</button></div>
+          <div class="settings-card-title"><span>05</span><div><h2>Jira Status Behaviors</h2><p>Exact Jira status names override the safe default behavior classifier.</p></div><button type="button" class="small-action" (click)="addStatus()">＋ ADD STATUS</button></div>
           <div class="status-mappings">
             <div class="status-mapping" *ngFor="let mapping of config.statusMappings;let index=index;trackBy:trackStatus">
               <label>JIRA STATUS<input [name]="'status'+index" [(ngModel)]="mapping.status" maxlength="100" required></label>
@@ -87,6 +100,8 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
   protected saving=false;
   protected saved=false;
   protected error='';
+  protected projectKeysText='';
+  protected issueTypesText='';
   protected readonly behaviors:CharacterState[]=['IDLE','WORKING','DISCUSSING','REVIEWING','BLOCKED','CELEBRATING'];
   protected readonly homeLocations=[
     {value:'command-dais',label:'Command Dais'},{value:'north-forge',label:'North Forge'},{value:'west-archive',label:'West Archive'},{value:'east-library',label:'East Library'},
@@ -98,7 +113,7 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
   ];
 
   ngOnInit():void{
-    this.subscriptions.add(this.service.config$.subscribe(config=>this.edit=cloneConfig(config)));
+    this.subscriptions.add(this.service.config$.subscribe(config=>this.setEdit(config)));
     this.subscriptions.add(this.service.error$.subscribe(error=>this.error=error));
   }
   ngOnDestroy():void{this.subscriptions.unsubscribe()}
@@ -111,12 +126,26 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
   protected save():void{
     if(!this.edit||this.saving)return;
     this.error='';this.saved=false;
+    this.edit.settings.jiraProjects=this.parseList(this.projectKeysText,true);
+    this.edit.settings.jiraIssueTypes=this.parseList(this.issueTypesText,false);
     const ids=this.edit.profiles.map(profile=>profile.jiraAccountId?.trim()).filter((value):value is string=>Boolean(value));
     if(new Set(ids).size!==ids.length){this.error='Each Jira account ID can map to only one character.';return}
     this.saving=true;
     this.service.save(this.edit).subscribe({
-      next:config=>{this.edit=cloneConfig(config);this.saving=false;this.saved=true},
+      next:config=>{this.setEdit(config);this.saving=false;this.saved=true},
       error:response=>{this.saving=false;this.error=response.error?.error||'Could not save configuration'}
     });
+  }
+
+  private setEdit(config:GameConfig):void{
+    this.edit=cloneConfig(config);
+    this.projectKeysText=config.settings.jiraProjects.join(', ');
+    this.issueTypesText=config.settings.jiraIssueTypes.join(', ');
+  }
+  private parseList(value:string,uppercase:boolean):string[]{
+    const seen=new Set<string>();
+    return value.split(',').map(item=>item.trim()).filter(item=>{
+      const key=item.toLowerCase();if(!item||seen.has(key))return false;seen.add(key);return true;
+    }).map(item=>uppercase?item.toUpperCase():item);
   }
 }

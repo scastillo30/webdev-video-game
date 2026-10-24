@@ -38,4 +38,4 @@ Delivered:
 
 - Populate each stable Jira account ID in Settings after the real Jira users are confirmed. Defaults intentionally remain unmapped.
 - Provide `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, and `JIRA_JQL` on the Go server to enable live data.
-- Phase 6 can add extended automated browser coverage and a long-duration performance soak.
+- Phase 6–7 follow-on work is documented in `PHASE_6_7_REPORT.md`.

@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "start": "ng serve --proxy-config proxy.conf.json",
-    "build": "ng build"
+    "build": "ng build",
+    "test:engine": "node scripts/run-engine-tests.mjs"
   },
   "dependencies": {
     "@angular/animations": "^18.2.0",

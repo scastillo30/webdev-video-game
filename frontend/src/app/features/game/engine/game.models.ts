@@ -23,7 +23,23 @@ export interface GameSettings {
   rotationIntervalSeconds: number;
   tvScale: number;
   soundEnabled: boolean;
+  jiraProjects: string[];
+  jiraIssueTypes: string[];
+  featuredTicketRule: FeaturedTicketRule;
+  refreshIntervalSeconds: number;
+  tvModeEnabled: boolean;
+  fullscreenEnabled: boolean;
+  targetFps: 24 | 30 | 60;
 }
+
+export type FeaturedTicketRule = 'recently-updated' | 'highest-priority' | 'nearest-due-date';
+
+export const defaultGameSettings=():GameSettings=>({
+  scene:'castle-command-center',movementEnabled:true,effectsEnabled:true,animationSpeed:1,
+  spectatorEnabled:true,rotationIntervalSeconds:15,tvScale:1,soundEnabled:false,
+  jiraProjects:[],jiraIssueTypes:[],featuredTicketRule:'recently-updated',refreshIntervalSeconds:60,
+  tvModeEnabled:true,fullscreenEnabled:true,targetFps:30
+});
 
 export interface StatusBehaviorMapping {
   status: string;

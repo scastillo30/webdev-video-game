@@ -3,7 +3,7 @@ import {AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, inject} from
 import {combineLatest, Subscription} from 'rxjs';
 import {emptyJiraSnapshot, JiraActivityEvent, JiraIssueSnapshot, JiraSnapshot} from '../../core/jira/jira.models';
 import {JiraStoreService} from '../../core/jira/jira-store.service';
-import {CharacterDirective, GameProfile, GameSettings, SpectatorState, StatusBehaviorMapping} from './engine/game.models';
+import {CharacterDirective, defaultGameSettings, GameProfile, GameSettings, SpectatorState, StatusBehaviorMapping} from './engine/game.models';
 import {GameRuntimeService} from './game-runtime.service';
 import {GameBehaviorService} from './services/game-behavior.service';
 import {GameConfigService} from './services/game-config.service';
@@ -15,7 +15,7 @@ import {SpectatorDirectorService} from './services/spectator-director.service';
   imports:[DatePipe,NgFor,NgIf],
   providers:[GameRuntimeService,GameBehaviorService,SpectatorDirectorService],
   template:`
-    <main class="game-view" [style.--tv-scale]="settings.tvScale">
+    <main class="game-view" [class.tv-mode]="settings.tvModeEnabled" [style.--tv-scale]="settings.tvScale">
       <section class="game-scene-shell" aria-labelledby="gameTitle">
         <div class="game-toolbar">
           <div><small>GAME VIEW · PHASER 3</small><h1 id="gameTitle">CASTLE COMMAND CENTER</h1></div>
@@ -23,6 +23,7 @@ import {SpectatorDirectorService} from './services/spectator-director.service';
             <i aria-hidden="true"></i>
             <span>{{snapshot.connection.configured ? snapshot.connection.state : 'not configured'}}</span>
             <b>{{enabledProfiles.length}} HEROES · {{settings.rotationIntervalSeconds}}S</b>
+            <button *ngIf="settings.fullscreenEnabled" type="button" class="fullscreen-control" (click)="toggleFullscreen()" [attr.aria-pressed]="fullscreen">{{fullscreen?'EXIT FULLSCREEN':'FULLSCREEN'}}</button>
           </div>
         </div>
         <div #gameHost class="phaser-host" aria-label="Top-down castle command center with eight roster characters"></div>
@@ -95,12 +96,14 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   private issues:JiraIssueSnapshot[]=[];
   private statusMappings:StatusBehaviorMapping[]=[];
   protected enabledProfiles:GameProfile[]=[];
-  protected settings:GameSettings={scene:'castle-command-center',movementEnabled:true,effectsEnabled:true,animationSpeed:1,spectatorEnabled:true,rotationIntervalSeconds:15,tvScale:1,soundEnabled:false};
+  protected settings:GameSettings=defaultGameSettings();
   protected snapshot:JiraSnapshot=emptyJiraSnapshot();
   protected presentation:SpectatorState={active:null,focusCharacterId:null,autoEnabled:true,paused:false,pending:0};
   protected activeProfile:GameProfile|null=null;
+  protected fullscreen=false;
 
   ngAfterViewInit():void{
+    document.addEventListener('fullscreenchange',this.handleFullscreen);
     this.subscriptions.add(combineLatest([this.configService.config$,this.jira.snapshot$]).subscribe(([config,snapshot])=>{
       this.snapshot=snapshot;
       this.settings=config.settings;
@@ -110,7 +113,7 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
       this.runtime.configure(config.settings);
       if(!this.runtime.running())this.runtime.start(this.gameHost.nativeElement,this.enabledProfiles);
       this.director.configure(config.settings.spectatorEnabled,config.settings.rotationIntervalSeconds);
-      const result=this.behavior.derive(snapshot,this.enabledProfiles,this.statusMappings);
+      const result=this.behavior.derive(snapshot,this.enabledProfiles,this.statusMappings,this.settings);
       this.baseDirectives=result.directives;
       this.director.ingest(result.spectatorItems);
       this.renderPresentation();
@@ -126,6 +129,10 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   protected toggleRotation():void{this.presentation.paused?this.director.resume():this.director.pause()}
   protected next():void{this.director.next()}
   protected selectCharacter(characterId:string):void{this.director.manualFocus(characterId)}
+  protected toggleFullscreen():void{
+    if(document.fullscreenElement)void document.exitFullscreen();
+    else void this.gameHost.nativeElement.closest('.game-view')?.requestFullscreen().catch(()=>undefined);
+  }
 
   protected dialogueFor(event:JiraActivityEvent):string{
     const action=event.action.toUpperCase();
@@ -146,8 +153,11 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   }
 
   ngOnDestroy():void{
+    document.removeEventListener('fullscreenchange',this.handleFullscreen);
     this.subscriptions.unsubscribe();this.director.stop();this.runtime.stop();
   }
+
+  private readonly handleFullscreen=():void=>{this.fullscreen=Boolean(document.fullscreenElement)};
 
   private renderPresentation():void{
     const active=this.presentation.active?this.behavior.directiveFor(this.presentation.active,this.issues,this.statusMappings):null;

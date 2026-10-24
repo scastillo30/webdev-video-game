@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -18,34 +19,74 @@ type envelope struct {
 }
 
 type Service struct {
-	source       Source
-	repository   Repository
-	pollInterval time.Duration
-	mu           sync.Mutex
-	subscribers  map[chan envelope]struct{}
+	source          Source
+	repository      Repository
+	pollInterval    atomic.Int64
+	intervalUpdates chan time.Duration
+	mu              sync.Mutex
+	subscribers     map[chan envelope]struct{}
 }
 
 func NewService(source Source, repository Repository, pollInterval time.Duration) *Service {
-	if pollInterval < 10*time.Second {
-		pollInterval = 60 * time.Second
-	}
-	return &Service{source: source, repository: repository, pollInterval: pollInterval, subscribers: map[chan envelope]struct{}{}}
+	service := &Service{source: source, repository: repository, intervalUpdates: make(chan time.Duration, 1), subscribers: map[chan envelope]struct{}{}}
+	service.pollInterval.Store(int64(normalizePollInterval(pollInterval)))
+	return service
 }
 
 func (s *Service) Start(ctx context.Context) {
 	go func() {
 		s.poll(ctx)
-		ticker := time.NewTicker(s.pollInterval)
-		defer ticker.Stop()
+		timer := time.NewTimer(s.currentPollInterval())
+		defer timer.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case <-ticker.C:
+			case <-timer.C:
 				s.poll(ctx)
+				timer.Reset(s.currentPollInterval())
+			case interval := <-s.intervalUpdates:
+				if !timer.Stop() {
+					select {
+					case <-timer.C:
+					default:
+					}
+				}
+				timer.Reset(interval)
 			}
 		}
 	}()
+}
+
+func (s *Service) SetPollInterval(interval time.Duration) {
+	interval = normalizePollInterval(interval)
+	s.pollInterval.Store(int64(interval))
+	select {
+	case s.intervalUpdates <- interval:
+	default:
+		select {
+		case <-s.intervalUpdates:
+		default:
+		}
+		select {
+		case s.intervalUpdates <- interval:
+		default:
+		}
+	}
+}
+
+func (s *Service) currentPollInterval() time.Duration {
+	return time.Duration(s.pollInterval.Load())
+}
+
+func normalizePollInterval(interval time.Duration) time.Duration {
+	if interval < 10*time.Second {
+		return 60 * time.Second
+	}
+	if interval > time.Hour {
+		return time.Hour
+	}
+	return interval
 }
 
 func (s *Service) poll(ctx context.Context) {
@@ -62,7 +103,11 @@ func (s *Service) poll(ctx context.Context) {
 	}
 	batch, err := s.source.Fetch(ctx, since)
 	if err != nil {
-		state := Connection{State: "reconnecting", Configured: s.source.Configured(), LastAttemptAt: &attempt, LastSuccessAt: previous.Connection.LastSuccessAt, Message: err.Error()}
+		stateName := "reconnecting"
+		if previous.Connection.LastSuccessAt != nil {
+			stateName = "stale"
+		}
+		state := Connection{State: stateName, Configured: s.source.Configured(), LastAttemptAt: &attempt, LastSuccessAt: previous.Connection.LastSuccessAt, Message: err.Error()}
 		if errors.Is(err, ErrNotConfigured) {
 			state.State = "disconnected"
 		}

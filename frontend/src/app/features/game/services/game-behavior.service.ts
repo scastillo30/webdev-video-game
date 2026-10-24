@@ -1,27 +1,33 @@
 import {Injectable} from '@angular/core';
 import {JiraActivityEvent, JiraIssueSnapshot, JiraSnapshot} from '../../../core/jira/jira.models';
 import {stateForStatus} from '../engine/character-state-machine';
-import {CharacterDirective, CharacterState, GameBehaviorResult, GameProfile, SpectatorItem, StatusBehaviorMapping} from '../engine/game.models';
+import {chooseFeaturedIssue} from '../engine/featured-ticket';
+import {CharacterDirective, CharacterState, GameBehaviorResult, GameProfile, GameSettings, SpectatorItem, StatusBehaviorMapping} from '../engine/game.models';
 
 @Injectable()
 export class GameBehaviorService{
-  derive(snapshot:JiraSnapshot,profiles:GameProfile[],statusMappings:StatusBehaviorMapping[]):GameBehaviorResult{
+  derive(snapshot:JiraSnapshot,profiles:GameProfile[],statusMappings:StatusBehaviorMapping[],settings:GameSettings):GameBehaviorResult{
     const byJiraId=this.mapping(profiles);
-    const newestIssueByCharacter=new Map<string,JiraIssueSnapshot>();
-    for(const issue of [...snapshot.issues].sort((a,b)=>Date.parse(b.updatedAt)-Date.parse(a.updatedAt))){
+    const issuesByCharacter=new Map<string,JiraIssueSnapshot[]>();
+    const allowedIssues=snapshot.issues.filter(issue=>this.inScope(issue,settings));
+    for(const issue of allowedIssues){
       const character=issue.assigneeId?byJiraId.get(issue.assigneeId):undefined;
-      if(character&&!newestIssueByCharacter.has(character.characterId))newestIssueByCharacter.set(character.characterId,issue);
+      if(character){
+        const issues=issuesByCharacter.get(character.characterId)??[];
+        issues.push(issue);issuesByCharacter.set(character.characterId,issues);
+      }
     }
     const directives=profiles.filter(profile=>profile.enabled).map(profile=>{
-      const issue=newestIssueByCharacter.get(profile.characterId)??null;
+      const issue=chooseFeaturedIssue(issuesByCharacter.get(profile.characterId)??[],settings.featuredTicketRule);
       let state:CharacterState=issue?this.configuredState(issue.status,issue.statusCategory,statusMappings):'IDLE';
       if(state==='CELEBRATING')state='IDLE';
       return{characterId:profile.characterId,state,issue,event:null,label:this.persistentLabel(state,issue)};
     });
     const spectatorItems:SpectatorItem[]=[];
+    const allowedKeys=new Set(allowedIssues.map(issue=>issue.issueKey));
     for(const event of snapshot.events){
       const character=event.authorId?byJiraId.get(event.authorId):undefined;
-      if(character)spectatorItems.push({character,event,groupedEventCount:1});
+      if(character&&allowedKeys.has(event.issueKey))spectatorItems.push({character,event,groupedEventCount:1});
     }
     return{directives,spectatorItems};
   }
@@ -42,6 +48,12 @@ export class GameBehaviorService{
 
   private mapping(profiles:GameProfile[]):Map<string,GameProfile>{
     return new Map(profiles.filter(profile=>profile.enabled&&profile.jiraAccountId).map(profile=>[profile.jiraAccountId!,profile]));
+  }
+
+  private inScope(issue:JiraIssueSnapshot,settings:GameSettings):boolean{
+    const projectAllowed=!settings.jiraProjects.length||settings.jiraProjects.includes(issue.projectKey.toUpperCase());
+    const typeAllowed=!settings.jiraIssueTypes.length||settings.jiraIssueTypes.some(type=>type.localeCompare(issue.issueType,undefined,{sensitivity:'accent'})===0);
+    return projectAllowed&&typeAllowed;
   }
 
   private configuredState(status:string,category:string,mappings:StatusBehaviorMapping[]):CharacterState{

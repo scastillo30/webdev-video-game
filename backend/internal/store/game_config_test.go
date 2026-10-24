@@ -28,6 +28,11 @@ func TestGameConfigDefaultsAndPersistence(t *testing.T) {
 		}
 	}
 	config.Settings.RotationIntervalSeconds = 30
+	config.Settings.JiraProjects = []string{" planna ", "livebug", "PLANNA"}
+	config.Settings.JiraIssueTypes = []string{"Bug", " Task ", "bug"}
+	config.Settings.FeaturedTicketRule = "highest-priority"
+	config.Settings.RefreshIntervalSeconds = 90
+	config.Settings.TargetFPS = 24
 	saved, err := database.SaveGameConfig(ctx, config)
 	if err != nil {
 		t.Fatal(err)
@@ -35,10 +40,34 @@ func TestGameConfigDefaultsAndPersistence(t *testing.T) {
 	if saved.Settings.RotationIntervalSeconds != 30 {
 		t.Fatalf("rotation interval was not persisted: %#v", saved.Settings)
 	}
+	if len(saved.Settings.JiraProjects) != 2 || saved.Settings.JiraProjects[0] != "PLANNA" || saved.Settings.RefreshIntervalSeconds != 90 || saved.Settings.TargetFPS != 24 {
+		t.Fatalf("extended settings were not normalized and persisted: %#v", saved.Settings)
+	}
 	for _, profile := range saved.Profiles {
 		if profile.CharacterID == "commander" && (profile.JiraAccountID == nil || *profile.JiraAccountID != accountID) {
 			t.Fatalf("Commander mapping was not persisted: %#v", profile)
 		}
+	}
+}
+
+func TestGameConfigRejectsUnsafeRuntimePreferences(t *testing.T) {
+	database, err := Open(filepath.Join(t.TempDir(), "game.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	config, err := database.GetGameConfig(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	config.Settings.JiraProjects = []string{"NOT A PROJECT"}
+	if _, err = database.SaveGameConfig(context.Background(), config); err == nil || !strings.Contains(err.Error(), "project key") {
+		t.Fatalf("expected invalid project validation, got %v", err)
+	}
+	config, _ = database.GetGameConfig(context.Background())
+	config.Settings.TargetFPS = 55
+	if _, err = database.SaveGameConfig(context.Background(), config); err == nil || !strings.Contains(err.Error(), "target FPS") {
+		t.Fatalf("expected FPS validation, got %v", err)
 	}
 }
 
