@@ -1,0 +1,25 @@
+{
+  "characterId": "swordsman",
+  "animationId": "sword-wind",
+  "version": "v003",
+  "fps": 24,
+  "sourceFrames": 192,
+  "durationMs": 8000,
+  "width": 491,
+  "height": 512,
+  "source": "assets/characters/swordsman/sword-wind/v003/swordsman_sword_wind.blend",
+  "animation": "assets/characters/swordsman/sword-wind/v003/idle.webp",
+  "poster": "assets/characters/swordsman/sword-wind/v003/poster.webp",
+  "head": "assets/characters/swordsman/sword-wind/v003/head.webp",
+  "technique": "Articulated 2.5D illustration: separate upper arm, forearm, closed hand and rigid sword",
+  "gameIntegrated": false,
+  "changes": [
+    "Opening frame revised to supplied inward chest-guard reference",
+    "Forearm crosses chest and blade points 27 degrees up-right",
+    "Inward elbow bend maintained through entire lowering and return",
+    "Opening poster matches the first animation frame",
+    "Rigid sword and fixed grip retained; v001 and v002 preserved"
+  ],
+  "validation": "assets/characters/swordsman/sword-wind/v003/rig_validation.json",
+  "limitations": "Illustrated movement in the image plane; no volumetric hand articulation or simulated sword mass."
+}

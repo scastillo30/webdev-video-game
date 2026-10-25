@@ -1,30 +1,29 @@
 import Phaser from 'phaser';
+import {boardCharacterAsset} from './board-character-assets';
 import {CharacterController} from './character-controller';
 import {CharacterPathfinding} from './character-pathfinding';
+import {
+  CASTLE_ANCHORS,
+  CASTLE_COLUMNS,
+  CASTLE_ROWS,
+  CASTLE_TILE_SIZE,
+  CastleNavigationModel,
+  InteractionTarget
+} from './castle-navigation';
 import {CharacterDirective, GameProfile, GameSettings, GridPoint} from './game.models';
 
-export const CASTLE_WIDTH=1440;
-export const CASTLE_HEIGHT=720;
-const TILE_SIZE=48;
-const COLUMNS=CASTLE_WIDTH/TILE_SIZE;
-const ROWS=CASTLE_HEIGHT/TILE_SIZE;
+export const CASTLE_WIDTH=CASTLE_COLUMNS*CASTLE_TILE_SIZE;
+export const CASTLE_HEIGHT=CASTLE_ROWS*CASTLE_TILE_SIZE;
 const cellKey=(point:GridPoint):string=>`${point.x},${point.y}`;
-
-const anchors:Record<string,GridPoint>={
-	'command-dais':{x:15,y:3},'north-forge':{x:5,y:7},'west-archive':{x:8,y:8},'east-library':{x:21,y:4},
-	'south-sanctum':{x:15,y:12},'west-gate':{x:9,y:12},'training-hall':{x:24,y:11},'east-stage':{x:23,y:11},
-	'planning-table':{x:10,y:7},'ops-console':{x:8,y:6},'frontend-desk':{x:9,y:9},'api-orb':{x:21,y:5},
-	'design-table':{x:11,y:11},'support-desk':{x:7,y:11},'qa-board':{x:21,y:10},'automation-console':{x:22,y:7},
-	'quest-board':{x:20,y:5},'review-table':{x:19,y:7},'entrance':{x:15,y:13}
-};
 
 export class CastleScene extends Phaser.Scene{
   private readonly controllers=new Map<string,CharacterController>();
   private readonly directiveSignatures=new Map<string,string>();
-  private readonly blocked=new Set<string>();
+  private readonly navigation=new CastleNavigationModel();
   private pathfinding!:CharacterPathfinding;
   private focusedCharacterId:string|null=null;
   private lastUpdate=0;
+  private idleSequence=0;
   private readonly ambientTweens:Phaser.Tweens.Tween[]=[];
 
   constructor(
@@ -37,23 +36,29 @@ export class CastleScene extends Phaser.Scene{
 
   preload():void{
 	this.load.image('castle-office-background','/assets/game-board/castle-office-v001.png');
-    for(const profile of this.profiles.filter(item=>item.enabled))this.load.image(`hero-${profile.characterId}`,`/legacy-game/${profile.miniatureAsset}`);
+    for(const profile of this.profiles.filter(item=>item.enabled)){
+      const fallbackPath=`/legacy-game/${profile.miniatureAsset}`;
+      this.load.image(`hero-${profile.characterId}`,boardCharacterAsset(profile.characterId,fallbackPath).path);
+      const walk=boardCharacterAsset(profile.characterId,fallbackPath).directional;
+      if(walk)this.load.spritesheet(walk.key,walk.path,{frameWidth:walk.frameWidth,frameHeight:walk.frameHeight});
+    }
   }
 
   create():void{
     this.createGrid();
     this.createArchitecture();
     this.createFallbackTextures();
-    this.pathfinding=new CharacterPathfinding(COLUMNS,ROWS,this.blocked);
+    this.pathfinding=new CharacterPathfinding(CASTLE_COLUMNS,CASTLE_ROWS,this.navigation.blocked);
     for(const profile of this.profiles.filter(item=>item.enabled)){
-      const home=this.anchor(profile.homeLocation);
-      this.controllers.set(profile.characterId,new CharacterController(this,profile,this.pathfinding,TILE_SIZE,home,this.onSelect,this.reducedMotion,this.settings));
+      const home=this.navigation.anchor(profile.homeLocation);
+      this.controllers.set(profile.characterId,new CharacterController(this,profile,this.pathfinding,CASTLE_TILE_SIZE,home,this.onSelect,this.reducedMotion,this.settings));
     }
     this.onReady();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>this.destroyControllers());
   }
 
-  override update(time:number):void{
+  override update(time:number,delta:number):void{
+    for(const controller of this.controllers.values())controller.animate(delta);
     if(time-this.lastUpdate<100)return;
     this.lastUpdate=time;
     for(const controller of this.controllers.values())controller.update(time,item=>this.tryIdleMove(item));
@@ -66,7 +71,9 @@ export class CastleScene extends Phaser.Scene{
       const signature=[directive.state,directive.issue?.issueKey,directive.event?.eventId,directive.label].join('|');
       if(this.directiveSignatures.get(directive.characterId)===signature)continue;
       this.directiveSignatures.set(directive.characterId,signature);
-      controller.apply(directive,this.destination(controller.profile,directive),this.reserved(controller.profile.characterId));
+      const reserved=this.reserved(controller.profile.characterId);
+      const target=this.destination(controller,directive,reserved);
+      controller.apply(directive,target.point,reserved,target.facingX);
     }
   }
 
@@ -90,18 +97,7 @@ export class CastleScene extends Phaser.Scene{
 	this.add.image(0,0,'castle-office-background').setOrigin(0).setDisplaySize(CASTLE_WIDTH,CASTLE_HEIGHT).setDepth(0);
 	const atmosphere=this.add.graphics().setDepth(1);
 	atmosphere.fillGradientStyle(0x03101d,0x03101d,0x020711,0x020711,.05,.05,.22,.22).fillRect(0,0,CASTLE_WIDTH,CASTLE_HEIGHT);
-    for(let column=0;column<COLUMNS;column++){this.blocked.add(`${column},0`);this.blocked.add(`${column},${ROWS-1}`)}
-    for(let row=0;row<ROWS;row++){this.blocked.add(`0,${row}`);this.blocked.add(`${COLUMNS-1},${row}`)}
-	// Static furniture in the illustrated board remains outside the navigation mesh.
-	this.blockRect(1,3,5,4);   // crystal fountain
-	this.blockRect(6,3,5,3);   // northwest workstation
-	this.blockRect(12,6,7,4);  // central planning table and chairs
-	this.blockRect(22,1,7,4);  // fireplace and north library
-	this.blockRect(23,5,6,3);  // east map/archive wall
-	this.blockRect(1,8,7,3);   // southwest workstation
-	this.blockRect(24,8,5,3);  // southeast workstation
-	this.blockRect(1,12,8,2);  // west lower landing
-	this.blockRect(21,12,8,2); // east lower landing
+    if(new URLSearchParams(window.location.search).get('navGrid')==='1')this.drawNavigationGrid();
   }
 
   private createArchitecture():void{
@@ -111,29 +107,25 @@ export class CastleScene extends Phaser.Scene{
 	this.addHologram(720,304);
 	this.addCrystalGlow(116,204);
 	this.addFireGlow(1300,142);
-	this.addStation(anchors['planning-table'],'PLANNING TABLE',0x64dfff);
-	this.addStation(anchors['ops-console'],'OPS CONSOLE',0x64dfff);
-	this.addStation(anchors['frontend-desk'],'FRONTEND',0x64dfff);
-	this.addStation(anchors['quest-board'],'QUEST BOARD',0xe0b858);
-	this.addStation(anchors['api-orb'],'API ORB',0x64dfff);
-	this.addStation(anchors['automation-console'],'AUTOMATION',0xbd79ed);
-	this.addStation(anchors['entrance'],'GREAT GATE',0x77dbbf);
+	this.addStation(CASTLE_ANCHORS['planning-table'],'PLANNING TABLE',0x64dfff);
+	this.addStation(CASTLE_ANCHORS['ops-console'],'OPS CONSOLE',0x64dfff);
+	this.addStation(CASTLE_ANCHORS['frontend-desk'],'FRONTEND',0x64dfff);
+	this.addStation(CASTLE_ANCHORS['quest-board'],'QUEST BOARD',0xe0b858);
+	this.addStation(CASTLE_ANCHORS['api-orb'],'API ORB',0x64dfff);
+	this.addStation(CASTLE_ANCHORS['automation-console'],'AUTOMATION',0xbd79ed);
+	this.addStation(CASTLE_ANCHORS['entrance'],'GREAT GATE',0x77dbbf);
 	for(const point of [{x:9,y:2},{x:20,y:2},{x:10,y:11},{x:20,y:11}])this.addTorch(point);
   }
 
-  private blockRect(column:number,row:number,width:number,height:number):void{
-	for(let r=row;r<row+height;r++)for(let c=column;c<column+width;c++)this.blocked.add(`${c},${r}`);
-  }
-
   private addStation(point:GridPoint,label:string,color:number):void{
-    const x=point.x*TILE_SIZE+TILE_SIZE/2,y=point.y*TILE_SIZE+TILE_SIZE/2;
+    const x=point.x*CASTLE_TILE_SIZE+CASTLE_TILE_SIZE/2,y=point.y*CASTLE_TILE_SIZE+CASTLE_TILE_SIZE/2;
 	const ring=this.add.ellipse(x,y,38,14,color,.1).setStrokeStyle(1,color,.55).setDepth(40);
 	this.add.text(x,y+15,label,{fontFamily:'Manrope,sans-serif',fontSize:'7px',color:'#b8cad3',stroke:'#04101d',strokeThickness:3}).setOrigin(.5).setDepth(41);
     if(!this.reducedMotion)this.ambientTweens.push(this.tweens.add({targets:ring,alpha:.45,scaleX:1.18,scaleY:1.18,duration:1800/this.settings.animationSpeed,yoyo:true,repeat:-1,ease:'Sine.inOut',paused:!this.settings.effectsEnabled}));
   }
 
   private addTorch(point:GridPoint):void{
-    const x=point.x*TILE_SIZE+TILE_SIZE/2,y=point.y*TILE_SIZE+6;
+    const x=point.x*CASTLE_TILE_SIZE+CASTLE_TILE_SIZE/2,y=point.y*CASTLE_TILE_SIZE+6;
 	const flame=this.add.circle(x,y,3,0xffd16f,.72).setDepth(45);
 	this.add.circle(x,y,11,0xffa63b,.05).setDepth(44);
     if(!this.reducedMotion)this.ambientTweens.push(this.tweens.add({targets:flame,scaleX:.7,scaleY:1.4,alpha:.62,duration:(420+point.x*13)/this.settings.animationSpeed,yoyo:true,repeat:-1,paused:!this.settings.effectsEnabled}));
@@ -175,26 +167,70 @@ export class CastleScene extends Phaser.Scene{
     }
   }
 
-  private destination(profile:GameProfile,directive:CharacterDirective):GridPoint{
-    if(directive.state==='WORKING')return this.anchor(profile.workstation);
-    if(directive.state==='REVIEWING')return this.anchor('review-table');
-    if(directive.state==='DISCUSSING')return this.anchor('planning-table');
-    if(directive.state==='CELEBRATING')return this.anchor('quest-board');
-    return this.anchor(profile.homeLocation);
+  private destination(controller:CharacterController,directive:CharacterDirective,reserved:ReadonlySet<string>):InteractionTarget{
+    let station='';
+    if(directive.state==='WORKING')station=controller.profile.workstation;
+    else if(directive.state==='REVIEWING')station='review-table';
+    else if(directive.state==='DISCUSSING')station='planning-table';
+    else if(directive.state==='CELEBRATING')station='quest-board';
+    const target=station?this.navigation.station(station,controller.currentCell,reserved):null;
+    return target??{point:this.navigation.anchor(controller.profile.homeLocation),label:'',state:directive.state};
   }
 
   private tryIdleMove(controller:CharacterController):void{
     if(!this.settings.movementEnabled||this.focusedCharacterId===controller.profile.characterId)return;
-    const origin=this.anchor(controller.profile.homeLocation);
-    const choices=[{x:origin.x+1,y:origin.y},{x:origin.x-1,y:origin.y},{x:origin.x,y:origin.y+1},{x:origin.x,y:origin.y-1}]
-      .filter(point=>!this.blocked.has(cellKey(point))&&!this.reserved(controller.profile.characterId).has(cellKey(point)));
-    if(choices.length)controller.wander(choices[Math.floor(Math.random()*choices.length)],this.reserved(controller.profile.characterId));
+    const reserved=this.reserved(controller.profile.characterId);
+    const behavior=(this.identityIndex(controller.profile.characterId)+this.idleSequence++)%5;
+    const autonomousCount=[...this.controllers.values()].filter(candidate=>candidate.isAutonomousBusy).length;
+    if(behavior===0&&autonomousCount===0&&this.startConversation(controller,reserved))return;
+    const station=behavior===1?'planning-table':behavior===2?'library':behavior===3?controller.profile.workstation:'';
+    if(station&&autonomousCount<2){
+      const target=this.navigation.station(station,controller.currentCell,reserved);
+      if(target){controller.interact(target.point,reserved,target.label,target.state,3400,target.facingX);return}
+    }
+    const destination=this.navigation.roam(this.navigation.anchor(controller.profile.homeLocation),controller.currentCell,reserved);
+    if(destination)controller.wander(destination,reserved);
   }
 
   private reserved(exceptCharacterId:string):ReadonlySet<string>{
-    return new Set([...this.controllers.entries()].filter(([id])=>id!==exceptCharacterId).map(([,controller])=>cellKey(controller.currentCell)));
+    const occupied=new Set<string>();
+    for(const [id,controller] of this.controllers){
+      if(id===exceptCharacterId)continue;
+      occupied.add(cellKey(controller.currentCell));
+      const destination=controller.destinationCell;
+      if(destination)occupied.add(cellKey(destination));
+    }
+    return occupied;
   }
 
-  private anchor(name:string):GridPoint{return{...(anchors[name]??anchors['entrance'])}}
+  private startConversation(controller:CharacterController,reserved:ReadonlySet<string>):boolean{
+    const partner=[...this.controllers.values()]
+      .filter(candidate=>candidate!==controller&&candidate.availableForConversation&&candidate.profile.characterId!==this.focusedCharacterId)
+      .sort((left,right)=>this.cellDistance(controller.currentCell,left.currentCell)-this.cellDistance(controller.currentCell,right.currentCell))[0];
+    if(!partner)return false;
+    const meetingPoint=this.navigation.adjacentTo(partner.currentCell,controller.currentCell,reserved);
+    if(!meetingPoint||!this.pathfinding.find(controller.currentCell,meetingPoint,reserved).length)return false;
+    controller.interact(
+      meetingPoint,
+      reserved,
+      `Syncing with ${partner.profile.displayName}`,
+      'DISCUSSING',
+      3600,
+      partner.currentCell.x,
+      ()=>partner.engage(`Syncing with ${controller.profile.displayName}`,'DISCUSSING',3600,meetingPoint.x)
+    );
+    return true;
+  }
+
+  private drawNavigationGrid():void{
+    const graphics=this.add.graphics().setDepth(9000);
+    for(let y=0;y<CASTLE_ROWS;y++)for(let x=0;x<CASTLE_COLUMNS;x++){
+      const blocked=this.navigation.blocked.has(`${x},${y}`);
+      graphics.fillStyle(blocked?0xff4968:0x5be5a8,blocked ? .24 : .08).fillRect(x*CASTLE_TILE_SIZE,y*CASTLE_TILE_SIZE,CASTLE_TILE_SIZE-1,CASTLE_TILE_SIZE-1);
+    }
+  }
+
+  private identityIndex(characterId:string):number{return this.profiles.findIndex(profile=>profile.characterId===characterId)}
+  private cellDistance(left:GridPoint,right:GridPoint):number{return Math.abs(left.x-right.x)+Math.abs(left.y-right.y)}
   private destroyControllers():void{for(const controller of this.controllers.values())controller.destroy();this.controllers.clear()}
 }

@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "exports": [
+    {
+      "file": "spritesheet-runtime.png",
+      "frameSize": [
+        64,
+        64
+      ],
+      "sheetSize": [
+        768,
+        256
+      ],
+      "occupiedFrames": 33,
+      "uniquePoses": 33,
+      "paletteColors": 24,
+      "alignedBaseline": true,
+      "binaryAlpha": true,
+      "emptyCellsTransparent": true
+    },
+    {
+      "file": "spritesheet.png",
+      "frameSize": [
+        32,
+        32
+      ],
+      "sheetSize": [
+        384,
+        128
+      ],
+      "occupiedFrames": 33,
+      "uniquePoses": 33,
+      "paletteColors": 24,
+      "alignedBaseline": true,
+      "binaryAlpha": true,
+      "emptyCellsTransparent": true
+    }
+  ]
+}

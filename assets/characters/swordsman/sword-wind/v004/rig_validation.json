@@ -1,0 +1,35 @@
+{
+  "frames": 192,
+  "fps": 24,
+  "durationSeconds": 8,
+  "maxGripDrift": 4.76837158203125e-07,
+  "maxUpperArmLengthError": 2.1962568563793639e-07,
+  "maxForearmLengthError": 1.385043939539088e-07,
+  "loopTransformError": 0.0,
+  "swordRigid": true,
+  "maxSleeveOpeningGap": 0,
+  "maxVisibleCuffGap2D": 0,
+  "anatomicalElbowFlexionDegrees": [
+    13.600546736669836,
+    141.60054489136124
+  ],
+  "wristAdjustmentDegrees": [
+    -20,
+    19
+  ],
+  "shoulderMovementDegrees": [
+    -30,
+    0
+  ],
+  "startBladeAngleDegrees": 26.99999780900628,
+  "startForearmPointsRight": true,
+  "startPose": "Forearm across chest, closed grip, blade up-right; supplied reference",
+  "exportDurationMs": 8000,
+  "webpFrames": 192,
+  "visualReviewFrames": [
+    1,
+    49,
+    97,
+    149
+  ]
+}

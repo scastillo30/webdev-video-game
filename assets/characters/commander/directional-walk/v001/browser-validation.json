@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "checks": [
+    "direction row 0: walk and stop verified",
+    "direction row 1: walk and stop verified",
+    "direction row 2: walk and stop verified",
+    "direction row 3: walk and stop verified",
+    "movement toggle pauses/resumes the active tween; speed changes apply",
+    "Rogue retains original artwork and movement after pause/resume",
+    "pause/resume and Commander/Rogue switching verified",
+    "reduced motion uses a neutral directional pose",
+    "missing sprite sheet falls back to Commander poster"
+  ],
+  "pageErrors": []
+}

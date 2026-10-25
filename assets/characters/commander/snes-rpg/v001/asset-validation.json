@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "dimensions": [
+    384,
+    128
+  ],
+  "frameSize": [
+    32,
+    32
+  ],
+  "occupiedFrames": 33,
+  "uniquePoses": 33,
+  "opaquePaletteColors": 32,
+  "allBaselinesAtPixel30": true,
+  "binaryAlpha": true,
+  "emptyTilesTransparent": true
+}

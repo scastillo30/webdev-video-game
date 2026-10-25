@@ -40,10 +40,10 @@ const CHARACTER_ANIMATIONS=Object.freeze({
   "swordsman": {
     "characterId": "swordsman",
     "animationId": "sword-wind",
-    "version": "v002",
-    "animation": "assets/characters/swordsman/sword-wind/v002/idle.webp?v=2",
-    "poster": "assets/characters/swordsman/sword-wind/v002/poster.webp?v=2",
-    "head": "assets/characters/swordsman/sword-wind/v002/head.webp?v=2",
+    "version": "v004",
+    "animation": "assets/characters/swordsman/sword-wind/v004/idle.webp?v=4",
+    "poster": "assets/characters/swordsman/sword-wind/v004/poster.webp?v=4",
+    "head": "assets/characters/swordsman/sword-wind/v004/head.webp?v=4",
     "width": 491,
     "height": 512
   }

@@ -12,6 +12,219 @@
       "width": 384,
       "height": 576,
       "source": "animation/character_smile_grasp_transparent.blend"
+    },
+    "directional-walk": {
+      "characterId": "commander",
+      "animationId": "directional-walk",
+      "version": "v001",
+      "frameWidth": 48,
+      "frameHeight": 64,
+      "columns": 9,
+      "rows": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ],
+      "neutralColumn": 0,
+      "walkColumns": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "cycleDistancePixels": 96,
+      "source": "assets/characters/commander/directional-walk/v001/commander_directional_walk.blend",
+      "technique": "Articulated volumetric mesh in Blender, orthographic Workbench renders, fixed color lattice, binary alpha",
+      "limitations": "First-pass faceted render-to-pixel prototype; not a hand-drawn replica of Chrono Trigger sprites.",
+      "spritesheet": "assets/characters/commander/directional-walk/v001/spritesheet.png",
+      "poster": "assets/characters/commander/directional-walk/v001/poster.webp",
+      "head": "assets/characters/commander/directional-walk/v001/head.webp",
+      "animation": "assets/characters/commander/directional-walk/v001/walk-down.webp",
+      "boardIntegration": "Phaser castle board only; sword-ready default and legacy registry preserved"
+    },
+    "snes-rpg": {
+      "characterId": "commander",
+      "animationId": "snes-rpg",
+      "version": "v002",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "sheetWidth": 768,
+      "sheetHeight": 256,
+      "columns": 12,
+      "rows": 4,
+      "occupiedFrames": 33,
+      "paletteColors": 24,
+      "footBaseline": 61,
+      "sequences": {
+        "idle-down": [
+          0,
+          1,
+          2
+        ],
+        "idle-up": [
+          3,
+          4,
+          5
+        ],
+        "idle-right": [
+          6,
+          7,
+          8
+        ],
+        "walk-down": [
+          12,
+          13,
+          14,
+          15
+        ],
+        "walk-up": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "walk-right": [
+          20,
+          21,
+          22,
+          23
+        ],
+        "attack-down": [
+          24,
+          25,
+          26
+        ],
+        "attack-up": [
+          27,
+          28,
+          29
+        ],
+        "attack-right": [
+          30,
+          31,
+          32
+        ],
+        "hurt-down": [
+          36
+        ],
+        "hurt-up": [
+          37
+        ],
+        "hurt-right": [
+          38
+        ]
+      },
+      "leftFacing": "Mirror right-facing frames",
+      "source": "assets/characters/commander/snes-rpg/v002/source-generated.png",
+      "technique": "Refined flat pixel artwork, area-coverage native-grid export, shared 24-color material palette and binary alpha",
+      "runtimeFootOrigin": [
+        32,
+        62
+      ],
+      "runtimeDisplayScale": 1.2,
+      "runtimeSpritesheet": "spritesheet-runtime.png",
+      "compatibility": {
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "sheetWidth": 384,
+        "sheetHeight": 128,
+        "footBaseline": 30,
+        "spritesheet": "spritesheet.png"
+      },
+      "spritesheet": "assets/characters/commander/snes-rpg/v002/spritesheet-runtime.png",
+      "compatibilitySpritesheet": "assets/characters/commander/snes-rpg/v002/spritesheet.png",
+      "poster": "assets/characters/commander/snes-rpg/v002/poster.webp",
+      "head": "assets/characters/commander/snes-rpg/v002/head.webp",
+      "animation": "assets/characters/commander/snes-rpg/v002/idle-down.webp",
+      "gameIntegration": "Active Commander castle board 64px runtime artwork at unchanged physical size; 32px compatibility export and previous versions preserved",
+      "previousVersions": {
+        "v001": {
+          "characterId": "commander",
+          "animationId": "snes-rpg",
+          "version": "v001",
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "sheetWidth": 384,
+          "sheetHeight": 128,
+          "columns": 12,
+          "rows": 4,
+          "occupiedFrames": 33,
+          "paletteColors": 32,
+          "footBaseline": 30,
+          "sequences": {
+            "idle-down": [
+              0,
+              1,
+              2
+            ],
+            "idle-up": [
+              3,
+              4,
+              5
+            ],
+            "idle-right": [
+              6,
+              7,
+              8
+            ],
+            "walk-down": [
+              12,
+              13,
+              14,
+              15
+            ],
+            "walk-up": [
+              16,
+              17,
+              18,
+              19
+            ],
+            "walk-right": [
+              20,
+              21,
+              22,
+              23
+            ],
+            "attack-down": [
+              24,
+              25,
+              26
+            ],
+            "attack-up": [
+              27,
+              28,
+              29
+            ],
+            "attack-right": [
+              30,
+              31,
+              32
+            ],
+            "hurt-down": [
+              36
+            ],
+            "hurt-up": [
+              37
+            ],
+            "hurt-right": [
+              38
+            ]
+          },
+          "leftFacing": "Mirror right-facing frames",
+          "source": "assets/characters/commander/snes-rpg/v001/source-generated.png",
+          "technique": "Built-in image generation using style/identity references, exact-grid RGBA export with shared palette and nearest-neighbor sampling",
+          "spritesheet": "assets/characters/commander/snes-rpg/v001/spritesheet.png",
+          "poster": "assets/characters/commander/snes-rpg/v001/poster.webp",
+          "head": "assets/characters/commander/snes-rpg/v001/head.webp",
+          "animation": "assets/characters/commander/snes-rpg/v001/idle-down.webp",
+          "gameIntegration": "Active Commander castle board sprite; prior directional-walk/v001 and sword-ready/v001 preserved"
+        }
+      }
     }
   },
   "legacyAssetsPreserved": [

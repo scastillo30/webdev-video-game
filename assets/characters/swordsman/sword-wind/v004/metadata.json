@@ -1,0 +1,26 @@
+{
+  "characterId": "swordsman",
+  "animationId": "sword-wind",
+  "version": "v004",
+  "fps": 24,
+  "sourceFrames": 192,
+  "durationMs": 8000,
+  "width": 491,
+  "height": 512,
+  "source": "assets/characters/swordsman/sword-wind/v004/swordsman_sword_wind.blend",
+  "animation": "assets/characters/swordsman/sword-wind/v004/idle.webp",
+  "poster": "assets/characters/swordsman/sword-wind/v004/poster.webp",
+  "head": "assets/characters/swordsman/sword-wind/v004/head.webp",
+  "technique": "Articulated 2.5D illustration with connected sleeve fold, turning cuff and authored wrapped-hilt grip",
+  "gameIntegrated": false,
+  "changes": [
+    "New hand-and-hilt artwork with curled fingers and opposing thumb",
+    "Hilt and hand share authored contact; rigid blade shares wrist control",
+    "Elbow pivot registered at actual visible sleeve mouth",
+    "Continuous cloth fold and cuff turn with the forearm",
+    "Bare forearm root underlaps cuff without old glove fragments",
+    "Eight-second reference-start loop retained; earlier versions preserved"
+  ],
+  "validation": "assets/characters/swordsman/sword-wind/v004/rig_validation.json",
+  "limitations": "Illustrated movement in the image plane; no volumetric hand articulation or simulated sword mass."
+}

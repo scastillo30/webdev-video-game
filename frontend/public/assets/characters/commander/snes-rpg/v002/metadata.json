@@ -1,0 +1,488 @@
+{
+  "characterId": "commander",
+  "animationId": "snes-rpg",
+  "version": "v002",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "sheetWidth": 768,
+  "sheetHeight": 256,
+  "columns": 12,
+  "rows": 4,
+  "occupiedFrames": 33,
+  "paletteColors": 24,
+  "footBaseline": 61,
+  "sequences": {
+    "idle-down": [
+      0,
+      1,
+      2
+    ],
+    "idle-up": [
+      3,
+      4,
+      5
+    ],
+    "idle-right": [
+      6,
+      7,
+      8
+    ],
+    "walk-down": [
+      12,
+      13,
+      14,
+      15
+    ],
+    "walk-up": [
+      16,
+      17,
+      18,
+      19
+    ],
+    "walk-right": [
+      20,
+      21,
+      22,
+      23
+    ],
+    "attack-down": [
+      24,
+      25,
+      26
+    ],
+    "attack-up": [
+      27,
+      28,
+      29
+    ],
+    "attack-right": [
+      30,
+      31,
+      32
+    ],
+    "hurt-down": [
+      36
+    ],
+    "hurt-up": [
+      37
+    ],
+    "hurt-right": [
+      38
+    ]
+  },
+  "leftFacing": "Mirror right-facing frames",
+  "source": "source-generated.png",
+  "technique": "Refined flat pixel artwork, area-coverage native-grid export, shared 24-color material palette and binary alpha",
+  "registrations": [
+    {
+      "row": 0,
+      "column": 3,
+      "sourceBounds": [
+        574,
+        14,
+        697,
+        178
+      ],
+      "headAnchor": 637.0,
+      "footAnchor": 177.0
+    },
+    {
+      "row": 0,
+      "column": 5,
+      "sourceBounds": [
+        930,
+        14,
+        1055,
+        178
+      ],
+      "headAnchor": 992.0,
+      "footAnchor": 177.0
+    },
+    {
+      "row": 0,
+      "column": 4,
+      "sourceBounds": [
+        751,
+        15,
+        878,
+        178
+      ],
+      "headAnchor": 814.0,
+      "footAnchor": 175.0
+    },
+    {
+      "row": 0,
+      "column": 6,
+      "sourceBounds": [
+        1101,
+        16,
+        1238,
+        178
+      ],
+      "headAnchor": 1181.5,
+      "footAnchor": 175.0
+    },
+    {
+      "row": 0,
+      "column": 7,
+      "sourceBounds": [
+        1283,
+        20,
+        1416,
+        178
+      ],
+      "headAnchor": 1356.0,
+      "footAnchor": 175.0
+    },
+    {
+      "row": 0,
+      "column": 8,
+      "sourceBounds": [
+        1464,
+        20,
+        1597,
+        178
+      ],
+      "headAnchor": 1538.0,
+      "footAnchor": 175.0
+    },
+    {
+      "row": 0,
+      "column": 0,
+      "sourceBounds": [
+        28,
+        26,
+        168,
+        178
+      ],
+      "headAnchor": 91.0,
+      "footAnchor": 175.0
+    },
+    {
+      "row": 0,
+      "column": 1,
+      "sourceBounds": [
+        209,
+        26,
+        348,
+        178
+      ],
+      "headAnchor": 273.0,
+      "footAnchor": 175.0
+    },
+    {
+      "row": 0,
+      "column": 2,
+      "sourceBounds": [
+        391,
+        26,
+        529,
+        178
+      ],
+      "headAnchor": 453.0,
+      "footAnchor": 175.0
+    },
+    {
+      "row": 1,
+      "column": 5,
+      "sourceBounds": [
+        933,
+        198,
+        1062,
+        360
+      ],
+      "headAnchor": 995.0,
+      "footAnchor": 356.0
+    },
+    {
+      "row": 1,
+      "column": 6,
+      "sourceBounds": [
+        1107,
+        198,
+        1241,
+        359
+      ],
+      "headAnchor": 1177.0,
+      "footAnchor": 356.0
+    },
+    {
+      "row": 1,
+      "column": 4,
+      "sourceBounds": [
+        748,
+        200,
+        878,
+        355
+      ],
+      "headAnchor": 814.0,
+      "footAnchor": 351.0
+    },
+    {
+      "row": 1,
+      "column": 7,
+      "sourceBounds": [
+        1287,
+        200,
+        1425,
+        359
+      ],
+      "headAnchor": 1361.0,
+      "footAnchor": 355.0
+    },
+    {
+      "row": 1,
+      "column": 8,
+      "sourceBounds": [
+        1461,
+        200,
+        1606,
+        358
+      ],
+      "headAnchor": 1543.0,
+      "footAnchor": 355.0
+    },
+    {
+      "row": 1,
+      "column": 9,
+      "sourceBounds": [
+        1637,
+        200,
+        1778,
+        359
+      ],
+      "headAnchor": 1724.0,
+      "footAnchor": 355.0
+    },
+    {
+      "row": 1,
+      "column": 10,
+      "sourceBounds": [
+        1817,
+        200,
+        1971,
+        359
+      ],
+      "headAnchor": 1907.0,
+      "footAnchor": 355.0
+    },
+    {
+      "row": 1,
+      "column": 11,
+      "sourceBounds": [
+        1995,
+        201,
+        2152,
+        359
+      ],
+      "headAnchor": 2085.0,
+      "footAnchor": 355.0
+    },
+    {
+      "row": 1,
+      "column": 3,
+      "sourceBounds": [
+        568,
+        202,
+        697,
+        360
+      ],
+      "headAnchor": 633.0,
+      "footAnchor": 356.0
+    },
+    {
+      "row": 1,
+      "column": 1,
+      "sourceBounds": [
+        205,
+        205,
+        341,
+        362
+      ],
+      "headAnchor": 270.0,
+      "footAnchor": 358.0
+    },
+    {
+      "row": 1,
+      "column": 2,
+      "sourceBounds": [
+        387,
+        205,
+        530,
+        362
+      ],
+      "headAnchor": 452.0,
+      "footAnchor": 358.0
+    },
+    {
+      "row": 1,
+      "column": 0,
+      "sourceBounds": [
+        28,
+        206,
+        168,
+        361
+      ],
+      "headAnchor": 91.0,
+      "footAnchor": 358.0
+    },
+    {
+      "row": 2,
+      "column": 3,
+      "sourceBounds": [
+        577,
+        370,
+        714,
+        540
+      ],
+      "headAnchor": 638.0,
+      "footAnchor": 537.0
+    },
+    {
+      "row": 2,
+      "column": 1,
+      "sourceBounds": [
+        198,
+        373,
+        346,
+        542
+      ],
+      "headAnchor": 271.0,
+      "footAnchor": 539.0
+    },
+    {
+      "row": 2,
+      "column": 4,
+      "sourceBounds": [
+        731,
+        374,
+        880,
+        541
+      ],
+      "headAnchor": 811.0,
+      "footAnchor": 537.0
+    },
+    {
+      "row": 2,
+      "column": 6,
+      "sourceBounds": [
+        1100,
+        374,
+        1222,
+        536
+      ],
+      "headAnchor": 1183.0,
+      "footAnchor": 533.0
+    },
+    {
+      "row": 2,
+      "column": 5,
+      "sourceBounds": [
+        915,
+        384,
+        1062,
+        540
+      ],
+      "headAnchor": 996.0,
+      "footAnchor": 536.0
+    },
+    {
+      "row": 2,
+      "column": 7,
+      "sourceBounds": [
+        1267,
+        384,
+        1450,
+        538
+      ],
+      "headAnchor": 1356.0,
+      "footAnchor": 535.0
+    },
+    {
+      "row": 2,
+      "column": 8,
+      "sourceBounds": [
+        1458,
+        384,
+        1616,
+        538
+      ],
+      "headAnchor": 1541.0,
+      "footAnchor": 534.0
+    },
+    {
+      "row": 2,
+      "column": 0,
+      "sourceBounds": [
+        19,
+        386,
+        163,
+        537
+      ],
+      "headAnchor": 88.0,
+      "footAnchor": 534.0
+    },
+    {
+      "row": 2,
+      "column": 2,
+      "sourceBounds": [
+        388,
+        388,
+        526,
+        541
+      ],
+      "headAnchor": 452.0,
+      "footAnchor": 538.0
+    },
+    {
+      "row": 3,
+      "column": 1,
+      "sourceBounds": [
+        211,
+        564,
+        335,
+        713
+      ],
+      "headAnchor": 273.0,
+      "footAnchor": 710.0
+    },
+    {
+      "row": 3,
+      "column": 0,
+      "sourceBounds": [
+        30,
+        568,
+        163,
+        713
+      ],
+      "headAnchor": 90.0,
+      "footAnchor": 710.0
+    },
+    {
+      "row": 3,
+      "column": 2,
+      "sourceBounds": [
+        374,
+        568,
+        503,
+        712
+      ],
+      "headAnchor": 457.0,
+      "footAnchor": 709.0
+    }
+  ],
+  "runtimeFootOrigin": [
+    32,
+    62
+  ],
+  "runtimeDisplayScale": 1.2,
+  "runtimeSpritesheet": "spritesheet-runtime.png",
+  "compatibility": {
+    "frameWidth": 32,
+    "frameHeight": 32,
+    "sheetWidth": 384,
+    "sheetHeight": 128,
+    "footBaseline": 30,
+    "spritesheet": "spritesheet.png"
+  }
+}

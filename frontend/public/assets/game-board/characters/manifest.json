@@ -1,0 +1,41 @@
+{
+  "version": "v001",
+  "presentation": "game-board",
+  "style": "late-16-bit fantasy JRPG overworld pixel art",
+  "notes": "Board-only equivalents keyed to the shared character IDs. Office View assets and character animation mappings remain unchanged.",
+  "characters": {
+    "commander": {
+      "boardAsset": "assets/game-board/characters/v001/commander.png",
+      "linkedOfficeSource": "assets/characters/commander/sword-ready/v001/poster.webp"
+    },
+    "guardian": {
+      "boardAsset": "assets/game-board/characters/v001/guardian.png",
+      "linkedOfficeSource": "assets/characters/cube-wanderer/cube-wind/v002/poster.png",
+      "sourceCharacterId": "cube-wanderer"
+    },
+    "rogue": {
+      "boardAsset": "assets/game-board/characters/v001/rogue.png",
+      "linkedOfficeSource": "assets/rogue-pointing/poster.webp"
+    },
+    "mage": {
+      "boardAsset": "assets/game-board/characters/v001/mage.png",
+      "linkedOfficeSource": "assets/mage_full.webp"
+    },
+    "healer": {
+      "boardAsset": "assets/game-board/characters/v001/healer.png",
+      "linkedOfficeSource": "assets/characters/healer/crosier-victory/v002/poster.png"
+    },
+    "courier": {
+      "boardAsset": "assets/game-board/characters/v001/courier.png",
+      "linkedOfficeSource": "assets/courier_full.webp"
+    },
+    "swordsman": {
+      "boardAsset": "assets/game-board/characters/v001/swordsman.png",
+      "linkedOfficeSource": "assets/characters/swordsman/sword-wind/v004/poster.webp"
+    },
+    "bard": {
+      "boardAsset": "assets/game-board/characters/v001/bard.png",
+      "linkedOfficeSource": "assets/bard_full.webp"
+    }
+  }
+}

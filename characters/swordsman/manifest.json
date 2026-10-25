@@ -6,43 +6,98 @@
     "sword-wind": {
       "characterId": "swordsman",
       "animationId": "sword-wind",
-      "version": "v002",
+      "version": "v004",
       "fps": 24,
       "sourceFrames": 192,
       "durationMs": 8000,
       "width": 491,
       "height": 512,
-      "source": "assets/characters/swordsman/sword-wind/v002/swordsman_sword_wind.blend",
-      "animation": "assets/characters/swordsman/sword-wind/v002/idle.webp",
-      "poster": "assets/characters/swordsman/sword-wind/v002/poster.webp",
-      "head": "assets/characters/swordsman/sword-wind/v002/head.webp",
-      "technique": "Articulated 2.5D illustration: separate upper arm, forearm, closed hand and rigid sword",
+      "source": "assets/characters/swordsman/sword-wind/v004/swordsman_sword_wind.blend",
+      "animation": "assets/characters/swordsman/sword-wind/v004/idle.webp",
+      "poster": "assets/characters/swordsman/sword-wind/v004/poster.webp",
+      "head": "assets/characters/swordsman/sword-wind/v004/head.webp",
+      "technique": "Articulated 2.5D illustration with connected sleeve fold, turning cuff and authored wrapped-hilt grip",
       "gameIntegrated": true,
       "changes": [
-        "New arm, closed glove and isolated sword artwork",
-        "Fixed shoulder and continuous elbow and wrist hierarchy",
-        "Hilt locked behind fingers, rigid blade, no grip sliding",
-        "Anatomical elbow stays flexed rather than reversing through straight extension",
-        "Controlled easing with low and raised guard holds"
+        "New hand-and-hilt artwork with curled fingers and opposing thumb",
+        "Hilt and hand share authored contact; rigid blade shares wrist control",
+        "Elbow pivot registered at actual visible sleeve mouth",
+        "Continuous cloth fold and cuff turn with the forearm",
+        "Bare forearm root underlaps cuff without old glove fragments",
+        "Eight-second reference-start loop retained; earlier versions preserved"
       ],
-      "validation": "assets/characters/swordsman/sword-wind/v002/rig_validation.json",
+      "validation": "assets/characters/swordsman/sword-wind/v004/rig_validation.json",
       "limitations": "Illustrated movement in the image plane; no volumetric hand articulation or simulated sword mass.",
       "previousVersions": {
-        "v001": {
+        "v003": {
           "characterId": "swordsman",
           "animationId": "sword-wind",
-          "version": "v001",
+          "version": "v003",
           "fps": 24,
           "sourceFrames": 192,
           "durationMs": 8000,
           "width": 491,
           "height": 512,
-          "source": "assets/characters/swordsman/sword-wind/v001/swordsman_sword_wind.blend",
-          "animation": "assets/characters/swordsman/sword-wind/v001/idle.webp",
-          "poster": "assets/characters/swordsman/sword-wind/v001/poster.webp",
-          "head": "assets/characters/swordsman/sword-wind/v001/head.webp",
-          "technique": "Layered 2.5D illustrated puppet; reconstructed hidden artwork",
-          "gameIntegrated": true
+          "source": "assets/characters/swordsman/sword-wind/v003/swordsman_sword_wind.blend",
+          "animation": "assets/characters/swordsman/sword-wind/v003/idle.webp",
+          "poster": "assets/characters/swordsman/sword-wind/v003/poster.webp",
+          "head": "assets/characters/swordsman/sword-wind/v003/head.webp",
+          "technique": "Articulated 2.5D illustration: separate upper arm, forearm, closed hand and rigid sword",
+          "gameIntegrated": false,
+          "changes": [
+            "Opening frame revised to supplied inward chest-guard reference",
+            "Forearm crosses chest and blade points 27 degrees up-right",
+            "Inward elbow bend maintained through entire lowering and return",
+            "Opening poster matches the first animation frame",
+            "Rigid sword and fixed grip retained; v001 and v002 preserved"
+          ],
+          "validation": "assets/characters/swordsman/sword-wind/v003/rig_validation.json",
+          "limitations": "Illustrated movement in the image plane; no volumetric hand articulation or simulated sword mass.",
+          "previousVersions": {
+            "v002": {
+              "characterId": "swordsman",
+              "animationId": "sword-wind",
+              "version": "v002",
+              "fps": 24,
+              "sourceFrames": 192,
+              "durationMs": 8000,
+              "width": 491,
+              "height": 512,
+              "source": "assets/characters/swordsman/sword-wind/v002/swordsman_sword_wind.blend",
+              "animation": "assets/characters/swordsman/sword-wind/v002/idle.webp",
+              "poster": "assets/characters/swordsman/sword-wind/v002/poster.webp",
+              "head": "assets/characters/swordsman/sword-wind/v002/head.webp",
+              "technique": "Articulated 2.5D illustration: separate upper arm, forearm, closed hand and rigid sword",
+              "gameIntegrated": true,
+              "changes": [
+                "New arm, closed glove and isolated sword artwork",
+                "Fixed shoulder and continuous elbow and wrist hierarchy",
+                "Hilt locked behind fingers, rigid blade, no grip sliding",
+                "Anatomical elbow stays flexed rather than reversing through straight extension",
+                "Controlled easing with low and raised guard holds"
+              ],
+              "validation": "assets/characters/swordsman/sword-wind/v002/rig_validation.json",
+              "limitations": "Illustrated movement in the image plane; no volumetric hand articulation or simulated sword mass.",
+              "previousVersions": {
+                "v001": {
+                  "characterId": "swordsman",
+                  "animationId": "sword-wind",
+                  "version": "v001",
+                  "fps": 24,
+                  "sourceFrames": 192,
+                  "durationMs": 8000,
+                  "width": 491,
+                  "height": 512,
+                  "source": "assets/characters/swordsman/sword-wind/v001/swordsman_sword_wind.blend",
+                  "animation": "assets/characters/swordsman/sword-wind/v001/idle.webp",
+                  "poster": "assets/characters/swordsman/sword-wind/v001/poster.webp",
+                  "head": "assets/characters/swordsman/sword-wind/v001/head.webp",
+                  "technique": "Layered 2.5D illustrated puppet; reconstructed hidden artwork",
+                  "gameIntegrated": true
+                }
+              }
+            }
+          }
         }
       }
     }

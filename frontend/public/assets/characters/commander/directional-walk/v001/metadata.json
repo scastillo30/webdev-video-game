@@ -1,0 +1,29 @@
+{
+  "characterId": "commander",
+  "animationId": "directional-walk",
+  "version": "v001",
+  "frameWidth": 48,
+  "frameHeight": 64,
+  "columns": 9,
+  "rows": [
+    "down",
+    "left",
+    "right",
+    "up"
+  ],
+  "neutralColumn": 0,
+  "walkColumns": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "cycleDistancePixels": 96,
+  "source": "commander_directional_walk.blend",
+  "technique": "Articulated volumetric mesh in Blender, orthographic Workbench renders, fixed color lattice, binary alpha",
+  "limitations": "First-pass faceted render-to-pixel prototype; not a hand-drawn replica of Chrono Trigger sprites."
+}
