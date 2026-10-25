@@ -120,6 +120,26 @@ func TestHealthAndReadinessMethods(t *testing.T) {
 	}
 }
 
+func TestVersionInfoIsAvailableAndMethodBound(t *testing.T) {
+	response := httptest.NewRecorder()
+	versionInfo()(response, httptest.NewRequest(http.MethodGet, "/api/version", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("version returned %d: %s", response.Code, response.Body.String())
+	}
+	var payload buildInfoResponse
+	if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Version == "" || payload.Commit == "" || payload.BuiltAt == "" || payload.Target == "" {
+		t.Fatalf("incomplete version payload: %#v", payload)
+	}
+	response = httptest.NewRecorder()
+	versionInfo()(response, httptest.NewRequest(http.MethodPost, "/api/version", nil))
+	if response.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("POST version returned %d", response.Code)
+	}
+}
+
 func TestSecurityHeadersAndCorsAllowlist(t *testing.T) {
 	handler := securityHeaders(cors(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		write(w, http.StatusOK, map[string]string{"status": "ok"})

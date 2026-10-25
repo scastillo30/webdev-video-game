@@ -1,5 +1,6 @@
 {
   "name": "webdev-mmorpg",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "frontend:install": "npm --prefix frontend install",
@@ -19,7 +20,10 @@
     "release:candidate": "node scripts/verify-release-candidate.mjs",
     "soak:verify": "node scripts/verify-soak-report.mjs",
     "test:release-tools": "node --test scripts/release-tools.test.mjs",
-    "quality:check": "node scripts/quality-gate.mjs"
+    "quality:check": "node scripts/quality-gate.mjs",
+    "db:backup": "cd backend && go run ./cmd/admin backup",
+    "db:verify": "cd backend && go run ./cmd/admin verify",
+    "db:restore": "cd backend && go run ./cmd/admin restore"
   },
   "devDependencies": { "npm-run-all": "^4.1.5" }
 }

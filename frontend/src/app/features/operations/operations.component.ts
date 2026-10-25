@@ -23,6 +23,7 @@ interface OperationsStatus {
   issueCount:number;
   eventCount:number;
   database:string;
+  build:{version:string;commit:string;builtAt:string;target:string};
   targetFps:number;
   tvModeEnabled:boolean;
 }
@@ -50,7 +51,7 @@ interface OperationsStatus {
         </article>
         <article class="operations-card">
           <small>GO + SQLITE</small><strong>{{formatUptime(current.uptimeSeconds)}}</strong>
-          <dl><div><dt>Database</dt><dd>{{current.database}}</dd></div><div><dt>Started</dt><dd>{{current.serverStartedAt|date:'medium'}}</dd></div><div><dt>Target frame rate</dt><dd>{{current.targetFps}} FPS</dd></div><div><dt>TV mode</dt><dd>{{current.tvModeEnabled?'Enabled':'Disabled'}}</dd></div></dl>
+          <dl><div><dt>Version</dt><dd>{{current.build.version}}</dd></div><div><dt>Commit</dt><dd>{{shortCommit(current.build.commit)}}</dd></div><div><dt>Target</dt><dd>{{current.build.target}}</dd></div><div><dt>Database</dt><dd>{{current.database}}</dd></div><div><dt>Started</dt><dd>{{current.serverStartedAt|date:'medium'}}</dd></div><div><dt>Target frame rate</dt><dd>{{current.targetFps}} FPS</dd></div><div><dt>TV mode</dt><dd>{{current.tvModeEnabled?'Enabled':'Disabled'}}</dd></div></dl>
         </article>
         <article class="operations-card">
           <small>JIRA CONNECTION</small><strong>{{current.connection.state}}</strong>
@@ -108,4 +109,6 @@ export class OperationsComponent implements OnInit,OnDestroy {
     const minutes=Math.floor((seconds%3600)/60);
     return days?`${days}d ${hours}h`:hours?`${hours}h ${minutes}m`:`${minutes}m`;
   }
+
+  protected shortCommit(commit:string):string{return commit==='unknown'?commit:commit.slice(0,12)}
 }

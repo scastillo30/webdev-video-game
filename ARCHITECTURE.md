@@ -78,6 +78,8 @@ The initial synchronization caches current issue state without replaying old cha
 - `scripts/build-release.mjs` creates a single-port, platform-specific deployment folder from a clean tree. Runtime assets are discovered from committed UI/config references instead of copying the 1.8 GB production-art directory, and `scripts/verify-release.mjs` validates every packaged file against its SHA-256 manifest.
 - The Go runtime exposes separate liveness and SQLite-aware readiness probes, uses bounded request timeouts without interrupting SSE, handles termination signals gracefully, and applies an explicit CORS allowlist plus browser security headers.
 - `scripts/quality-gate.mjs` is the shared local/CI verification path. `scripts/verify-release-candidate.mjs` additionally requires signed soak evidence and adds its SHA-256 certificate to the verified release manifest.
+- Packaged servers expose version, commit, build time, and target at `/api/version`; these values are compiled from the same metadata written to `release-manifest.json`.
+- `webdev-admin` creates consistent SQLite snapshots with `VACUUM INTO`, verifies them read-only with `PRAGMA quick_check`, and performs confirmation-gated restores while preserving a timestamped rollback database.
 
 ## Development
 

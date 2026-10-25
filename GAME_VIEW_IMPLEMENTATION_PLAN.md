@@ -1,6 +1,6 @@
 # WEBDEV MMORPG — Game View Implementation Plan
 
-Status: **Phases 0–12 implemented; target-hardware soak sign-off remains an operational release gate**
+Status: **Phases 0–14 implemented; target-hardware soak sign-off remains an operational release gate**
 Branch: `codex/game-view-proposal`  
 Scope rule: **Do not modify, regenerate, overwrite, or remap existing character animations or character-owned assets.**
 
@@ -370,6 +370,24 @@ Acceptance: the packaged server reports database readiness, rejects unapproved c
 - Bind the soak evidence to the release with a SHA-256 certificate recorded in the bundle manifest.
 
 Acceptance: a release candidate can be produced only after source checks and signed soak evidence pass, and its certificate remains covered by bundle integrity verification.
+
+### Phase 13 — Runtime identity and build provenance
+
+- Give the application an explicit version and inject version, Git commit, build time, and platform target into packaged Go binaries.
+- Expose credential-safe provenance through `/api/version` and the Operations console.
+- Record the same identity in the release manifest and certified release evidence.
+- Keep development builds visibly distinct from packaged releases.
+
+Acceptance: an operator can match a running process to its exact release manifest and source commit without reading the filesystem or exposing secrets.
+
+### Phase 14 — SQLite backup and recovery
+
+- Add consistent online backups using SQLite `VACUUM INTO`, followed by integrity verification and SHA-256 reporting.
+- Package a cross-platform `webdev-admin` tool for backup, verification, and explicit restore.
+- Require the server to be stopped and an exact confirmation token before restore.
+- Preserve the replaced database and SQLite sidecars as timestamped rollback files.
+
+Acceptance: operators can create and verify a live-safe backup, restore it only through an explicit stopped-server workflow, and return to the automatically preserved pre-restore database if needed.
 
 ## 12. Verification strategy
 

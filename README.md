@@ -18,6 +18,8 @@ Run the complete source gate with `npm run quality:check`. After the target-host
 
 Production health probes are available at `/api/health` and `/api/ready`. Cross-origin API access is disabled by default; set the comma-separated `CORS_ALLOWED_ORIGINS` allowlist only when a separate trusted frontend origin is required. The normal Angular development proxy and packaged single-origin application do not require it.
 
+The running release identity is available at `/api/version` and in the Operations console. Release bundles also include `webdev-admin` for consistent SQLite backup, verification, and recovery. Follow [`BACKUP_RECOVERY.md`](BACKUP_RECOVERY.md); restore is intentionally confirmation-gated and must be performed while the server is stopped.
+
 The preserved original game can still be opened from `index.html` in a modern browser. Its art assets are in `assets/`. For a zero-setup standalone variant use `webdev_mmorpg_v4.html` (provided separately; all image assets embedded).
 
 The scene works offline using HTML/CSS and Canvas. When internet is available it may optionally load Three.js from a CDN for GPU-driven overlay particles; visit with `?offline=1` to skip that request.

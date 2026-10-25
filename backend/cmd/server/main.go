@@ -17,6 +17,13 @@ import (
 	"webdev-mmorpg/backend/internal/store"
 )
 
+var (
+	buildVersion = "dev"
+	buildCommit  = "unknown"
+	buildTime    = "unknown"
+	buildTarget  = "development"
+)
+
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -40,6 +47,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", health())
 	mux.HandleFunc("/api/ready", readiness(db))
+	mux.HandleFunc("/api/version", versionInfo())
 	mux.HandleFunc("/api/operations/status", operationsStatus(db, jiraService, serverStartedAt))
 	mux.HandleFunc("/api/characters", collection(db))
 	mux.HandleFunc("/api/characters/", member(db))
@@ -107,6 +115,27 @@ type readinessResponse struct {
 	CheckedAt string `json:"checkedAt"`
 }
 
+type buildInfoResponse struct {
+	Version string `json:"version"`
+	Commit  string `json:"commit"`
+	BuiltAt string `json:"builtAt"`
+	Target  string `json:"target"`
+}
+
+func currentBuildInfo() buildInfoResponse {
+	return buildInfoResponse{Version: buildVersion, Commit: buildCommit, BuiltAt: buildTime, Target: buildTarget}
+}
+
+func versionInfo() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		write(w, http.StatusOK, currentBuildInfo())
+	}
+}
+
 func readiness(db *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -128,16 +157,17 @@ func readiness(db *store.Store) http.HandlerFunc {
 }
 
 type operationsResponse struct {
-	Status        string           `json:"status"`
-	ServerStarted string           `json:"serverStartedAt"`
-	UptimeSeconds int64            `json:"uptimeSeconds"`
-	Jira          jira.Diagnostics `json:"jira"`
-	Connection    jira.Connection  `json:"connection"`
-	IssueCount    int              `json:"issueCount"`
-	EventCount    int              `json:"eventCount"`
-	Database      string           `json:"database"`
-	TargetFPS     int              `json:"targetFps"`
-	TVModeEnabled bool             `json:"tvModeEnabled"`
+	Status        string            `json:"status"`
+	ServerStarted string            `json:"serverStartedAt"`
+	UptimeSeconds int64             `json:"uptimeSeconds"`
+	Jira          jira.Diagnostics  `json:"jira"`
+	Connection    jira.Connection   `json:"connection"`
+	IssueCount    int               `json:"issueCount"`
+	EventCount    int               `json:"eventCount"`
+	Database      string            `json:"database"`
+	Build         buildInfoResponse `json:"build"`
+	TargetFPS     int               `json:"targetFps"`
+	TVModeEnabled bool              `json:"tvModeEnabled"`
 }
 
 func operationsStatus(db *store.Store, jiraService *jira.Service, startedAt time.Time) http.HandlerFunc {
@@ -163,7 +193,7 @@ func operationsStatus(db *store.Store, jiraService *jira.Service, startedAt time
 		write(w, http.StatusOK, operationsResponse{
 			Status: status, ServerStarted: startedAt.Format(time.RFC3339Nano), UptimeSeconds: int64(time.Since(startedAt).Seconds()),
 			Jira: jiraService.Diagnostics(), Connection: snapshot.Connection, IssueCount: len(snapshot.Issues), EventCount: len(snapshot.Events),
-			Database: "ready", TargetFPS: config.Settings.TargetFPS, TVModeEnabled: config.Settings.TVModeEnabled,
+			Database: "ready", Build: currentBuildInfo(), TargetFPS: config.Settings.TargetFPS, TVModeEnabled: config.Settings.TVModeEnabled,
 		})
 	}
 }

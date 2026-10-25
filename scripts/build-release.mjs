@@ -14,6 +14,8 @@ const target=(targetIndex>=0?args[targetIndex+1]:`${hostOS}-${hostArch}`).toLowe
 const match=/^(windows|linux|darwin)-(amd64|arm64)$/.exec(target);
 if(!match){console.error('Target must be windows-amd64, windows-arm64, linux-amd64, linux-arm64, darwin-amd64, or darwin-arm64.');process.exit(2)}
 const [,goos,goarch]=match;
+const packageMetadata=JSON.parse(readFileSync(join(root,'package.json'),'utf8'));
+const applicationVersion=packageMetadata.version??'0.0.0';
 
 const run=(command,commandArgs,options={})=>{
   const result=spawnSync(command,commandArgs,{cwd:root,stdio:'inherit',...options,env:{...process.env,...options.env}});
@@ -37,6 +39,7 @@ const bundle=join(releaseRoot,bundleName);
 const web=join(bundle,'web');
 const legacy=join(bundle,'legacy');
 const executable=`webdev-server${goos==='windows'?'.exe':''}`;
+const adminExecutable=`webdev-admin${goos==='windows'?'.exe':''}`;
 mkdirSync(releaseRoot,{recursive:true});
 rmSync(bundle,{recursive:true,force:true});
 mkdirSync(bundle,{recursive:true});
@@ -44,7 +47,12 @@ mkdirSync(bundle,{recursive:true});
 console.log(`Building Angular for ${target}...`);
 run(node,[join(root,'frontend','node_modules','@angular','cli','bin','ng.js'),'build','--progress=false'],{cwd:join(root,'frontend'),env:{CI:'1'}});
 console.log(`Building Go server for ${target}...`);
-run(go,['build','-trimpath','-ldflags=-s -w','-o',join(bundle,executable),'./cmd/server'],{cwd:join(root,'backend'),env:{GOOS:goos,GOARCH:goarch,CGO_ENABLED:'0',GOCACHE:join(root,'.tools','go-cache')}});
+const commit=capture('git',['rev-parse','HEAD']);
+const builtAt=new Date().toISOString();
+const serverLdflags=`-s -w -X main.buildVersion=${applicationVersion} -X main.buildCommit=${commit} -X main.buildTime=${builtAt} -X main.buildTarget=${target}`;
+run(go,['build','-trimpath',`-ldflags=${serverLdflags}`,'-o',join(bundle,executable),'./cmd/server'],{cwd:join(root,'backend'),env:{GOOS:goos,GOARCH:goarch,CGO_ENABLED:'0',GOCACHE:join(root,'.tools','go-cache')}});
+console.log(`Building database administration tool for ${target}...`);
+run(go,['build','-trimpath','-ldflags=-s -w','-o',join(bundle,adminExecutable),'./cmd/admin'],{cwd:join(root,'backend'),env:{GOOS:goos,GOARCH:goarch,CGO_ENABLED:'0',GOCACHE:join(root,'.tools','go-cache')}});
 
 cpSync(join(root,'frontend','dist','webdev-mmorpg','browser'),web,{recursive:true});
 mkdirSync(legacy,{recursive:true});
@@ -61,18 +69,19 @@ for(const asset of [...runtimeAssets].sort()){
   const destination=join(legacy,asset);mkdirSync(dirname(destination),{recursive:true});copyFileSync(source,destination);
 }
 
-for(const document of ['README.md','ARCHITECTURE.md','WINDOWS_SETUP.md','TV_SOAK_RUNBOOK.md','PHASE_8_9_REPORT.md','PHASE_9_10_REPORT.md','PHASE_11_12_REPORT.md'])copyFileSync(join(root,document),join(bundle,document));
+for(const document of ['README.md','ARCHITECTURE.md','WINDOWS_SETUP.md','TV_SOAK_RUNBOOK.md','BACKUP_RECOVERY.md','PHASE_8_9_REPORT.md','PHASE_9_10_REPORT.md','PHASE_11_12_REPORT.md','PHASE_13_14_REPORT.md'])copyFileSync(join(root,document),join(bundle,document));
 mkdirSync(join(bundle,'data'),{recursive:true});
+mkdirSync(join(bundle,'backups'),{recursive:true});
 const unixLauncher=`#!/bin/sh\nset -eu\nROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\nexport ANGULAR_DIST="$ROOT/web"\nexport LEGACY_GAME_DIR="$ROOT/legacy"\nexport DB_PATH="${'$'}{DB_PATH:-$ROOT/data/game.db}"\nexport ADDR="${'$'}{ADDR:-:8080}"\nexec "$ROOT/${executable}"\n`;
 const windowsLauncher=`$ErrorActionPreference = "Stop"\n$Root = Split-Path -Parent $MyInvocation.MyCommand.Path\n$env:ANGULAR_DIST = Join-Path $Root "web"\n$env:LEGACY_GAME_DIR = Join-Path $Root "legacy"\nif (-not $env:DB_PATH) { $env:DB_PATH = Join-Path $Root "data\\game.db" }\nif (-not $env:ADDR) { $env:ADDR = ":8080" }\n& (Join-Path $Root "${executable}")\n`;
 if(goos==='windows')writeFileSync(join(bundle,'start.ps1'),windowsLauncher);
 else{writeFileSync(join(bundle,'start.sh'),unixLauncher);chmodSync(join(bundle,'start.sh'),0o755)}
-writeFileSync(join(bundle,'RELEASE_README.txt'),`WEBDEV MMORPG ${target}\n\nStart: ${goos==='windows'?'.\\start.ps1':'./start.sh'}\nOpen: http://localhost:8080\nHealth: http://localhost:8080/api/health\nReadiness: http://localhost:8080/api/ready\nOperations: http://localhost:8080/operations\nTV soak: http://localhost:8080/diagnostics/soak.html\n\nSet JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN, and JIRA_JQL in the process environment before starting. Never store credentials in this folder. Set CORS_ALLOWED_ORIGINS only when serving a trusted frontend from a different origin.\n`);
+writeFileSync(join(bundle,'RELEASE_README.txt'),`WEBDEV MMORPG ${applicationVersion} (${target})\n\nStart: ${goos==='windows'?'.\\start.ps1':'./start.sh'}\nAdmin: ${goos==='windows'?'.\\webdev-admin.exe':'./webdev-admin'}\nOpen: http://localhost:8080\nHealth: http://localhost:8080/api/health\nReadiness: http://localhost:8080/api/ready\nVersion: http://localhost:8080/api/version\nOperations: http://localhost:8080/operations\nTV soak: http://localhost:8080/diagnostics/soak.html\n\nSet JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN, and JIRA_JQL in the process environment before starting. Never store credentials in this folder. Set CORS_ALLOWED_ORIGINS only when serving a trusted frontend from a different origin. Read BACKUP_RECOVERY.md before using restore.\n`);
 
 const fileList=[];
 function walk(directory){for(const entry of readdirSync(directory,{withFileTypes:true})){const path=join(directory,entry.name);if(entry.isDirectory())walk(path);else if(entry.isFile()&&entry.name!=='release-manifest.json')fileList.push(path)}}
 walk(bundle);
-const manifest={name:'WEBDEV MMORPG',target,commit:capture('git',['rev-parse','HEAD']),builtAt:new Date().toISOString(),dirty,allowDirty,runtimeAssetCount:runtimeAssets.size,mutableDirectories:['data/'],files:fileList.sort().map(path=>({path:relative(bundle,path).split(sep).join('/'),size:lstatSync(path).size,sha256:createHash('sha256').update(readFileSync(path)).digest('hex')}))};
+const manifest={name:'WEBDEV MMORPG',version:applicationVersion,target,commit,builtAt,dirty,allowDirty,runtimeAssetCount:runtimeAssets.size,mutableDirectories:['data/','backups/'],files:fileList.sort().map(path=>({path:relative(bundle,path).split(sep).join('/'),size:lstatSync(path).size,sha256:createHash('sha256').update(readFileSync(path)).digest('hex')}))};
 writeFileSync(join(bundle,'release-manifest.json'),`${JSON.stringify(manifest,null,2)}\n`);
 run(node,[join(root,'scripts','verify-release.mjs'),bundle]);
 console.log(`Release bundle ready: ${bundle}`);

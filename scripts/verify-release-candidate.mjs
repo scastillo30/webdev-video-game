@@ -37,7 +37,7 @@ const bundle=join(root,'release',`webdev-mmorpg-${target}`);
 const manifestPath=join(bundle,'release-manifest.json');
 const manifest=JSON.parse(readFileSync(manifestPath,'utf8'));
 const certificate={
-  schemaVersion:1,target,commit:manifest.commit,verifiedAt:new Date().toISOString(),qualityGate:'passed',
+  schemaVersion:1,version:manifest.version,target,commit:manifest.commit,verifiedAt:new Date().toISOString(),qualityGate:'passed',
   soakReport:{file:basename(soakPath),sha256:createHash('sha256').update(readFileSync(soakPath)).digest('hex')}
 };
 const certificatePath=join(bundle,'release-certificate.json');

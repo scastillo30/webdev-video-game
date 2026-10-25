@@ -113,6 +113,15 @@ npm run release:candidate -- --soak-report C:\path\to\webdev-tv-soak-report.json
 
 This reruns the complete quality gate and records a checksum-only soak certificate in the bundle.
 
+The release folder also includes `webdev-admin.exe`. Create a live-safe backup with:
+
+```powershell
+.\webdev-admin.exe backup --db .\data\game.db --out .\backups\game-2026-10-25.db
+.\webdev-admin.exe verify --file .\backups\game-2026-10-25.db
+```
+
+See `BACKUP_RECOVERY.md` before restoring. The server must be stopped, and the command requires `--confirm STOPPED`.
+
 ## Database and configuration
 
 The default SQLite database is created automatically at:
