@@ -122,6 +122,20 @@ The release folder also includes `webdev-admin.exe`. Create a live-safe backup w
 
 See `BACKUP_RECOVERY.md` before restoring. The server must be stopped, and the command requires `--confirm STOPPED`.
 
+Preview data-retention maintenance without deleting anything:
+
+```powershell
+.\webdev-admin.exe prune --db .\data\game.db --event-days 180 --audit-days 365
+```
+
+Only after reviewing the counts, apply the same policy with a new pre-prune backup and exact confirmation:
+
+```powershell
+.\webdev-admin.exe prune --db .\data\game.db --event-days 180 --audit-days 365 --apply --confirm PRUNE --backup .\backups\before-prune-2026-10-25.db
+```
+
+See `DATA_RETENTION.md` for scope and verification steps.
+
 ## Database and configuration
 
 The default SQLite database is created automatically at:

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -159,5 +160,63 @@ func TestSecurityHeadersAndCorsAllowlist(t *testing.T) {
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusForbidden || response.Header().Get("Access-Control-Allow-Origin") != "" {
 		t.Fatalf("unexpected origin was allowed: code=%d headers=%#v", response.Code, response.Header())
+	}
+}
+
+func TestMutationAuditIsCredentialSafeAndRequestCorrelated(t *testing.T) {
+	database, err := store.Open(filepath.Join(t.TempDir(), "game.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	handler := auditMutations(database, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		write(w, http.StatusCreated, map[string]string{"status": "created"})
+	}))
+	request := httptest.NewRequest(http.MethodPut, "/api/characters/private-id?token=do-not-store", bytes.NewBufferString(`{"email":"private@example.test","apiToken":"secret"}`))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusCreated || response.Header().Get("X-Request-ID") == "" {
+		t.Fatalf("mutation was not correlated: code=%d headers=%#v", response.Code, response.Header())
+	}
+	entries, err := database.ListAudit(request.Context(), 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Action != "character.update" || entries[0].Path != "/api/characters/:id" || entries[0].StatusCode != http.StatusCreated {
+		t.Fatalf("unexpected audit entry: %#v", entries)
+	}
+	encoded, _ := json.Marshal(entries)
+	for _, secret := range []string{"private-id", "token", "private@example.test", "apiToken", "secret"} {
+		if bytes.Contains(encoded, []byte(secret)) {
+			t.Fatalf("audit stored sensitive request material %q: %s", secret, encoded)
+		}
+	}
+
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/characters/private-id", nil))
+	entries, err = database.ListAudit(request.Context(), 10)
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("read request was audited: entries=%#v err=%v", entries, err)
+	}
+}
+
+func TestOperationsAuditIsReadOnly(t *testing.T) {
+	database, err := store.Open(filepath.Join(t.TempDir(), "game.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	if err = database.RecordAudit(context.Background(), store.AuditEntry{RequestID: "request", Action: "jira.refresh", Method: "POST", Path: "/api/jira/refresh", StatusCode: 200}); err != nil {
+		t.Fatal(err)
+	}
+	response := httptest.NewRecorder()
+	operationsAudit(database)(response, httptest.NewRequest(http.MethodGet, "/api/operations/audit?limit=1", nil))
+	if response.Code != http.StatusOK || !bytes.Contains(response.Body.Bytes(), []byte("jira.refresh")) {
+		t.Fatalf("audit endpoint failed: code=%d body=%s", response.Code, response.Body.String())
+	}
+	response = httptest.NewRecorder()
+	operationsAudit(database)(response, httptest.NewRequest(http.MethodDelete, "/api/operations/audit", nil))
+	if response.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("audit endpoint accepted mutation: %d", response.Code)
 	}
 }

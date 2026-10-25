@@ -1,6 +1,6 @@
 # WEBDEV MMORPG — Game View Implementation Plan
 
-Status: **Phases 0–14 implemented; target-hardware soak sign-off remains an operational release gate**
+Status: **Phases 0–16 implemented; target-hardware soak sign-off remains an operational release gate**
 Branch: `codex/game-view-proposal`  
 Scope rule: **Do not modify, regenerate, overwrite, or remap existing character animations or character-owned assets.**
 
@@ -388,6 +388,24 @@ Acceptance: an operator can match a running process to its exact release manifes
 - Preserve the replaced database and SQLite sidecars as timestamped rollback files.
 
 Acceptance: operators can create and verify a live-safe backup, restore it only through an explicit stopped-server workflow, and return to the automatically preserved pre-restore database if needed.
+
+### Phase 15 — Credential-safe administrative auditing
+
+- Assign a server-generated request correlation ID to every mutating API request and return it in `X-Request-ID`.
+- Record the action, normalized route, method, response status, duration, and UTC timestamp in SQLite.
+- Exclude bodies, query strings, Jira credentials, user emails, client addresses, and dynamic character identifiers from audit data.
+- Expose bounded recent history through the Operations API and console without making the audit endpoint mutable.
+
+Acceptance: every administrative mutation is traceable to a response request ID, read-only traffic is not recorded, and sensitive request material cannot appear in the persisted audit schema.
+
+### Phase 16 — Controlled operational data retention
+
+- Add a preview-first administration command for historical Jira activity and audit retention.
+- Constrain retention windows to 7–3650 days and keep issue snapshots, characters, mappings, and configuration outside deletion scope.
+- Require `--apply`, the exact `PRUNE` confirmation, and a new verified backup destination before deletion.
+- Package the retention runbook and command in every supported release bundle.
+
+Acceptance: operators can review candidate counts without writes, cannot accidentally enable deletion by disabling preview, and receive a verified pre-prune backup before eligible rows are removed.
 
 ## 12. Verification strategy
 

@@ -14,6 +14,17 @@ interface JiraDiagnostics {
   subscriberCount:number;
 }
 
+interface AuditEntry {
+  id:number;
+  requestId:string;
+  action:string;
+  method:string;
+  path:string;
+  statusCode:number;
+  durationMs:number;
+  occurredAt:string;
+}
+
 interface OperationsStatus {
   status:'ok'|'degraded';
   serverStartedAt:string;
@@ -26,6 +37,7 @@ interface OperationsStatus {
   build:{version:string;commit:string;builtAt:string;target:string};
   targetFps:number;
   tvModeEnabled:boolean;
+  recentAudit:AuditEntry[];
 }
 
 @Component({
@@ -34,7 +46,7 @@ interface OperationsStatus {
   template:`
     <main class="operations-page">
       <header class="operations-heading">
-        <div><p>PHASE 8 · OPERATIONAL READINESS</p><h1>Castle Systems Console</h1><span>Credential-safe runtime telemetry for the shared Jira stream and Game View.</span></div>
+        <div><p>PHASE 15 · OPERATIONAL AUDIT</p><h1>Castle Systems Console</h1><span>Credential-safe runtime telemetry and administrative request correlation.</span></div>
         <div class="operations-actions">
           <button type="button" (click)="load()" [disabled]="loading">{{loading?'CHECKING…':'REFRESH STATUS'}}</button>
           <button type="button" class="primary" (click)="refreshJira()" [disabled]="refreshing">{{refreshing?'REFRESHING…':'REFRESH JIRA NOW'}}</button>
@@ -70,6 +82,27 @@ interface OperationsStatus {
           <small>PHASE 9 · RELEASE SOAK</small><strong>Run on the target television host</strong>
           <p>The soak runner can hold Game View steady or cycle Game → Office → Game while checking that exactly one Phaser canvas is mounted, route teardown releases it, the API remains responsive, and browser heap does not trend upward unexpectedly.</p>
           <a href="/diagnostics/soak.html?auto=1" target="_blank" rel="noopener">START FOUR-HOUR SOAK ↗</a>
+        </article>
+        <article class="operations-card wide-card audit-card">
+          <small>RECENT ADMINISTRATIVE ACTIVITY</small><strong>{{current.recentAudit.length}} recorded mutations</strong>
+          <p *ngIf="!current.recentAudit.length">No administrative mutations have been recorded since this database was created.</p>
+          <div *ngIf="current.recentAudit.length" class="audit-list" role="list" aria-label="Recent administrative activity">
+            @for (entry of current.recentAudit; track entry.id) {
+              <div role="listitem" class="audit-row">
+                <span class="audit-action">{{entry.action}}</span>
+                <span>{{entry.method}} · {{entry.path}}</span>
+                <span [class.audit-success]="entry.statusCode<400" [class.audit-failure]="entry.statusCode>=400">HTTP {{entry.statusCode}}</span>
+                <span>{{entry.durationMs}} ms</span>
+                <time [attr.datetime]="entry.occurredAt">{{entry.occurredAt|date:'medium'}}</time>
+                <code title="Request correlation ID">{{shortRequest(entry.requestId)}}</code>
+              </div>
+            }
+          </div>
+        </article>
+        <article class="operations-card wide-card retention-card">
+          <small>PHASE 16 · DATA RETENTION</small><strong>Preview, back up, then prune</strong>
+          <p>Retention maintenance removes only expired Jira activity events and administrative audit rows. Current issue snapshots, characters, mappings, and game configuration remain untouched.</p>
+          <code>webdev-admin prune --db data/game.db --event-days 180 --audit-days 365</code>
         </article>
       </section>
     </main>
@@ -111,4 +144,5 @@ export class OperationsComponent implements OnInit,OnDestroy {
   }
 
   protected shortCommit(commit:string):string{return commit==='unknown'?commit:commit.slice(0,12)}
+  protected shortRequest(requestId:string):string{return requestId.slice(0,12)}
 }

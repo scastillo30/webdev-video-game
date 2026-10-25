@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 	"webdev-mmorpg/backend/internal/store"
 )
 
@@ -19,7 +20,7 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: webdev-admin <backup|verify|restore> [options]")
+		return errors.New("usage: webdev-admin <backup|verify|restore|prune> [options]")
 	}
 	switch args[0] {
 	case "backup":
@@ -78,8 +79,61 @@ func run(args []string) error {
 			return err
 		}
 		return printJSON(report)
+	case "prune":
+		flags := flag.NewFlagSet("prune", flag.ContinueOnError)
+		databasePath := flags.String("db", environment("DB_PATH", "data/game.db"), "SQLite database path")
+		eventDays := flags.Int("event-days", 180, "days of Jira activity events to retain")
+		auditDays := flags.Int("audit-days", 365, "days of administrative audit to retain")
+		dryRun := flags.Bool("dry-run", true, "preview candidate counts without deleting data")
+		apply := flags.Bool("apply", false, "apply deletions after creating the required backup")
+		backupPath := flags.String("backup", "", "new backup file required with --apply")
+		confirmation := flags.String("confirm", "", "must be PRUNE when applying deletions")
+		if err := flags.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := requireDatabase(*databasePath); err != nil {
+			return err
+		}
+		if *apply {
+			if *confirmation != "PRUNE" {
+				return errors.New("prune apply requires --confirm PRUNE")
+			}
+			if *backupPath == "" {
+				return errors.New("prune apply requires --backup <new-backup-file>")
+			}
+		}
+		database, err := store.Open(*databasePath)
+		if err != nil {
+			return err
+		}
+		defer database.Close()
+		if !*apply {
+			report, pruneErr := database.PruneOperationalData(context.Background(), *eventDays, *auditDays, time.Now(), true)
+			if pruneErr != nil {
+				return pruneErr
+			}
+			// The flag is retained for explicit, script-readable dry-run intent. A
+			// destructive run still requires --apply regardless of this value.
+			report.DryRun = *dryRun
+			if !*dryRun {
+				return errors.New("--dry-run=false does not delete data; pass --apply with backup and confirmation")
+			}
+			return printJSON(report)
+		}
+		backupReport, err := database.Backup(context.Background(), *backupPath)
+		if err != nil {
+			return err
+		}
+		report, err := database.PruneOperationalData(context.Background(), *eventDays, *auditDays, time.Now(), false)
+		if err != nil {
+			return err
+		}
+		return printJSON(struct {
+			Backup      store.BackupReport      `json:"backup"`
+			Maintenance store.MaintenanceReport `json:"maintenance"`
+		}{Backup: backupReport, Maintenance: report})
 	default:
-		return fmt.Errorf("unknown command %q; use backup, verify, or restore", args[0])
+		return fmt.Errorf("unknown command %q; use backup, verify, restore, or prune", args[0])
 	}
 }
 

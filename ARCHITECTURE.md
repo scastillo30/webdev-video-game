@@ -51,6 +51,7 @@ SQLite stores editable application metadata. `characters/<id>/manifest.json` and
 - `GET /api/game/config`
 - `PUT /api/game/config`
 - `GET /api/operations/status` (credential-safe readiness telemetry)
+- `GET /api/operations/audit` (credential-safe administrative mutation history)
 
 The Go service applies ordered, embedded, forward-only migrations at startup and records them in `schema_migrations`. All writes use parameterized SQL. Jira issue state and deduplicated activity events are stored separately. `character_game_profiles` stores Game View placement, approved visual references, enablement, and an optional unique Jira account ID. `game_settings` stores runtime and display preferences, while `jira_status_behavior_mappings` stores exact status-to-behavior overrides. Seeded Jira mappings are deliberately null.
 
@@ -80,6 +81,8 @@ The initial synchronization caches current issue state without replaying old cha
 - `scripts/quality-gate.mjs` is the shared local/CI verification path. `scripts/verify-release-candidate.mjs` additionally requires signed soak evidence and adds its SHA-256 certificate to the verified release manifest.
 - Packaged servers expose version, commit, build time, and target at `/api/version`; these values are compiled from the same metadata written to `release-manifest.json`.
 - `webdev-admin` creates consistent SQLite snapshots with `VACUUM INTO`, verifies them read-only with `PRAGMA quick_check`, and performs confirmation-gated restores while preserving a timestamped rollback database.
+- Mutating API requests receive an `X-Request-ID` and produce a bounded operational audit record containing only action, normalized path, method, status, duration, and timestamp. Bodies, queries, Jira credentials, email addresses, and client addresses are excluded.
+- `webdev-admin prune` previews retention candidates by default. Applying deletion requires an exact confirmation token and a new verified pre-prune backup; only historical Jira events and audit rows are eligible.
 
 ## Development
 

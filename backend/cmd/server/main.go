@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"log"
@@ -10,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -49,6 +52,7 @@ func main() {
 	mux.HandleFunc("/api/ready", readiness(db))
 	mux.HandleFunc("/api/version", versionInfo())
 	mux.HandleFunc("/api/operations/status", operationsStatus(db, jiraService, serverStartedAt))
+	mux.HandleFunc("/api/operations/audit", operationsAudit(db))
 	mux.HandleFunc("/api/characters", collection(db))
 	mux.HandleFunc("/api/characters/", member(db))
 	mux.HandleFunc("/api/game/config", gameConfig(db, jiraService))
@@ -77,7 +81,7 @@ func main() {
 	addr := env("ADDR", ":8080")
 	log.Printf("WEBDEV MMORPG API listening on %s", addr)
 	server := &http.Server{
-		Addr: addr, Handler: securityHeaders(cors(mux, env("CORS_ALLOWED_ORIGINS", ""))),
+		Addr: addr, Handler: securityHeaders(cors(auditMutations(db, mux), env("CORS_ALLOWED_ORIGINS", ""))),
 		// WriteTimeout remains disabled because the Jira SSE response is intentionally long-lived.
 		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second,
 		IdleTimeout: 60 * time.Second, MaxHeaderBytes: 1 << 20,
@@ -157,17 +161,18 @@ func readiness(db *store.Store) http.HandlerFunc {
 }
 
 type operationsResponse struct {
-	Status        string            `json:"status"`
-	ServerStarted string            `json:"serverStartedAt"`
-	UptimeSeconds int64             `json:"uptimeSeconds"`
-	Jira          jira.Diagnostics  `json:"jira"`
-	Connection    jira.Connection   `json:"connection"`
-	IssueCount    int               `json:"issueCount"`
-	EventCount    int               `json:"eventCount"`
-	Database      string            `json:"database"`
-	Build         buildInfoResponse `json:"build"`
-	TargetFPS     int               `json:"targetFps"`
-	TVModeEnabled bool              `json:"tvModeEnabled"`
+	Status        string             `json:"status"`
+	ServerStarted string             `json:"serverStartedAt"`
+	UptimeSeconds int64              `json:"uptimeSeconds"`
+	Jira          jira.Diagnostics   `json:"jira"`
+	Connection    jira.Connection    `json:"connection"`
+	IssueCount    int                `json:"issueCount"`
+	EventCount    int                `json:"eventCount"`
+	Database      string             `json:"database"`
+	Build         buildInfoResponse  `json:"build"`
+	TargetFPS     int                `json:"targetFps"`
+	TVModeEnabled bool               `json:"tvModeEnabled"`
+	RecentAudit   []store.AuditEntry `json:"recentAudit"`
 }
 
 func operationsStatus(db *store.Store, jiraService *jira.Service, startedAt time.Time) http.HandlerFunc {
@@ -186,6 +191,11 @@ func operationsStatus(db *store.Store, jiraService *jira.Service, startedAt time
 			write(w, http.StatusInternalServerError, map[string]string{"error": "game configuration unavailable"})
 			return
 		}
+		recentAudit, err := db.ListAudit(r.Context(), 8)
+		if err != nil {
+			write(w, http.StatusInternalServerError, map[string]string{"error": "administrative audit unavailable"})
+			return
+		}
 		status := "ok"
 		if snapshot.Connection.Configured && snapshot.Connection.State != "live" {
 			status = "degraded"
@@ -194,7 +204,23 @@ func operationsStatus(db *store.Store, jiraService *jira.Service, startedAt time
 			Status: status, ServerStarted: startedAt.Format(time.RFC3339Nano), UptimeSeconds: int64(time.Since(startedAt).Seconds()),
 			Jira: jiraService.Diagnostics(), Connection: snapshot.Connection, IssueCount: len(snapshot.Issues), EventCount: len(snapshot.Events),
 			Database: "ready", Build: currentBuildInfo(), TargetFPS: config.Settings.TargetFPS, TVModeEnabled: config.Settings.TVModeEnabled,
+			RecentAudit: recentAudit,
 		})
+	}
+}
+
+func operationsAudit(db *store.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		limit := 25
+		if requested, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil && requested >= 1 && requested <= 100 {
+			limit = requested
+		}
+		entries, err := db.ListAudit(r.Context(), limit)
+		respond(w, entries, err)
 	}
 }
 
@@ -337,6 +363,84 @@ func securityHeaders(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *statusWriter) WriteHeader(status int) {
+	if w.status != 0 {
+		return
+	}
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *statusWriter) Write(body []byte) (int, error) {
+	if w.status == 0 {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.ResponseWriter.Write(body)
+}
+
+func auditMutations(database *store.Store, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/api/") || (r.Method != http.MethodPost && r.Method != http.MethodPut && r.Method != http.MethodDelete) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		requestID := newRequestID()
+		w.Header().Set("X-Request-ID", requestID)
+		captured := &statusWriter{ResponseWriter: w}
+		started := time.Now()
+		next.ServeHTTP(captured, r)
+		if captured.status == 0 {
+			captured.status = http.StatusOK
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := database.RecordAudit(ctx, store.AuditEntry{
+			RequestID: requestID, Action: auditAction(r.Method, r.URL.Path), Method: r.Method,
+			Path: auditPath(r.URL.Path), StatusCode: captured.status,
+			DurationMS: time.Since(started).Milliseconds(), OccurredAt: time.Now().UTC().Format(time.RFC3339Nano),
+		}); err != nil {
+			log.Printf("record administrative audit: %v", err)
+		}
+	})
+}
+
+func auditAction(method, path string) string {
+	switch {
+	case method == http.MethodPost && path == "/api/jira/refresh":
+		return "jira.refresh"
+	case method == http.MethodPut && path == "/api/game/config":
+		return "game.config.update"
+	case method == http.MethodPost && path == "/api/characters":
+		return "character.create"
+	case method == http.MethodPut && strings.HasPrefix(path, "/api/characters/"):
+		return "character.update"
+	case method == http.MethodDelete && strings.HasPrefix(path, "/api/characters/"):
+		return "character.delete"
+	default:
+		return "api.mutation"
+	}
+}
+
+func auditPath(path string) string {
+	if strings.HasPrefix(path, "/api/characters/") {
+		return "/api/characters/:id"
+	}
+	return path
+}
+
+func newRequestID() string {
+	random := make([]byte, 12)
+	if _, err := rand.Read(random); err == nil {
+		return hex.EncodeToString(random)
+	}
+	return strconv.FormatInt(time.Now().UTC().UnixNano(), 36)
 }
 func spa(dir string) http.Handler {
 	files := http.FileServer(http.Dir(dir))
