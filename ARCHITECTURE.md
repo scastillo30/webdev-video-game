@@ -26,7 +26,11 @@ Office View and Game View consume one root-scoped Angular Jira store. The store 
 
 Game View creates exactly one Phaser instance while `/game` is mounted and destroys it on route exit. The canvas pauses when the document is hidden. Angular retains responsibility for the accessible toolbar and activity panel; Phaser owns only the castle simulation. The scene uses a collision grid, named anchors, A* paths, per-character state machines, destination reservations, and bounded effects.
 
-The castle simulation uses `frontend/public/assets/game-board/castle-office-v001.png` as its environment layer. The illustrated furniture is represented in the navigation mesh so characters route around the crystal fountain, workstations, planning table, archive/map wall, fireplace, and lower landings. Phaser overlays bounded hologram, crystal, fire, lamp, and station effects; they honor the existing effects setting and reduced-motion preference. Character images remain separate runtime objects sourced from their approved profiles.
+The castle simulation uses `frontend/public/assets/game-board/castle-office-v001.png` as its environment layer. The illustrated furniture is represented in the navigation mesh so characters route around the crystal fountain, workstations, planning table, archive/map wall, fireplace, and lower landings. Phaser overlays bounded hologram, crystal, fire, lamp, and station effects; they honor the existing effects setting and reduced-motion preference.
+
+Characters remain separate runtime objects, but Game View does not reuse Office animations. Canonical roster IDs are mapped to board-specific SNES-style assets in `board-character-assets.ts`; custom/unmapped board profiles fall back to that same character's approved miniature. Character-owned animated board atlases can override a static board sprite through per-character runtime configuration. Office animation, poster, portrait, and registry mappings remain independent and untouched by board presentation changes.
+
+The navigation layer distinguishes walkable corridors from walls and furniture, exposes named work/social interaction targets, and reserves destinations to avoid character overlap. Ground positions represent each sprite's feet; the controller aligns the shadow, pointer target, focus halo, and speech offset from that anchor. Autonomous behavior is low frequency and bounded so the scene remains useful as a continuous display.
 
 The spectator director accepts only events whose author has an explicit stable Jira-account mapping. Assignee state can position a mapped character at a workstation, but it never changes event authorship. Event IDs are deduplicated, pending events from one author are grouped into one appearance, and characters rotate fairly at a configurable interval (15 seconds by default). Manual focus pauses rotation without stopping the shared Jira store.
 
@@ -37,6 +41,14 @@ The Game View applies project and issue-type scope after the shared normalized J
 ## Character ownership
 
 SQLite stores editable application metadata. `characters/<id>/manifest.json` and `PROJECT_WORKFLOW.md` remain authoritative for animation ownership and approved versions. A database edit must not silently reassign Commander, Rogue, or any other character to another character's assets.
+
+There are therefore three linked but distinct layers:
+
+1. Canonical identity and editable metadata in SQLite plus character manifests.
+2. Office View animation configuration in `characters/registry.js` and character-owned Office assets.
+3. Game View board presentation in `board-character-assets.ts` and character-owned board animation metadata.
+
+The stable character ID joins those layers. Asset paths are never inferred from appearance.
 
 ## API
 
@@ -97,3 +109,5 @@ The initial synchronization caches current issue state without replaying old cha
 For production, run `npm run frontend:build`, then start the Go server. It serves the Angular build, API, and legacy game from one process.
 
 Verified local builds can also use `npm run local:frontend:build` and `npm run local:backend:build` without globally installing Node or Go.
+
+See `DEVELOPMENT.md` for environment variables and troubleshooting, `API.md` for payload contracts, and `GAME_VIEW.md` for the board runtime in detail.

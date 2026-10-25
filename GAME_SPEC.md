@@ -1,6 +1,8 @@
 # Webdev MMORPG — Continuation Specification
 
-**Document status:** Working product and engineering specification  
+> **Historical document.** This specification describes the original static V4 game before the Angular, Go, SQLite, shared Jira stream, and Phaser Game View migration. Use [`README.md`](README.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), and [`docs/README.md`](docs/README.md) for the current product. This file is retained for narrative and legacy Office View rationale.
+
+**Document status:** Historical V4 product and engineering specification
 **Based on:** Version 4 Alpha source currently in this folder  
 **Primary entry point:** `index.html`  
 **Last analyzed:** 2026-10-15

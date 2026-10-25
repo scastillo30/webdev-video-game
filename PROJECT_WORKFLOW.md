@@ -6,7 +6,7 @@ master, 32px compatibility export, reduced board scale, integration and review s
 
 Commander and Rogue are different characters. Commander has the smile/sword-grasp idle; Rogue has the earlier pointing/breathing/glasses-glow loop. Keep both selectable in the eight-character roster.
 
-## Current ownership
+## Current integrated Office animations
 
 | Character ID | Game shortcut | Default animation | Editable Blender source |
 |---|---|---|---|
@@ -36,7 +36,9 @@ Prompt for the integration chat:
 
 ## Version control
 
-This workflow document does not enable Git. Before parallel development, initialize a Git repository and save a baseline. Use a separate branch/worktree for each production chat and merge approved work through the integration chat. Separate chats in the same local directory can edit the same files; chat separation alone is not isolation. Keep renders reproducible and retain source files and exported approved assets in backups. Large Blender files may warrant Git LFS or a separate versioned asset backup.
+This repository is tracked in Git with `main` as its integration branch and `origin` as the configured GitHub remote. Use a focused `codex/` branch or isolated worktree for production changes, then merge approved work through an integration change. Separate chats in the same local directory can edit the same files; chat separation alone is not isolation. Keep renders reproducible and retain source files and approved exports in backups. Large Blender files may warrant Git LFS or a separate versioned asset backup.
+
+The five rows above are characters with an explicitly integrated animated Office asset. Tech Mage, Moon Courier, and Shadow Bard remain valid roster characters using their preserved still/layered Office assets. All eight have independent board equivalents; see `GAME_VIEW.md` and `frontend/public/assets/game-board/characters/manifest.json`.
 
 ## Legacy files
 

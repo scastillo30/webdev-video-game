@@ -1,5 +1,7 @@
 # WEBDEV MMORPG — Game View Implementation Plan
 
+> **Implemented historical plan.** This document records the migration decisions and phased intent. For current behavior and operating instructions, use [`ARCHITECTURE.md`](ARCHITECTURE.md), [`GAME_VIEW.md`](GAME_VIEW.md), and [`docs/README.md`](docs/README.md).
+
 Status: **Phases 0–17 implemented; target-hardware soak sign-off remains an operational release gate**
 Branch: `codex/game-view-proposal`  
 Scope rule: **Do not modify, regenerate, overwrite, or remap existing character animations or character-owned assets.**

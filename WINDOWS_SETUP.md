@@ -8,7 +8,7 @@ Install the following 64-bit tools:
 
 - [Git for Windows](https://git-scm.com/download/win)
 - [Node.js 22 LTS](https://nodejs.org/en/download/)
-- [Go 1.22 or newer](https://go.dev/dl/)
+- [Go](https://go.dev/dl/) matching `.go-version` (or a compatible newer toolchain)
 
 After installation, open a new PowerShell window and verify that all commands are available:
 
@@ -69,7 +69,7 @@ In the second window, start Angular:
 npm run frontend:start
 ```
 
-Open [http://localhost:4200](http://localhost:4200). Angular automatically forwards `/api` and `/game` requests to the Go server on port `8080`.
+Open [http://localhost:4200](http://localhost:4200). Angular owns `/game` and forwards `/api` and `/legacy-game` requests to the Go server on port `8080`.
 
 Keep both PowerShell windows open while using the development application. Press `Ctrl+C` in each window to stop it.
 
@@ -194,3 +194,5 @@ npm run frontend:install
 ```
 
 Do not delete `backend\data\game.db` unless you intentionally want to remove the local character database.
+
+For the complete cross-platform development model, see [`DEVELOPMENT.md`](DEVELOPMENT.md). For release-host upgrades and checks, see [`DEPLOYMENT.md`](DEPLOYMENT.md).
