@@ -10,6 +10,8 @@ For the current Angular + Go application, install dependencies once with `npm ru
 
 Operational readiness is available at `/operations`. Run the unattended television stability check at `/diagnostics/soak.html`; see [`TV_SOAK_RUNBOOK.md`](TV_SOAK_RUNBOOK.md) before using its result as release evidence.
 
+Game View now uses an illustrated castle-office board with the reference-inspired skyline windows, banners, fireplace, magical crystal, developer workstations, planning library, plants, central holographic table, rugs, statues, and gate. Characters remain independent Phaser objects with their existing approved artwork and behavior. See [`GAME_BOARD_VISUALS.md`](GAME_BOARD_VISUALS.md) for the asset and implementation boundary.
+
 ## Production release bundle
 
 From a clean checkout, `npm run release:build` creates a verified bundle for the current operating system under `release/`. Cross-compile with `npm run release:build -- --target windows-amd64`, `linux-amd64`, or `darwin-arm64`. The bundle contains the Go server, compiled Angular application, preserved Office View runtime files, only referenced runtime images, platform startup script, and a SHA-256 manifest. It never copies Jira credentials.

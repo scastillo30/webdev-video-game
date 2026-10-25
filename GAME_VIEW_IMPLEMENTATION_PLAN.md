@@ -1,6 +1,6 @@
 # WEBDEV MMORPG — Game View Implementation Plan
 
-Status: **Phases 0–16 implemented; target-hardware soak sign-off remains an operational release gate**
+Status: **Phases 0–17 implemented; target-hardware soak sign-off remains an operational release gate**
 Branch: `codex/game-view-proposal`  
 Scope rule: **Do not modify, regenerate, overwrite, or remap existing character animations or character-owned assets.**
 
@@ -406,6 +406,17 @@ Acceptance: every administrative mutation is traceable to a response request ID,
 - Package the retention runbook and command in every supported release bundle.
 
 Acceptance: operators can review candidate counts without writes, cannot accidentally enable deletion by disabling preview, and receive a verified pre-prune backup before eligible rows are removed.
+
+### Phase 17 — Illustrated castle-office game board
+
+- Replace the placeholder procedural floor with a dedicated illustrated castle-office environment inspired by the approved visual reference.
+- Include skyline arches, banners, fireplace, crystal fountain, developer workstations, planning boards, library storage, plants, statues, rugs, and a central holographic planning table.
+- Keep characters as independent runtime objects and preserve every animation, mapping, portrait, and roster identity.
+- Align navigation obstacles and named behavior anchors to the illustrated furniture.
+- Add bounded, configuration-aware hologram, crystal, fireplace, lantern, and station effects with static reduced-motion fallbacks.
+- Present the Jira activity panel as an ornamental overlay without obscuring keyboard-accessible focus and spectator controls.
+
+Acceptance: the illustrated environment fills the Game View across desktop aspect ratios, all eight existing characters remain selectable and mobile, the activity panel remains readable, pause/resume works, and the browser console stays error-free.
 
 ## 12. Verification strategy
 

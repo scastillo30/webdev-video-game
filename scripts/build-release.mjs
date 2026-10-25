@@ -69,7 +69,7 @@ for(const asset of [...runtimeAssets].sort()){
   const destination=join(legacy,asset);mkdirSync(dirname(destination),{recursive:true});copyFileSync(source,destination);
 }
 
-for(const document of ['README.md','ARCHITECTURE.md','WINDOWS_SETUP.md','TV_SOAK_RUNBOOK.md','BACKUP_RECOVERY.md','DATA_RETENTION.md','PHASE_8_9_REPORT.md','PHASE_9_10_REPORT.md','PHASE_11_12_REPORT.md','PHASE_13_14_REPORT.md','PHASE_15_16_REPORT.md'])copyFileSync(join(root,document),join(bundle,document));
+for(const document of ['README.md','ARCHITECTURE.md','WINDOWS_SETUP.md','TV_SOAK_RUNBOOK.md','BACKUP_RECOVERY.md','DATA_RETENTION.md','GAME_BOARD_VISUALS.md','PHASE_8_9_REPORT.md','PHASE_9_10_REPORT.md','PHASE_11_12_REPORT.md','PHASE_13_14_REPORT.md','PHASE_15_16_REPORT.md'])copyFileSync(join(root,document),join(bundle,document));
 mkdirSync(join(bundle,'data'),{recursive:true});
 mkdirSync(join(bundle,'backups'),{recursive:true});
 const unixLauncher=`#!/bin/sh\nset -eu\nROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\nexport ANGULAR_DIST="$ROOT/web"\nexport LEGACY_GAME_DIR="$ROOT/legacy"\nexport DB_PATH="${'$'}{DB_PATH:-$ROOT/data/game.db}"\nexport ADDR="${'$'}{ADDR:-:8080}"\nexec "$ROOT/${executable}"\n`;

@@ -39,7 +39,7 @@ export class GameRuntimeService{
         transparent:false,
         scene:[this.scene],
         fps:{target:this.settings.targetFps,limit:this.settings.targetFps,forceSetTimeOut:false},
-        scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:CASTLE_WIDTH,height:CASTLE_HEIGHT},
+        scale:{mode:Phaser.Scale.ENVELOP,autoCenter:Phaser.Scale.CENTER_BOTH,width:CASTLE_WIDTH,height:CASTLE_HEIGHT},
         render:{antialias:true,pixelArt:false,roundPixels:true,powerPreference:'low-power'}
       });
       document.addEventListener('visibilitychange',this.handleVisibility);

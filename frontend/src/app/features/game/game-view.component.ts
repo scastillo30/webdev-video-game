@@ -18,7 +18,7 @@ import {SpectatorDirectorService} from './services/spectator-director.service';
     <main class="game-view" [class.tv-mode]="settings.tvModeEnabled" [style.--tv-scale]="settings.tvScale">
       <section class="game-scene-shell" aria-labelledby="gameTitle">
         <div class="game-toolbar">
-          <div><small>GAME VIEW · PHASER 3</small><h1 id="gameTitle">CASTLE COMMAND CENTER</h1></div>
+          <div><small>LIVE GAME BOARD · SHARED JIRA STREAM</small><h1 id="gameTitle">CASTLE COMMAND CENTER</h1></div>
           <div class="game-health" [attr.data-state]="snapshot.connection.state">
             <i aria-hidden="true"></i>
             <span>{{snapshot.connection.configured ? snapshot.connection.state : 'not configured'}}</span>
@@ -29,6 +29,7 @@ import {SpectatorDirectorService} from './services/spectator-director.service';
         <div #gameHost class="phaser-host" aria-label="Top-down castle command center with eight roster characters"></div>
         <div class="scene-loading" *ngIf="!runtime.running()" aria-live="polite">SUMMONING THE PARTY…</div>
         <div class="motion-note" *ngIf="runtime.reducedMotion()">REDUCED MOTION · INSTANT TRAVEL</div>
+        <div class="board-location" aria-hidden="true"><i></i><span>SKYFORGE KEEP</span><small>DEVELOPER OPERATIONS FLOOR</small></div>
         <div class="hero-shortcuts" aria-label="Focus a party character">
           <button *ngFor="let hero of enabledProfiles" type="button" (click)="selectCharacter(hero.characterId)"
             [attr.aria-label]="'Focus ' + hero.displayName" [attr.aria-pressed]="presentation.focusCharacterId === hero.characterId">
@@ -38,6 +39,10 @@ import {SpectatorDirectorService} from './services/spectator-director.service';
       </section>
 
       <section class="game-activity-panel" aria-live="polite">
+        <span class="panel-corner panel-corner-nw" aria-hidden="true">✦</span>
+        <span class="panel-corner panel-corner-ne" aria-hidden="true">✦</span>
+        <span class="panel-corner panel-corner-sw" aria-hidden="true">✦</span>
+        <span class="panel-corner panel-corner-se" aria-hidden="true">✦</span>
         <ng-container *ngIf="activeProfile as character; else overviewPanel">
           <div class="activity-portrait">
             <img [src]="'/legacy-game/' + character.portraitAsset" [alt]="character.displayName + ' portrait'">
