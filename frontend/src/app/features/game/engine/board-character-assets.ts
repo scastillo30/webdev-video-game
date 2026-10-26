@@ -1,15 +1,15 @@
-import {COMMANDER_WALK} from './directional-walk';
+import {COMMANDER_WALK,GUARDIAN_WALK,DirectionalSpriteConfig} from './directional-walk';
 
 export interface BoardCharacterAsset {
   characterId:string;
   path:string;
   version:string;
-  directional?:typeof COMMANDER_WALK;
+  directional?:DirectionalSpriteConfig;
 }
 
 const boardCharacterAssets:Readonly<Record<string,BoardCharacterAsset>>=Object.freeze({
   commander:{characterId:'commander',path:'/assets/game-board/characters/v001/commander.png',version:'v001',directional:COMMANDER_WALK},
-  guardian:{characterId:'guardian',path:'/assets/game-board/characters/v001/guardian.png',version:'v001'},
+  guardian:{characterId:'guardian',path:'/assets/game-board/characters/v001/guardian.png',version:'v001',directional:GUARDIAN_WALK},
   rogue:{characterId:'rogue',path:'/assets/game-board/characters/v001/rogue.png',version:'v001'},
   mage:{characterId:'mage',path:'/assets/game-board/characters/v001/mage.png',version:'v001'},
   healer:{characterId:'healer',path:'/assets/game-board/characters/v001/healer.png',version:'v001'},

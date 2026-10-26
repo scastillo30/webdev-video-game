@@ -13,6 +13,12 @@ For animated character conversions and new board characters, use
 `snes-rpg/v002` is the approved quality reference; its versioned animated sprite
 sheet overrides the static board still while preserving the other roster mappings.
 
+Guardian now uses `cube-wanderer/snes-rpg/v001` through its own board sprite
+configuration at the same reduced scale as Commander. Its special animation raises
+a hand and reveals a cyan holographic cube. The original Guardian board still is
+retained as a fallback; Office `cube-wind/v002` and the canonical Guardian slot remain
+unchanged. See that version's README for the reveal timeline and validation.
+
 Game View uses a separate late-16-bit JRPG sprite presentation under:
 
 `frontend/public/assets/game-board/characters/v001/`

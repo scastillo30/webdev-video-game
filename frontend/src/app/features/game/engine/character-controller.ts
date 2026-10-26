@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import {CharacterPathfinding} from './character-pathfinding';
 import {CharacterStateMachine} from './character-state-machine';
-import {COMMANDER_WALK,DirectionalWalk} from './directional-walk';
+import {DirectionalWalk,DirectionalSpriteConfig} from './directional-walk';
+import {boardCharacterAsset} from './board-character-assets';
 import {CharacterDirective, CharacterState, GameProfile, GameSettings, GridPoint} from './game.models';
 
 export class CharacterController{
@@ -22,7 +23,8 @@ export class CharacterController{
 	private targetCell:GridPoint|null=null;
 	private activitySequence=0;
 	private autonomousActivity=false;
-  private readonly walk=new DirectionalWalk();
+  private readonly walk:DirectionalWalk;
+  private readonly spriteConfig?:DirectionalSpriteConfig;
   private readonly directional:boolean;
   private movementTween?:Phaser.Tweens.Tween;
 
@@ -36,18 +38,21 @@ export class CharacterController{
     private readonly reducedMotion=false,
     settings?:GameSettings
   ){
-    this.directional=profile.characterId==='commander'&&scene.textures.exists(COMMANDER_WALK.key);
+    const config=boardCharacterAsset(profile.characterId,profile.miniatureAsset).directional;
+    this.spriteConfig=config&&scene.textures.exists(config.key)?config:undefined;
+    this.directional=Boolean(this.spriteConfig);
+    this.walk=new DirectionalWalk(this.spriteConfig);
     if(settings)this.configure(settings);
     const position=this.world(cell);
 	this.halo=scene.add.ellipse(0,1,this.directional?40:64,this.directional?14:22,0x69d5ff,.16).setStrokeStyle(1,0xe7c77e,.3).setVisible(false);
 	const shadow=scene.add.ellipse(0,2,this.directional?30:50,this.directional?9:15,0x02040a,.68).setStrokeStyle(1,0xd6b568,.22);
-	const texture=this.directional?COMMANDER_WALK.key:`hero-${profile.characterId}`;
-	const footOrigin=this.directional?COMMANDER_WALK.footOrigin:1;
+	const texture=this.spriteConfig?.key??`hero-${profile.characterId}`;
+	const footOrigin=this.spriteConfig?.footOrigin??1;
 	this.silhouette=scene.add.image(2,1,texture,0).setOrigin(.5,footOrigin).setTintFill(0x020711).setAlpha(.72);
 	this.image=scene.add.image(0,0,texture,0).setOrigin(.5,footOrigin).setAlpha(1);
 	this.image.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
 	this.silhouette.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-	const height=112,scale=this.directional?COMMANDER_WALK.displayScale:height/Math.max(1,this.image.height);
+	const height=112,scale=this.spriteConfig?.displayScale??height/Math.max(1,this.image.height);
 	this.image.setScale(scale);this.silhouette.setScale(this.directional?scale:scale*1.025);
     if(this.directional)this.silhouette.setVisible(false);
 	this.figure=scene.add.container(0,0,[this.silhouette,this.image]);
@@ -134,6 +139,7 @@ export class CharacterController{
   }
 
   focus(active:boolean,_hasFocus:boolean):void{
+    if(active&&!this.container.getData('focused')&&this.spriteConfig?.abilityOnFocus&&!this.moving&&!this.reducedMotion&&this.effectsEnabled){this.walk.play('attack');this.showWalkFrame(this.walk.frame)}
     this.container.setData('focused',active);this.halo.setVisible(active);this.halo.setFillStyle(0x69d5ff,active ? .22 : .12);
 	this.container.setScale(active&&!this.directional?1.08:1);this.container.setAlpha(1);
   }
@@ -158,7 +164,14 @@ export class CharacterController{
 
   private setState(state:CharacterState,label:string):void{
     const changed=this.machine.transition(state);
-    if(changed&&this.directional&&!this.moving){this.walk.stop();if(state==='BLOCKED'&&!this.reducedMotion)this.walk.play('hurt');this.showWalkFrame(this.walk.frame)}
+    if(changed&&this.directional&&!this.moving){
+      this.walk.stop();
+      if(!this.reducedMotion&&this.effectsEnabled){
+        if(state==='BLOCKED')this.walk.play('hurt');
+        else if(this.spriteConfig?.abilityOnStates?.includes(state))this.walk.play('attack');
+      }
+      this.showWalkFrame(this.walk.frame);
+    }
     this.image.clearTint();
     if(state==='BLOCKED')this.image.setTint(0xffa0ad);
     else if(state==='REVIEWING')this.image.setTint(0xb8deff);

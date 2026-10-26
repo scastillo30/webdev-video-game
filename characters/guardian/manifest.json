@@ -25,6 +25,126 @@
           "height": 576
         }
       }
+    },
+    "snes-rpg": {
+      "characterId": "cube-wanderer",
+      "gameSlot": "guardian",
+      "animationId": "snes-rpg",
+      "version": "v001",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "sheetWidth": 768,
+      "sheetHeight": 256,
+      "columns": 12,
+      "rows": 4,
+      "occupiedFrames": 33,
+      "paletteColors": 24,
+      "footBaseline": 61,
+      "runtimeFootOrigin": [
+        32,
+        62
+      ],
+      "runtimeDisplayScale": 1.2,
+      "sequences": {
+        "idle-down": [
+          0,
+          1,
+          2
+        ],
+        "idle-up": [
+          3,
+          4,
+          5
+        ],
+        "idle-right": [
+          6,
+          7,
+          8
+        ],
+        "walk-down": [
+          12,
+          13,
+          14,
+          15
+        ],
+        "walk-up": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "walk-right": [
+          20,
+          21,
+          22,
+          23
+        ],
+        "cube-reveal-down": [
+          24,
+          25,
+          26
+        ],
+        "cube-reveal-up": [
+          27,
+          28,
+          29
+        ],
+        "cube-reveal-right": [
+          30,
+          31,
+          32
+        ],
+        "hurt-down": [
+          36
+        ],
+        "hurt-up": [
+          37
+        ],
+        "hurt-right": [
+          38
+        ]
+      },
+      "abilityTimeline": [
+        {
+          "pose": 0,
+          "duration": 180
+        },
+        {
+          "pose": 1,
+          "duration": 220
+        },
+        {
+          "pose": 2,
+          "duration": 1300
+        },
+        {
+          "pose": 1,
+          "duration": 180
+        },
+        {
+          "pose": 0,
+          "duration": 140
+        }
+      ],
+      "idleAbilityIntervalMs": 9000,
+      "abilityOnFocus": true,
+      "leftFacing": "Mirror right; presentation hand is mirrored on left-facing sprites",
+      "compatibility": {
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "sheetWidth": 384,
+        "sheetHeight": 128,
+        "footBaseline": 30,
+        "spritesheet": "spritesheet.png"
+      },
+      "technique": "Guardian identity-preserving built-in imagegen artwork, registered area-coverage export with shared material palette and binary alpha",
+      "source": "assets/characters/cube-wanderer/snes-rpg/v001/source-generated.png",
+      "spritesheet": "assets/characters/cube-wanderer/snes-rpg/v001/spritesheet-runtime.png",
+      "compatibilitySpritesheet": "assets/characters/cube-wanderer/snes-rpg/v001/spritesheet.png",
+      "animation": "assets/characters/cube-wanderer/snes-rpg/v001/cube-reveal-down.webp",
+      "poster": "assets/characters/cube-wanderer/snes-rpg/v001/poster.webp",
+      "head": "assets/characters/cube-wanderer/snes-rpg/v001/head.webp",
+      "gameIntegration": "Guardian castle board slot only; Office cube-wind/v002 and all original assets preserved"
     }
   },
   "legacyAssetsPreserved": [

@@ -114,16 +114,17 @@ antialiasing or unrelated characters as a substitute for improving the target ar
 
 ## 6. Integrate per character
 
-The current implementation is **Commander-specific**. Generalize its sprite
-configuration/animation clock before opting another character into this pipeline;
-changing a texture filename alone is insufficient. Each character must own its
-texture key, paths, frame dimensions, sequences, display scale, anchor and fallbacks.
+The shared implementation uses **per-character `DirectionalSpriteConfig`** entries
+and independent animation clocks. Commander and Guardian are integrated. Each new
+character must own its texture key, paths, frame dimensions, sequences, display
+scale, anchor, ability timeline/triggers and fallbacks; changing a filename alone
+is insufficient. Guardian uses Cube Wanderer's asset identity in the Guardian slot.
 
 Relevant files:
 
 - `frontend/src/app/features/game/engine/board-character-assets.ts`: board mapping.
-- `frontend/src/app/features/game/engine/directional-walk.ts`: Commander configuration
-  and animation clock, currently the reference for a future per-character API.
+- `frontend/src/app/features/game/engine/directional-walk.ts`: per-character sprite
+  configurations and the shared distance/ability animation clock.
 - `frontend/src/app/features/game/engine/character-controller.ts`: texture loading
   decisions, drawing, movement, reactions, focus and speech positioning.
 - `frontend/src/app/features/game/engine/castle-scene.ts`: preload and scene updates.
@@ -135,6 +136,12 @@ one frame every 12 board pixels), preserving phase through turns and stopping wh
 movement stops. Idle uses three poses at 260ms each. Commander's attack is a 360ms
 one-shot task-completion flourish; hurt is a 420ms reaction when a task becomes
 blocked. Choose equivalent character-appropriate reactions deliberately.
+
+Guardian's special row replaces the sword poses with hand raise / forming hologram /
+revealed cube. Its configured timeline raises for 400ms, holds the full cube for
+1.3 seconds, then lowers for 320ms. It triggers on selection, work/review states,
+completion and after nine stationary seconds. Movement cancels it. Keep this behavior
+in Guardian's configuration; other characters must not inherit its automatic reveal.
 
 Pause must freeze movement and animation clocks together. Reduced motion uses a
 neutral directional pose and instant travel. Missing sprite sheets use that same
@@ -168,6 +175,10 @@ delivering only a polished concept sheet.
 - `assets/characters/commander/snes-rpg/v002/generation-prompt.txt`
 - `animation/package_commander_snes_rpg_v002.py`
 - `animation/verify_commander_snes_rpg_v002.mjs`
+- `assets/characters/cube-wanderer/snes-rpg/v001/README.md`: Guardian's cube-reveal
+  variation, with its own timeline, palette and preserved roster/source relationship.
+- `animation/package_guardian_snes_rpg_v001.py`
+- `animation/verify_guardian_snes_rpg_v001.mjs`
 
 Adapt these examples to the target ID. Do not run a Commander packaging script
 unchanged for another character: its identity, paths and manifest writes are specific.

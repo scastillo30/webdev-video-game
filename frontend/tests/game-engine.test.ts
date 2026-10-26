@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {BOARD_CHARACTER_IDS,boardCharacterAsset} from '../src/app/features/game/engine/board-character-assets';
 import {CharacterPathfinding} from '../src/app/features/game/engine/character-pathfinding';
-import {COMMANDER_SEQUENCES,COMMANDER_WALK,DirectionalWalk} from '../src/app/features/game/engine/directional-walk';
+import {COMMANDER_SEQUENCES,COMMANDER_WALK,GUARDIAN_WALK,DirectionalWalk} from '../src/app/features/game/engine/directional-walk';
 import {CASTLE_ANCHORS,CASTLE_COLUMNS,CASTLE_ROWS,CastleNavigationModel} from '../src/app/features/game/engine/castle-navigation';
 import {CharacterStateMachine,stateForStatus} from '../src/app/features/game/engine/character-state-machine';
 import {chooseFeaturedIssue} from '../src/app/features/game/engine/featured-ticket';
@@ -55,6 +55,35 @@ test('Commander idle, attack and hurt have bounded clocks and recover to idle',(
   walk.face(-1,0);walk.play('hurt');assert.equal(walk.frame,38);assert.equal(walk.flipX,true);
   assert.equal(walk.tick(420),6);assert.equal(walk.currentAction,'idle');
   walk.begin({x:0,y:0},{x:0,y:-48});walk.play('attack');assert.equal(walk.currentAction,'walk');
+});
+
+test('Guardian owns a separate cube-wanderer sprite config without changing Commander or Rogue',()=>{
+  const guardian=boardCharacterAsset('guardian','fallback').directional;
+  assert.equal(guardian,GUARDIAN_WALK);assert.equal(guardian.characterId,'cube-wanderer');
+  assert.notEqual(guardian.key,COMMANDER_WALK.key);assert.notEqual(guardian.path,COMMANDER_WALK.path);
+  assert.equal(guardian.abilityName,'cube-reveal');assert.equal(COMMANDER_WALK.abilityName,'sword-flourish');
+  assert.equal(guardian.frameHeight*guardian.displayScale,COMMANDER_WALK.frameHeight*COMMANDER_WALK.displayScale);
+  assert.equal(boardCharacterAsset('rogue','fallback').directional,undefined);
+});
+
+test('Guardian raises the palm, holds the cube, lowers the hand, and returns to idle',()=>{
+  const guardian=new DirectionalWalk(GUARDIAN_WALK);guardian.play('attack');
+  assert.equal(guardian.frame,24);assert.equal(guardian.tick(180),25);
+  assert.equal(guardian.tick(220),26);assert.equal(guardian.tick(1299),26);
+  assert.equal(guardian.tick(1),25);assert.equal(guardian.tick(180),24);
+  assert.equal(guardian.tick(140),0);assert.equal(guardian.currentAction,'idle');
+  guardian.face(-1,0);guardian.play('attack');guardian.tick(400);
+  assert.equal(guardian.frame,32);assert.equal(guardian.flipX,true);
+  guardian.begin({x:0,y:0},{x:0,y:-48});assert.equal(guardian.currentAction,'walk');assert.equal(guardian.frame,16);
+});
+
+test('Guardian idle reveal repeats after nine stationary seconds; Commander never auto-casts',()=>{
+  const guardian=new DirectionalWalk(GUARDIAN_WALK),commander=new DirectionalWalk();
+  guardian.tick(8999);assert.equal(guardian.currentAction,'idle');
+  guardian.tick(1);assert.equal(guardian.currentAction,'attack');
+  commander.tick(9000);assert.equal(commander.currentAction,'idle');
+  guardian.stop();guardian.begin({x:0,y:0},{x:48,y:0});guardian.tick(9000);
+  assert.equal(guardian.currentAction,'walk');
 });
 
 test('A* avoids blocked and reserved tiles',()=>{
