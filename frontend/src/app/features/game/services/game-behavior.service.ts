@@ -1,15 +1,17 @@
 import {Injectable} from '@angular/core';
-import {JiraActivityEvent, JiraIssueSnapshot, JiraSnapshot} from '../../../core/jira/jira.models';
+import {JiraIssueSnapshot, JiraSnapshot} from '../../../core/jira/jira.models';
 import {stateForStatus} from '../engine/character-state-machine';
 import {chooseFeaturedIssue} from '../engine/featured-ticket';
 import {CharacterDirective, CharacterState, GameBehaviorResult, GameProfile, GameSettings, SpectatorItem, StatusBehaviorMapping} from '../engine/game.models';
+import {jiraStatusPresentation,jiraWorkPresentation} from '../engine/jira-work-presentation';
 
 @Injectable()
 export class GameBehaviorService{
   derive(snapshot:JiraSnapshot,profiles:GameProfile[],statusMappings:StatusBehaviorMapping[],settings:GameSettings):GameBehaviorResult{
     const byJiraId=this.mapping(profiles);
     const issuesByCharacter=new Map<string,JiraIssueSnapshot[]>();
-    const allowedIssues=snapshot.issues.filter(issue=>this.inScope(issue,settings));
+    const jiraConnected=snapshot.connection.configured&&snapshot.connection.state==='live';
+    const allowedIssues=jiraConnected?snapshot.issues.filter(issue=>this.inScope(issue,settings)):[];
     for(const issue of allowedIssues){
       const character=issue.assigneeId?byJiraId.get(issue.assigneeId):undefined;
       if(character){
@@ -21,11 +23,11 @@ export class GameBehaviorService{
       const issue=chooseFeaturedIssue(issuesByCharacter.get(profile.characterId)??[],settings.featuredTicketRule);
       let state:CharacterState=issue?this.configuredState(issue.status,issue.statusCategory,statusMappings):'IDLE';
       if(state==='CELEBRATING')state='IDLE';
-      return{characterId:profile.characterId,state,issue,event:null,label:this.persistentLabel(state,issue)};
+      return{characterId:profile.characterId,state,issue,event:null,label:this.persistentLabel(state,issue),status:issue?jiraStatusPresentation(issue.status):null};
     });
     const spectatorItems:SpectatorItem[]=[];
     const allowedKeys=new Set(allowedIssues.map(issue=>issue.issueKey));
-    for(const event of snapshot.events){
+    for(const event of jiraConnected?snapshot.events:[]){
       const character=event.authorId?byJiraId.get(event.authorId):undefined;
       if(character&&allowedKeys.has(event.issueKey))spectatorItems.push({character,event,groupedEventCount:1});
     }
@@ -43,7 +45,9 @@ export class GameBehaviorService{
     else if(/REVIEW|APPROV/.test(action))state='REVIEWING';
     else if(/COMMENT|DISCUSS/.test(action))state='DISCUSSING';
     else if(state==='IDLE')state='WORKING';
-    return{characterId:item.character.characterId,state,issue,event,label:this.eventLabel(event,state,item.groupedEventCount)};
+    const presentation=jiraWorkPresentation(event,issue);
+    const grouped=item.groupedEventCount>1?`${presentation.text} I also have ${item.groupedEventCount-1} more ${item.groupedEventCount===2?'update':'updates'} to share.`:presentation.text;
+    return{characterId:item.character.characterId,state,issue,event,label:grouped,status:presentation.status};
   }
 
   private mapping(profiles:GameProfile[]):Map<string,GameProfile>{
@@ -63,18 +67,9 @@ export class GameBehaviorService{
 
   private persistentLabel(state:CharacterState,issue:JiraIssueSnapshot|null):string{
     if(!issue||state==='IDLE')return'';
-    if(state==='BLOCKED')return`${issue.issueKey}: awaiting dependency`;
-    if(state==='REVIEWING')return`Reviewing ${issue.issueKey}`;
-    return`Assigned: ${issue.issueKey}`;
+    if(state==='BLOCKED')return`I am waiting on a dependency for ${issue.issueKey}.`;
+    if(state==='REVIEWING')return`I am reviewing ${issue.issueKey}.`;
+    return`I am working on ${issue.issueKey}.`;
   }
 
-  private eventLabel(event:JiraActivityEvent,state:CharacterState,grouped:number):string{
-    let label:string;
-    if(state==='CELEBRATING')label=`${event.issueKey}: task completed!`;
-    else if(event.action.toUpperCase()==='MOVED'&&event.previousStatus&&event.newStatus)label=`${event.issueKey}: ${event.previousStatus} → ${event.newStatus}`;
-    else if(state==='BLOCKED')label=`${event.issueKey}: awaiting dependency`;
-    else if(state==='REVIEWING')label=`Review started: ${event.issueKey}`;
-    else label=`${event.action.toUpperCase()} ${event.issueKey}`;
-    return grouped>1?`${label} (+${grouped-1} more)`:label;
-  }
 }

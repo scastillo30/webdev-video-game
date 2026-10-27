@@ -6,8 +6,9 @@ import {COMMANDER_SEQUENCES,COMMANDER_WALK,GUARDIAN_WALK,HEALER_WALK,Directional
 import {CASTLE_ANCHORS,CASTLE_COLUMNS,CASTLE_ROWS,CastleNavigationModel} from '../src/app/features/game/engine/castle-navigation';
 import {CharacterStateMachine,stateForStatus} from '../src/app/features/game/engine/character-state-machine';
 import {chooseFeaturedIssue} from '../src/app/features/game/engine/featured-ticket';
-import {JiraIssueSnapshot} from '../src/app/core/jira/jira.models';
+import {JiraActivityEvent,JiraIssueSnapshot} from '../src/app/core/jira/jira.models';
 import {GameProfile,SpectatorItem} from '../src/app/features/game/engine/game.models';
+import {jiraRelativeTime,jiraStatusPresentation,jiraWorkPresentation} from '../src/app/features/game/engine/jira-work-presentation';
 import {SpectatorDirectorService} from '../src/app/features/game/services/spectator-director.service';
 
 const issue=(key:string,overrides:Partial<JiraIssueSnapshot>={}):JiraIssueSnapshot=>({
@@ -168,6 +169,22 @@ test('featured ticket policy is deterministic',()=>{
   assert.equal(chooseFeaturedIssue(tickets,'nearest-due-date')?.issueKey,'PLANNA-3');
 });
 
+test('Jira work presentation narrates activity in first person with a readable time',()=>{
+  const event:JiraActivityEvent={eventId:'event-1',issueKey:'PLANNA-25867',authorId:'user',authorName:'User',assigneeId:'user',assigneeName:'User',action:'UPDATED',previousStatus:null,newStatus:null,currentStatus:'In Progress',occurredAt:'2026-10-27T10:00:00Z',issueSummary:'Casino switcher',issueUrl:'https://example.invalid/browse/PLANNA-25867'};
+  const presentation=jiraWorkPresentation(event,null,Date.parse('2026-10-27T12:00:00Z'));
+  assert.equal(presentation.text,'I have updated PLANNA-25867 2 hours ago!');
+  assert.deepEqual(presentation.status,jiraStatusPresentation('In Progress'));
+  assert.equal(presentation.status.cssColor,'#69d5ff');
+  assert.equal(jiraRelativeTime('2026-10-27T11:59:00Z',Date.parse('2026-10-27T12:00:00Z')),'1 minute ago');
+});
+
+test('Jira status presentation uses distinct semantic colors and does not guess missing status',()=>{
+  assert.notEqual(jiraStatusPresentation('Done').cssColor,jiraStatusPresentation('Blocked').cssColor);
+  assert.notEqual(jiraStatusPresentation('Code Review').cssColor,jiraStatusPresentation('To Do').cssColor);
+  assert.equal(jiraStatusPresentation(null).label,'PENDING SYNC');
+  assert.equal(jiraStatusPresentation(null).cssColor,'#f3a3df');
+});
+
 test('spectator queue deduplicates events and rotates fairly',()=>{
   Object.assign(globalThis,{window:globalThis});
   const profile=(id:string):GameProfile=>({characterId:id,displayName:id,characterClass:'Tester',jiraAccountId:`user-${id}`,homeLocation:'command-dais',workstation:'planning-table',miniatureAsset:'assets/test.webp',portraitAsset:'assets/test.webp',enabled:true});
@@ -184,5 +201,7 @@ test('spectator queue deduplicates events and rotates fairly',()=>{
   assert.notEqual(first,second);
   assert.deepEqual(new Set([first,second]),new Set(['alpha','beta']));
   assert.equal(latest.pending,0);
+  director.clearActivity();
+  assert.equal(latest.active,null);assert.equal(latest.focusCharacterId,null);assert.equal(latest.pending,0);
   director.stop();subscription.unsubscribe();
 });

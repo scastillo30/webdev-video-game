@@ -20,6 +20,7 @@ var ErrInvalidCredential = errors.New("credential cookie is invalid")
 type CredentialClaims struct {
 	UserID   string `json:"uid"`
 	SID      string `json:"sid"`
+	Server   string `json:"server,omitempty"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 	IssuedAt int64  `json:"iat"`

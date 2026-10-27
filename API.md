@@ -90,8 +90,8 @@ Use `/settings/game` instead of constructing requests by hand for normal adminis
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `POST` | `/api/jira/test-connection` | Test supplied username/password without saving |
-| `PUT` | `/api/jira/credential` | Test and save only in encrypted HttpOnly cookie |
+| `POST` | `/api/jira/test-connection` | Test supplied Jira server/username/password without saving |
+| `PUT` | `/api/jira/credential` | Test and save the selected allowed server and credential only in the encrypted HttpOnly cookie |
 | `GET` | `/api/jira/credential` | Return connected/invalid status; never password |
 | `DELETE` | `/api/jira/credential` | Clear credential and rotate the application session |
 | `GET` | `/api/jira/connection` | Cookie/configuration state and last sync without calling Jira |
@@ -100,6 +100,8 @@ Use `/settings/game` instead of constructing requests by hand for normal adminis
 | `POST` | `/api/employees/activity/refresh` | Start bounded stale-profile refresh for the current viewer |
 
 New endpoint errors use `{"detail":"message"}`. Activity unavailability is a successful `200` response with `available:false` and a reason such as `not_configured`, `no_jira_account`, `credentials_invalid`, `auth_failed`, or `fetch_failed`. A failed refresh returns the current viewer's cache with `stale:true` when available.
+
+Test and save bodies use `{"server":"https://jira.example.com","username":"jdoe","password":"..."}`. The server URL must share the configured `JIRA_BASE_URL` origin; the backend rejects any other destination before attaching credentials.
 
 ## Jira snapshot and events
 

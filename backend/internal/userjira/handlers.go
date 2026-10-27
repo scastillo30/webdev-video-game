@@ -37,6 +37,7 @@ func NewService(database *store.Store, keyring *Keyring, sessions *SessionManage
 }
 
 type loginRequest struct {
+	Server   string `json:"server"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
@@ -90,7 +91,12 @@ func (s *Service) TestConnectionHandler(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusOK, testResponse{Success: false, Message: "Authentication failed. Check username and password."})
 		return
 	}
-	ok, message := s.client.TestConnection(r.Context(), s.baseURL, request.Username, request.Password)
+	server, err := s.jiraServer(request.Server)
+	if err != nil {
+		writeJSON(w, http.StatusOK, testResponse{Success: false, Message: err.Error()})
+		return
+	}
+	ok, message := s.client.TestConnection(r.Context(), server, request.Username, request.Password)
 	writeJSON(w, http.StatusOK, testResponse{Success: ok, Message: message})
 }
 
@@ -105,12 +111,17 @@ func (s *Service) CredentialHandler(w http.ResponseWriter, r *http.Request) {
 		if !decodeJSON(w, r, &request) {
 			return
 		}
-		ok, message := s.client.TestConnection(r.Context(), s.baseURL, request.Username, request.Password)
+		server, serverErr := s.jiraServer(request.Server)
+		if serverErr != nil {
+			writeDetail(w, http.StatusBadRequest, serverErr.Error())
+			return
+		}
+		ok, message := s.client.TestConnection(r.Context(), server, request.Username, request.Password)
 		if !ok {
 			writeDetail(w, http.StatusBadRequest, message)
 			return
 		}
-		claims := CredentialClaims{UserID: session.UserID, SID: session.SID, Username: strings.TrimSpace(request.Username), Password: request.Password, IssuedAt: s.now().UTC().Unix()}
+		claims := CredentialClaims{UserID: session.UserID, SID: session.SID, Server: server, Username: strings.TrimSpace(request.Username), Password: request.Password, IssuedAt: s.now().UTC().Unix()}
 		token, err := s.keyring.Seal(claims)
 		if err != nil {
 			writeDetail(w, http.StatusInternalServerError, "Could not protect Jira credentials.")
@@ -135,16 +146,18 @@ func (s *Service) ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	session := s.sessions.Ensure(w, r)
-	state, _ := s.readCredential(r, session)
+	state, claims := s.readCredential(r, session)
 	configured := "none"
 	if state == credentialInvalid {
 		configured = "invalid"
 	} else if state == credentialValid {
 		configured = "present"
 	}
-	lastSync, _ := s.database.UserJiraLastSync(r.Context(), session.UserID, s.host)
+	selectedServer := s.claimsServer(claims)
+	selectedHost := jiraHost(selectedServer)
+	lastSync, _ := s.database.UserJiraLastSync(r.Context(), session.UserID, selectedHost)
 	lastSync = normalizeStoredTime(lastSync)
-	writeJSON(w, http.StatusOK, connectionResponse{Configured: configured, Host: s.host, LastSyncAt: lastSync})
+	writeJSON(w, http.StatusOK, connectionResponse{Configured: configured, Host: selectedHost, LastSyncAt: lastSync})
 }
 
 func (s *Service) CheckConnectionHandler(w http.ResponseWriter, r *http.Request) {
@@ -154,9 +167,11 @@ func (s *Service) CheckConnectionHandler(w http.ResponseWriter, r *http.Request)
 	}
 	session := s.sessions.Ensure(w, r)
 	state, claims := s.readCredential(r, session)
-	lastSync, _ := s.database.UserJiraLastSync(r.Context(), session.UserID, s.host)
+	selectedServer := s.claimsServer(claims)
+	selectedHost := jiraHost(selectedServer)
+	lastSync, _ := s.database.UserJiraLastSync(r.Context(), session.UserID, selectedHost)
 	lastSync = normalizeStoredTime(lastSync)
-	response := liveConnectionResponse{State: "not_configured", Host: s.host, LastSyncAt: lastSync, CheckedAt: formatOffsetTime(s.now())}
+	response := liveConnectionResponse{State: "not_configured", Host: selectedHost, LastSyncAt: lastSync, CheckedAt: formatOffsetTime(s.now())}
 	if state == credentialInvalid {
 		response.State = "auth_expired"
 		response.Detail = "Your Jira connection expired or can no longer be read — reconnect in Settings → Jira Integration."
@@ -167,7 +182,7 @@ func (s *Service) CheckConnectionHandler(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusOK, response)
 		return
 	}
-	ok, message := s.client.TestConnection(r.Context(), s.baseURL, claims.Username, claims.Password)
+	ok, message := s.client.TestConnection(r.Context(), selectedServer, claims.Username, claims.Password)
 	if ok {
 		response.State = "connected"
 	} else if strings.HasPrefix(message, "Authentication failed") {
@@ -266,17 +281,53 @@ func (s *Service) readCredential(r *http.Request, session Session) (credentialSt
 	if subtle.ConstantTimeCompare([]byte(claims.UserID), []byte(session.UserID)) != 1 || subtle.ConstantTimeCompare([]byte(claims.SID), []byte(session.SID)) != 1 {
 		return credentialInvalid, CredentialClaims{}
 	}
+	server, err := s.jiraServer(claims.Server)
+	if err != nil {
+		return credentialInvalid, CredentialClaims{}
+	}
+	claims.Server = server
 	return credentialValid, claims
 }
 
 func (s *Service) credentialStatus(state credentialState, claims CredentialClaims) credentialResponse {
-	response := credentialResponse{Connected: false, Invalid: state == credentialInvalid, Host: s.baseURL}
+	response := credentialResponse{Connected: false, Invalid: state == credentialInvalid, Host: s.claimsServer(claims)}
 	if state == credentialValid {
 		username := claims.Username
 		expires := formatOffsetTime(s.keyring.ExpiresAt(claims))
 		response.Connected, response.Username, response.ExpiresAt = true, &username, &expires
 	}
 	return response
+}
+
+func (s *Service) claimsServer(claims CredentialClaims) string {
+	if claims.Server != "" {
+		return claims.Server
+	}
+	return s.baseURL
+}
+
+func (s *Service) jiraServer(raw string) (string, error) {
+	candidate := strings.TrimSpace(raw)
+	if candidate == "" {
+		candidate = s.baseURL
+	}
+	parsed, err := url.Parse(candidate)
+	configured, configuredErr := url.Parse(s.baseURL)
+	if err != nil || configuredErr != nil || parsed.Scheme == "" || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || (parsed.Scheme != "https" && parsed.Scheme != "http") {
+		return "", errors.New("Enter a valid Jira server URL, for example https://jira.example.com")
+	}
+	if origin(parsed) != origin(configured) {
+		return "", errors.New("Jira server is not allowed by the backend JIRA_BASE_URL configuration")
+	}
+	return strings.TrimRight(parsed.String(), "/"), nil
+}
+
+func jiraHost(server string) string {
+	parsed, err := url.Parse(server)
+	if err != nil || parsed.Host == "" {
+		return ""
+	}
+	return strings.ToLower(parsed.Host)
 }
 
 func formatOffsetTime(value time.Time) string {

@@ -74,7 +74,7 @@ Do not use display names or email addresses as stable identifiers. Do not copy d
 
 ## Per-viewer credentials and character profiles
 
-The Settings page tests a username/password against `/rest/api/2/myself`, then stores it only in an AES-GCM authenticated-encryption cookie. The cookie is HttpOnly, SameSite Strict, scoped to `/api`, valid for at most 30 days, and Secure in production. Its payload is bound to the current opaque application-session user ID and rotation nonce; a different/restarted session, tampering, expiration, removed key, logout, or disconnect makes it unreadable. SQLite never stores the password.
+The Settings page exposes the active Jira Server next to the username/password and tests that selection against `/rest/api/2/myself`. The selected URL must match the origin configured by `JIRA_BASE_URL`; this prevents a browser request from sending credentials to an arbitrary host. The selected server and credentials are stored only in an AES-GCM authenticated-encryption cookie. The cookie is HttpOnly, SameSite Strict, scoped to `/api`, valid for at most 30 days, and Secure in production. Its payload is bound to the current opaque application-session user ID and rotation nonce; a different/restarted session, tampering, expiration, removed key, logout, or disconnect makes it unreadable. SQLite never stores the password.
 
 This application has no shared account/login directory, so the adaptation uses an opaque per-browser server session as the viewer identity. It provides cache and credential isolation but is not a multi-user SSO replacement. A future real login system should supply the session user ID while preserving the same credential binding.
 

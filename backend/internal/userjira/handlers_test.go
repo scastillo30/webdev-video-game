@@ -66,14 +66,15 @@ func TestCredentialRoutesNeverEchoPasswordAndMatchStatusShape(t *testing.T) {
 	defer database.Close()
 	defer server.Close()
 
-	request := httptest.NewRequest(http.MethodPut, "/api/jira/credential", bytes.NewBufferString(`{"username":"jdoe","password":"top-secret"}`))
+	body, _ := json.Marshal(loginRequest{Server: server.URL, Username: "jdoe", Password: "top-secret"})
+	request := httptest.NewRequest(http.MethodPut, "/api/jira/credential", bytes.NewReader(body))
 	response := httptest.NewRecorder()
 	service.CredentialHandler(response, request)
 	if response.Code != http.StatusOK || bytes.Contains(response.Body.Bytes(), []byte("top-secret")) {
 		t.Fatalf("credential save failed or echoed password: code=%d body=%s", response.Code, response.Body.String())
 	}
 	var status credentialResponse
-	if err := json.Unmarshal(response.Body.Bytes(), &status); err != nil || !status.Connected || status.Invalid || status.Username == nil || *status.Username != "jdoe" || status.ExpiresAt == nil {
+	if err := json.Unmarshal(response.Body.Bytes(), &status); err != nil || !status.Connected || status.Invalid || status.Host != server.URL || status.Username == nil || *status.Username != "jdoe" || status.ExpiresAt == nil {
 		t.Fatalf("unexpected status: %#v err=%v", status, err)
 	}
 	sessionCookie := cookieByName(response.Result().Cookies(), sessionCookieName)
@@ -89,6 +90,34 @@ func TestCredentialRoutesNeverEchoPasswordAndMatchStatusShape(t *testing.T) {
 	service.CredentialHandler(response, request)
 	if response.Code != http.StatusOK || bytes.Contains(response.Body.Bytes(), []byte("top-secret")) || !strings.Contains(response.Body.String(), `"connected":true`) {
 		t.Fatalf("credential read response invalid: %s", response.Body.String())
+	}
+}
+
+func TestCredentialRoutesRejectServerOutsideConfiguredJiraOrigin(t *testing.T) {
+	var requests atomic.Int32
+	service, database, server := testUserJiraService(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer database.Close()
+	defer server.Close()
+
+	body := `{"server":"https://untrusted.example","username":"jdoe","password":"secret"}`
+	request := httptest.NewRequest(http.MethodPost, "/api/jira/test-connection", bytes.NewBufferString(body))
+	response := httptest.NewRecorder()
+	service.TestConnectionHandler(response, request)
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"success":false`) || !strings.Contains(response.Body.String(), "not allowed") {
+		t.Fatalf("test route did not reject untrusted server: code=%d body=%s", response.Code, response.Body.String())
+	}
+
+	request = httptest.NewRequest(http.MethodPut, "/api/jira/credential", bytes.NewBufferString(body))
+	response = httptest.NewRecorder()
+	service.CredentialHandler(response, request)
+	if response.Code != http.StatusBadRequest || !strings.Contains(response.Body.String(), `"detail":"Jira server is not allowed`) {
+		t.Fatalf("save route did not reject untrusted server: code=%d body=%s", response.Code, response.Body.String())
+	}
+	if requests.Load() != 0 {
+		t.Fatalf("untrusted server validation reached Jira HTTP handler %d times", requests.Load())
 	}
 }
 

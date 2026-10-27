@@ -13,7 +13,11 @@ export class CharacterController{
 	private readonly silhouette:Phaser.GameObjects.Image;
   private readonly halo:Phaser.GameObjects.Ellipse;
   private readonly bubble:Phaser.GameObjects.Container;
+  private readonly bubbleBack:Phaser.GameObjects.Rectangle;
   private readonly bubbleText:Phaser.GameObjects.Text;
+  private readonly bubbleStatusBack:Phaser.GameObjects.Rectangle;
+  private readonly bubbleStatusText:Phaser.GameObjects.Text;
+  private readonly bubbleY:number;
   private moving=false;
   private idleAt=0;
   private celebrationSequence=0;
@@ -58,10 +62,12 @@ export class CharacterController{
 	this.figure=scene.add.container(0,0,[this.silhouette,this.image]);
 	const plate=scene.add.rectangle(0,17,96,18,0x071426,.94).setStrokeStyle(1,0x8e7145,.9);
 	const label=scene.add.text(0,17,profile.displayName.toUpperCase(),{fontFamily:'Cinzel,serif',fontSize:'9px',color:'#f0d39b'}).setOrigin(.5);
-	const bubbleY=this.directional?-98:-140;
-	const bubbleBack=scene.add.rectangle(0,bubbleY,166,38,0x071426,.97).setStrokeStyle(1,0xddb868,.95);
-	this.bubbleText=scene.add.text(0,bubbleY,'',{fontFamily:'Manrope,sans-serif',fontSize:'10px',color:'#f3ead9',align:'center',wordWrap:{width:152}}).setOrigin(.5);
-    this.bubble=scene.add.container(0,0,[bubbleBack,this.bubbleText]).setAlpha(0);
+	this.bubbleY=this.directional?-118:-154;
+	this.bubbleBack=scene.add.rectangle(0,this.bubbleY,226,64,0x071426,.98).setStrokeStyle(1,0xddb868,.95);
+	this.bubbleText=scene.add.text(0,this.bubbleY-8,'',{fontFamily:'Manrope,sans-serif',fontSize:'10px',color:'#f3ead9',align:'center',lineSpacing:2,wordWrap:{width:210}}).setOrigin(.5);
+	this.bubbleStatusBack=scene.add.rectangle(0,this.bubbleY+20,118,16,0x112638,.98).setStrokeStyle(1,0x8ee9ff,.95).setVisible(false);
+	this.bubbleStatusText=scene.add.text(0,this.bubbleY+20,'',{fontFamily:'Manrope,sans-serif',fontSize:'8px',fontStyle:'bold',color:'#8ee9ff',align:'center'}).setOrigin(.5).setVisible(false);
+    this.bubble=scene.add.container(0,0,[this.bubbleBack,this.bubbleText,this.bubbleStatusBack,this.bubbleStatusText]).setAlpha(0);
 	const hitArea=this.directional?new Phaser.Geom.Rectangle(-32,-78,64,106):new Phaser.Geom.Rectangle(-44,-118,88,136);
 	this.container=scene.add.container(position.x,position.y,[this.halo,shadow,this.figure,plate,label,this.bubble]).setSize(hitArea.width,hitArea.height).setInteractive(hitArea,Phaser.Geom.Rectangle.Contains);
     this.container.on('pointerdown',()=>onSelect(profile.characterId));
@@ -94,7 +100,7 @@ export class CharacterController{
   apply(directive:CharacterDirective,target:GridPoint,reserved:ReadonlySet<string>,facingX?:number):void{
 	this.activitySequence++;
 	this.autonomousActivity=false;
-	const finish=()=>{this.faceTowards(facingX);this.setState(directive.state,directive.label);if(directive.state==='CELEBRATING')this.celebrate()};
+	const finish=()=>{this.faceTowards(facingX);this.setState(directive.state,directive.label,directive.status);if(directive.state==='CELEBRATING')this.celebrate()};
     this.moveTo(target,reserved,finish,directive.state);
   }
 
@@ -162,7 +168,7 @@ export class CharacterController{
     advance(0);
   }
 
-  private setState(state:CharacterState,label:string):void{
+  private setState(state:CharacterState,label:string,status:{label:string;color:number}|null=null):void{
     const changed=this.machine.transition(state);
     if(changed&&this.directional&&!this.moving){
       this.walk.stop();
@@ -176,7 +182,7 @@ export class CharacterController{
     if(state==='BLOCKED')this.image.setTint(0xffa0ad);
     else if(state==='REVIEWING')this.image.setTint(0xb8deff);
     else if(state==='WORKING')this.image.setTint(0xffe5a6);
-    if(label)this.showBubble(label);else this.hideBubble(true);
+    if(label)this.showBubble(label,status);else this.hideBubble(true);
   }
 
 	private setFlipX(flip:boolean):void{this.image.setFlipX(flip);this.silhouette.setFlipX(flip)}
@@ -188,8 +194,18 @@ export class CharacterController{
 		this.setFlipX(worldX<this.container.x);
 	}
 
-  private showBubble(text:string):void{
-    this.bubbleText.setText(text);this.bubble.setAlpha(1);
+  private showBubble(text:string,status:{label:string;color:number}|null=null):void{
+    const hasStatus=Boolean(status);
+    this.bubbleText.setText(text).setY(this.bubbleY+(hasStatus?-8:0));
+    this.bubbleBack.setSize(226,hasStatus?64:50);
+    this.bubbleStatusBack.setVisible(hasStatus);
+    this.bubbleStatusText.setVisible(hasStatus);
+    if(status){
+      const color=`#${status.color.toString(16).padStart(6,'0')}`;
+      this.bubbleStatusBack.setStrokeStyle(1,status.color,.95).setFillStyle(status.color,.14);
+      this.bubbleStatusText.setText(`STATUS · ${status.label}`).setColor(color);
+    }
+    this.bubble.setAlpha(1);
   }
 
   private hideBubble(immediate=false):void{
@@ -198,7 +214,7 @@ export class CharacterController{
 
   private celebrate():void{
     const sequence=++this.celebrationSequence;
-    if(this.reducedMotion){this.showBubble('Task completed!');this.scene.time.delayedCall(1600,()=>{if(sequence===this.celebrationSequence&&this.machine.state==='CELEBRATING')this.setState('IDLE','')});return}
+    if(this.reducedMotion){this.scene.time.delayedCall(1600,()=>{if(sequence===this.celebrationSequence&&this.machine.state==='CELEBRATING')this.setState('IDLE','')});return}
     if(this.directional){this.walk.play('attack');this.showWalkFrame(this.walk.frame)}
     if(this.effectsEnabled)for(let index=0;index<8;index++){
       const angle=(Math.PI*2*index)/8,particle=this.scene.add.circle(this.container.x,this.container.y-62,3,index%2?0x69d5ff:0xffd878,1).setDepth(5000);

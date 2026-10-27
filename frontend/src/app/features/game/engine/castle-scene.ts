@@ -81,7 +81,7 @@ export class CastleScene extends Phaser.Scene{
     for(const directive of directives){
       const controller=this.controllers.get(directive.characterId);
       if(!controller)continue;
-      const signature=[directive.state,directive.issue?.issueKey,directive.event?.eventId,directive.label].join('|');
+      const signature=[directive.state,directive.issue?.issueKey,directive.event?.eventId,directive.label,directive.status?.label].join('|');
       if(this.directiveSignatures.get(directive.characterId)===signature)continue;
       this.directiveSignatures.set(directive.characterId,signature);
       const reserved=this.reserved(controller.profile.characterId);

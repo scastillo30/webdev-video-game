@@ -65,7 +65,18 @@ $env:JIRA_CREDENTIAL_KEYS = "PASTE-A-GENERATED-URL-SAFE-BASE64-32-BYTE-KEY"
 npm run backend:start
 ```
 
-Generate the key once with a trusted password/key generator or with OpenSSL (`openssl rand -base64 32`). Store it in the host's secret configuration, not in the repository. In production also set `$env:APP_ENV = "production"` so credential cookies require HTTPS.
+Generate the key once with a trusted password/key generator or with OpenSSL (`openssl rand -base64 32`). On Windows PowerShell versions where the static `RandomNumberGenerator.Fill` method is unavailable, use:
+
+```powershell
+$bytes = New-Object byte[] 32
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$rng.Dispose()
+$key = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
+$env:JIRA_CREDENTIAL_KEYS = $key
+```
+
+Store the key in the host's secret configuration, not in the repository. Keep the same value across restarts or existing encrypted login cookies become unreadable. The Jira Server entered in Settings must match `$env:JIRA_BASE_URL`. In production also set `$env:APP_ENV = "production"` so credential cookies require HTTPS.
 
 In the second window, start Angular:
 

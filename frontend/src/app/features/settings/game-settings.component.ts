@@ -31,11 +31,12 @@ const cloneConfig=(config:GameConfig):GameConfig=>({
         <section class="settings-card jira-integration-card">
           <div class="settings-card-title"><span>JI</span><div><h2>Jira Integration</h2><p>Your password is tested against Jira and stored only in an encrypted HttpOnly cookie bound to this browser session.</p></div></div>
           <div class="settings-grid jira-credential-grid">
+            <label class="jira-server-field">JIRA SERVER<input name="jiraCredentialServer" type="url" autocomplete="url" [(ngModel)]="jiraServer" placeholder="https://jira.example.com"></label>
             <label>JIRA USERNAME<input name="jiraCredentialUsername" autocomplete="username" [(ngModel)]="jiraUsername" placeholder="jdoe"></label>
             <label>JIRA PASSWORD<input name="jiraCredentialPassword" type="password" autocomplete="current-password" [(ngModel)]="jiraPassword" placeholder="Password or personal token"></label>
             <div class="jira-credential-actions">
-              <button type="button" (click)="testJira()" [disabled]="jiraBusy||!jiraUsername||!jiraPassword">TEST</button>
-              <button type="button" class="primary" (click)="saveJira()" [disabled]="jiraBusy||!jiraUsername||!jiraPassword">SAVE</button>
+              <button type="button" (click)="testJira()" [disabled]="jiraBusy||!jiraServer||!jiraUsername||!jiraPassword">TEST</button>
+              <button type="button" class="primary" (click)="saveJira()" [disabled]="jiraBusy||!jiraServer||!jiraUsername||!jiraPassword">SAVE</button>
               <button type="button" (click)="disconnectJira()" [disabled]="jiraBusy||!jiraCredential?.connected">DISCONNECT</button>
             </div>
           </div>
@@ -128,6 +129,7 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
   protected error='';
   protected projectKeysText='';
   protected issueTypesText='';
+  protected jiraServer='';
   protected jiraUsername='';
   protected jiraPassword='';
   protected jiraBusy=false;
@@ -148,6 +150,7 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
     this.subscriptions.add(this.service.error$.subscribe(error=>this.error=error));
     this.subscriptions.add(this.userJira.status$.subscribe(status=>{
       this.jiraCredential=status;
+      if(status?.host)this.jiraServer=status.host;
       if(status?.username)this.jiraUsername=status.username;
     }));
     this.userJira.loadStatus();
@@ -161,7 +164,7 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
 
   protected testJira():void{
     this.jiraBusy=true;this.jiraMessage='';
-    this.userJira.test(this.jiraUsername,this.jiraPassword).subscribe({
+    this.userJira.test(this.jiraServer,this.jiraUsername,this.jiraPassword).subscribe({
       next:value=>{this.jiraBusy=false;this.jiraMessage=value.message},
       error:response=>{this.jiraBusy=false;this.jiraMessage=response.error?.detail||'Could not test Jira.'}
     });
@@ -169,7 +172,7 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
 
   protected saveJira():void{
     this.jiraBusy=true;this.jiraMessage='';
-    this.userJira.save(this.jiraUsername,this.jiraPassword).subscribe({
+    this.userJira.save(this.jiraServer,this.jiraUsername,this.jiraPassword).subscribe({
       next:()=>{this.jiraBusy=false;this.jiraPassword='';this.jiraMessage='Jira connection saved for this browser session.'},
       error:response=>{this.jiraBusy=false;this.jiraMessage=response.error?.detail||'Could not save Jira connection.'}
     });

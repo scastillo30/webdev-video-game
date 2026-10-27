@@ -25,12 +25,12 @@ func TestCredentialSealUnsealBindingExpiryAndRotation(t *testing.T) {
 		t.Fatal(err)
 	}
 	oldRing.now = func() time.Time { return issued }
-	token, err := oldRing.Seal(CredentialClaims{UserID: "user-a", SID: "sid-a", Username: "jdoe", Password: "secret"})
+	token, err := oldRing.Seal(CredentialClaims{UserID: "user-a", SID: "sid-a", Server: "https://jira.example.com", Username: "jdoe", Password: "secret"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	claims, err := oldRing.Unseal(token, "user-a", "sid-a")
-	if err != nil || claims.Password != "secret" {
+	if err != nil || claims.Password != "secret" || claims.Server != "https://jira.example.com" {
 		t.Fatalf("valid token failed: claims=%#v err=%v", claims, err)
 	}
 	for _, mismatch := range [][2]string{{"user-b", "sid-a"}, {"user-a", "sid-b"}} {

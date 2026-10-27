@@ -9,6 +9,7 @@ import {GameBehaviorService} from './services/game-behavior.service';
 import {GameConfigService} from './services/game-config.service';
 import {SpectatorDirectorService} from './services/spectator-director.service';
 import {EmployeeJiraActivity, UserJiraService} from '../../core/jira/user-jira.service';
+import {jiraStatusPresentation, jiraWorkPresentation} from './engine/jira-work-presentation';
 
 @Component({
   selector:'app-game-view',
@@ -60,7 +61,7 @@ import {EmployeeJiraActivity, UserJiraService} from '../../core/jira/user-jira.s
               </a>
               <div class="activity-meta">
                 <span class="action-badge">ACTION: {{item.event.action}}</span>
-                <span class="status-badge">STATUS: {{item.event.currentStatus || item.event.newStatus || 'PENDING SYNC'}}</span>
+                <span class="status-badge" [style.--ticket-status-color]="statusFor(item.event).cssColor">STATUS: {{statusFor(item.event).label}}</span>
                 <time [dateTime]="item.event.occurredAt" [title]="item.event.occurredAt | date:'medium'">{{relativeTime(item.event.occurredAt)}}</time>
                 <em *ngIf="item.groupedEventCount > 1">{{item.groupedEventCount}} grouped events</em>
               </div>
@@ -147,7 +148,8 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
       this.director.configure(config.settings.spectatorEnabled,config.settings.rotationIntervalSeconds);
       const result=this.behavior.derive(snapshot,this.enabledProfiles,this.statusMappings,this.settings);
       this.baseDirectives=result.directives;
-      this.director.ingest(result.spectatorItems);
+      if(snapshot.connection.configured&&snapshot.connection.state==='live')this.director.ingest(result.spectatorItems);
+      else this.director.clearActivity();
       this.renderPresentation();
     }));
     this.subscriptions.add(this.director.state$.subscribe(state=>{
@@ -187,11 +189,12 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   }
 
   protected dialogueFor(event:JiraActivityEvent):string{
-    const action=event.action.toUpperCase();
-    if(action==='MOVED'&&event.previousStatus&&event.newStatus)return`I moved ${event.issueKey} from ${event.previousStatus} to ${event.newStatus}.`;
-    if(/CLOSED|RESOLVED|COMPLETED|DONE/.test(action))return`I closed ${event.issueKey}.`;
-    if(action==='UPDATED')return`I updated ${event.issueKey}.`;
-    return`My latest activity was on ${event.issueKey}.`;
+    return jiraWorkPresentation(event,this.issues.find(issue=>issue.issueKey===event.issueKey)??null).text;
+  }
+
+  protected statusFor(event:JiraActivityEvent){
+    const issue=this.issues.find(candidate=>candidate.issueKey===event.issueKey);
+    return jiraStatusPresentation(event.currentStatus??event.newStatus??issue?.status);
   }
 
   protected relativeTime(value:string):string{

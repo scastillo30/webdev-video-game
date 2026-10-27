@@ -41,12 +41,12 @@ export class UserJiraService {
     this.http.get<JiraCredentialStatus>('/api/jira/credential').subscribe({next:value=>this.statusSubject.next(value)});
   }
 
-  test(username:string,password:string):Observable<JiraTestResult>{
-    return this.http.post<JiraTestResult>('/api/jira/test-connection',{username,password});
+  test(server:string,username:string,password:string):Observable<JiraTestResult>{
+    return this.http.post<JiraTestResult>('/api/jira/test-connection',{server,username,password});
   }
 
-  save(username:string,password:string):Observable<JiraCredentialStatus>{
-    return this.http.put<JiraCredentialStatus>('/api/jira/credential',{username,password}).pipe(tap(value=>this.statusSubject.next(value)));
+  save(server:string,username:string,password:string):Observable<JiraCredentialStatus>{
+    return this.http.put<JiraCredentialStatus>('/api/jira/credential',{server,username,password}).pipe(tap(value=>this.statusSubject.next(value)));
   }
 
   disconnect():Observable<JiraCredentialStatus>{

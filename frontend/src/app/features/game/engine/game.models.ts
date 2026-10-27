@@ -64,6 +64,7 @@ export interface CharacterDirective {
   issue: JiraIssueSnapshot | null;
   event: JiraActivityEvent | null;
   label: string;
+  status: {label:string;color:number} | null;
 }
 
 export interface SpectatorItem {

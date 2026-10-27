@@ -197,7 +197,11 @@ func (s *ActivityService) Fetch(ctx context.Context, session Session, claims Cre
 	if err = s.writeCache(session.UserID, character, feed); err != nil {
 		return ActivityResponse{}, err
 	}
-	_ = s.store.RecordUserJiraSync(ctx, session.UserID, s.host, s.now().UTC())
+	syncHost := s.host
+	if claims.Server != "" {
+		syncHost = jiraHost(claims.Server)
+	}
+	_ = s.store.RecordUserJiraSync(ctx, session.UserID, syncHost, s.now().UTC())
 	return renderFeed(feed, false, ""), nil
 }
 
@@ -263,7 +267,11 @@ func (s *ActivityService) resolveUser(ctx context.Context, userID string, claims
 	if cached, ok, err := s.store.JiraUserDisplayName(ctx, userID, s.host, accountKey); err == nil && ok {
 		return cached
 	}
-	target := s.baseURL + "/rest/api/2/user?key=" + url.QueryEscape(accountKey)
+	server := s.baseURL
+	if claims.Server != "" {
+		server = strings.TrimRight(claims.Server, "/")
+	}
+	target := server + "/rest/api/2/user?key=" + url.QueryEscape(accountKey)
 	body, status, err := s.client.AuthedGet(ctx, target, claims.Username, claims.Password, 15*time.Second, 1<<20)
 	if err != nil || status < 200 || status >= 300 {
 		return accountKey
