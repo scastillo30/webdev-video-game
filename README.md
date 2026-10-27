@@ -14,6 +14,8 @@ Requirements: Node.js 22, npm, and Go. Exact project versions are recorded in `.
 ```sh
 npm install
 npm run frontend:install
+export JIRA_BASE_URL="https://company.atlassian.net"
+export JIRA_CREDENTIAL_KEYS="$(openssl rand -base64 32 | tr '+/' '-_')"
 npm run dev
 ```
 
@@ -55,16 +57,22 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for setup, environment variables, local dat
 
 ## Jira integration
 
-Jira credentials belong only in the Go process environment:
+The app supports two Jira credential scopes:
+
+- The optional shared event-stream service account belongs in the Go process environment.
+- Each viewer connects their own Jira account in **Settings → Jira Integration**. That password is stored only in an encrypted, HttpOnly, session-bound cookie and is never written to SQLite.
+
+Server configuration:
 
 ```sh
 export JIRA_BASE_URL="https://company.atlassian.net"
+export JIRA_CREDENTIAL_KEYS="$(openssl rand -base64 32 | tr '+/' '-_')"
 export JIRA_EMAIL="jira-user@example.com"
 export JIRA_API_TOKEN="..."
 export JIRA_JQL='project in (TEAM) ORDER BY updated DESC'
 ```
 
-Without all four values, the backend reports Jira as disconnected and does not label demo data as live. Stable Jira account IDs are mapped to character IDs in `/settings/game`; event author and ticket assignee remain separate. See [JIRA_INTEGRATION.md](JIRA_INTEGRATION.md).
+`JIRA_CREDENTIAL_KEYS` and `JIRA_BASE_URL` are required at startup. `JIRA_EMAIL`, `JIRA_API_TOKEN`, and `JIRA_JQL` are optional as a group; without them the shared stream is disconnected, while viewer-specific character activity can still work. Stable Jira account IDs are mapped to character IDs in `/settings/game`; event author and ticket assignee remain separate. See [JIRA_INTEGRATION.md](JIRA_INTEGRATION.md).
 
 ## Character and asset boundary
 

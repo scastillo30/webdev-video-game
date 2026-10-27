@@ -4,6 +4,7 @@ import {FormsModule} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {CharacterState, GameConfig, GameProfile, StatusBehaviorMapping} from '../game/engine/game.models';
 import {GameConfigService} from '../game/services/game-config.service';
+import {JiraCredentialStatus, UserJiraService} from '../../core/jira/user-jira.service';
 
 const cloneConfig=(config:GameConfig):GameConfig=>({
   settings:{...config.settings,jiraProjects:[...config.settings.jiraProjects],jiraIssueTypes:[...config.settings.jiraIssueTypes]},
@@ -26,6 +27,23 @@ const cloneConfig=(config:GameConfig):GameConfig=>({
       <form *ngIf="edit as config" (ngSubmit)="save()" class="game-settings-form">
         <p class="settings-alert error" *ngIf="error">{{error}}</p>
         <p class="settings-alert success" *ngIf="saved">Configuration saved. Game View will use it immediately.</p>
+
+        <section class="settings-card jira-integration-card">
+          <div class="settings-card-title"><span>JI</span><div><h2>Jira Integration</h2><p>Your password is tested against Jira and stored only in an encrypted HttpOnly cookie bound to this browser session.</p></div></div>
+          <div class="settings-grid jira-credential-grid">
+            <label>JIRA USERNAME<input name="jiraCredentialUsername" autocomplete="username" [(ngModel)]="jiraUsername" placeholder="jdoe"></label>
+            <label>JIRA PASSWORD<input name="jiraCredentialPassword" type="password" autocomplete="current-password" [(ngModel)]="jiraPassword" placeholder="Password or personal token"></label>
+            <div class="jira-credential-actions">
+              <button type="button" (click)="testJira()" [disabled]="jiraBusy||!jiraUsername||!jiraPassword">TEST</button>
+              <button type="button" class="primary" (click)="saveJira()" [disabled]="jiraBusy||!jiraUsername||!jiraPassword">SAVE</button>
+              <button type="button" (click)="disconnectJira()" [disabled]="jiraBusy||!jiraCredential?.connected">DISCONNECT</button>
+            </div>
+          </div>
+          <p class="jira-credential-status" [attr.data-state]="jiraCredential?.invalid?'invalid':jiraCredential?.connected?'connected':'none'">
+            {{jiraStatusLine()}}
+          </p>
+          <p class="jira-credential-message" *ngIf="jiraMessage">{{jiraMessage}}</p>
+        </section>
 
         <section class="settings-card">
           <div class="settings-card-title"><span>01</span><div><h2>Scene & Motion</h2><p>Runtime behavior without changing character-owned animation files.</p></div></div>
@@ -65,7 +83,7 @@ const cloneConfig=(config:GameConfig):GameConfig=>({
           <div class="mapping-table" role="table" aria-label="Jira character mappings">
             <div class="mapping-row mapping-head" role="row"><span>Character</span><span>Jira account ID</span><span>Home</span><span>Workstation</span><span>Enabled</span></div>
             <div class="mapping-row" role="row" *ngFor="let profile of config.profiles;trackBy:trackProfile">
-              <div class="mapping-character"><img [src]="'/legacy-game/'+profile.portraitAsset" alt=""><span>{{profile.displayName}}<small>{{profile.characterClass}}</small></span></div>
+              <div class="mapping-character"><img [src]="'/legacy-game/'+profile.portraitAsset" alt=""><span>{{profile.displayName}}<small>{{profile.characterClass}} · {{profile.jiraActivityUrl?'ACTIVITY LINKED':'NO ACTIVITY URL'}}</small></span></div>
               <label><span class="sr-only">{{profile.displayName}} Jira account ID</span><input [name]="profile.characterId+'Jira'" [(ngModel)]="profile.jiraAccountId" placeholder="Unmapped"></label>
               <label><span class="sr-only">{{profile.displayName}} home</span><select [name]="profile.characterId+'Home'" [(ngModel)]="profile.homeLocation"><option *ngFor="let location of homeLocations" [value]="location.value">{{location.label}}</option></select></label>
               <label><span class="sr-only">{{profile.displayName}} workstation</span><select [name]="profile.characterId+'Work'" [(ngModel)]="profile.workstation"><option *ngFor="let station of workstations" [value]="station.value">{{station.label}}</option></select></label>
@@ -95,6 +113,7 @@ const cloneConfig=(config:GameConfig):GameConfig=>({
 })
 export class GameSettingsComponent implements OnInit,OnDestroy{
   private readonly service=inject(GameConfigService);
+  private readonly userJira=inject(UserJiraService);
   private readonly subscriptions=new Subscription();
   protected edit:GameConfig|null=null;
   protected saving=false;
@@ -102,6 +121,11 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
   protected error='';
   protected projectKeysText='';
   protected issueTypesText='';
+  protected jiraUsername='';
+  protected jiraPassword='';
+  protected jiraBusy=false;
+  protected jiraMessage='';
+  protected jiraCredential:JiraCredentialStatus|null=null;
   protected readonly behaviors:CharacterState[]=['IDLE','WORKING','DISCUSSING','REVIEWING','BLOCKED','CELEBRATING'];
   protected readonly homeLocations=[
     {value:'command-dais',label:'Command Dais'},{value:'north-forge',label:'North Forge'},{value:'west-archive',label:'West Archive'},{value:'east-library',label:'East Library'},
@@ -115,6 +139,11 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
   ngOnInit():void{
     this.subscriptions.add(this.service.config$.subscribe(config=>this.setEdit(config)));
     this.subscriptions.add(this.service.error$.subscribe(error=>this.error=error));
+    this.subscriptions.add(this.userJira.status$.subscribe(status=>{
+      this.jiraCredential=status;
+      if(status?.username)this.jiraUsername=status.username;
+    }));
+    this.userJira.loadStatus();
   }
   ngOnDestroy():void{this.subscriptions.unsubscribe()}
   protected reload():void{this.saved=false;this.error='';this.service.reload()}
@@ -122,6 +151,38 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
   protected removeStatus(index:number):void{this.edit?.statusMappings.splice(index,1)}
   protected trackProfile(_:number,profile:GameProfile):string{return profile.characterId}
   protected trackStatus(index:number,_mapping:StatusBehaviorMapping):number{return index}
+
+  protected testJira():void{
+    this.jiraBusy=true;this.jiraMessage='';
+    this.userJira.test(this.jiraUsername,this.jiraPassword).subscribe({
+      next:value=>{this.jiraBusy=false;this.jiraMessage=value.message},
+      error:response=>{this.jiraBusy=false;this.jiraMessage=response.error?.detail||'Could not test Jira.'}
+    });
+  }
+
+  protected saveJira():void{
+    this.jiraBusy=true;this.jiraMessage='';
+    this.userJira.save(this.jiraUsername,this.jiraPassword).subscribe({
+      next:()=>{this.jiraBusy=false;this.jiraPassword='';this.jiraMessage='Jira connection saved for this browser session.'},
+      error:response=>{this.jiraBusy=false;this.jiraMessage=response.error?.detail||'Could not save Jira connection.'}
+    });
+  }
+
+  protected disconnectJira():void{
+    this.jiraBusy=true;this.jiraMessage='';
+    this.userJira.disconnect().subscribe({
+      next:()=>{this.jiraBusy=false;this.jiraPassword='';this.jiraUsername='';this.jiraMessage='Jira disconnected.'},
+      error:response=>{this.jiraBusy=false;this.jiraMessage=response.error?.detail||'Could not disconnect Jira.'}
+    });
+  }
+
+  protected jiraStatusLine():string{
+    if(!this.jiraCredential)return'Loading Jira connection…';
+    if(this.jiraCredential.invalid)return'Login unreadable — reconnect.';
+    if(!this.jiraCredential.connected)return'Not connected.';
+    const expires=this.jiraCredential.expires_at?new Date(this.jiraCredential.expires_at).toLocaleString():'unknown';
+    return`Connected as ${this.jiraCredential.username}; expires ${expires}.`;
+  }
 
   protected save():void{
     if(!this.edit||this.saving)return;

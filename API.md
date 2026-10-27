@@ -45,7 +45,10 @@ Character shape:
   "animationPath": "assets/characters/.../idle.webp",
   "posterPath": "assets/characters/.../poster.webp",
   "thumbPath": "assets/thumbnails/characters/...",
-  "commentThumbPath": "assets/thumbnails/comments/..."
+  "commentThumbPath": "assets/thumbnails/comments/...",
+  "jiraActivityUrl": "https://jira.example.com/activity?streams=user+IS+jdoe",
+  "workEmail": "jdoe@example.com",
+  "linkedLoginUsername": "jdoe"
 }
 ```
 
@@ -82,6 +85,21 @@ Important validation rules:
 - Behaviors are `IDLE`, `WORKING`, `DISCUSSING`, `REVIEWING`, `BLOCKED`, or `CELEBRATING`.
 
 Use `/settings/game` instead of constructing requests by hand for normal administration.
+
+## Per-viewer Jira connection
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/api/jira/test-connection` | Test supplied username/password without saving |
+| `PUT` | `/api/jira/credential` | Test and save only in encrypted HttpOnly cookie |
+| `GET` | `/api/jira/credential` | Return connected/invalid status; never password |
+| `DELETE` | `/api/jira/credential` | Clear credential and rotate the application session |
+| `GET` | `/api/jira/connection` | Cookie/configuration state and last sync without calling Jira |
+| `POST` | `/api/jira/connection/check` | Live connection check |
+| `GET` | `/api/employees/{characterId}/activity?limit=50` | Grouped Jira activity profile, limit 1–500 |
+| `POST` | `/api/employees/activity/refresh` | Start bounded stale-profile refresh for the current viewer |
+
+New endpoint errors use `{"detail":"message"}`. Activity unavailability is a successful `200` response with `available:false` and a reason such as `not_configured`, `no_jira_account`, `credentials_invalid`, `auth_failed`, or `fetch_failed`. A failed refresh returns the current viewer's cache with `stale:true` when available.
 
 ## Jira snapshot and events
 

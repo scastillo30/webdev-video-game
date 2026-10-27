@@ -2,7 +2,7 @@
 
 ## Design rule
 
-There is one Jira integration and two independent presentation layers. Go polls Jira once, normalizes and persists the result, and publishes it to one root-scoped Angular store. Office View and Game View never run competing Jira pollers.
+There is one shared Jira event integration and two independent presentation layers. In addition, each viewer may connect a personal Jira credential to read character-specific Atom Activity Streams. Office View and Game View never run competing shared pollers.
 
 ```text
 Jira Cloud
@@ -17,7 +17,18 @@ Jira Cloud
 
 ## Server configuration
 
-Set all four variables in the Go process environment:
+Required for per-viewer credentials:
+
+| Variable | Meaning |
+| --- | --- |
+| `JIRA_BASE_URL` | Jira base URL and mandatory outbound allowlist origin |
+| `JIRA_CREDENTIAL_KEYS` | Comma-separated encryption keys, newest first; the server refuses to start without one valid 32-byte key |
+| `CONFLUENCE_BASE_URL` | Optional second permitted origin for Activity Stream links/redirects |
+| `ACTIVITY_DIR` | Parsed per-viewer activity-cache directory |
+
+Generate a key with `openssl rand -base64 32 | tr '+/' '-_'`. Keep older keys after the newest key during rotation so existing cookies remain readable for their 30-day lifetime.
+
+Optional shared stream service account:
 
 | Variable | Meaning |
 | --- | --- |
@@ -26,7 +37,7 @@ Set all four variables in the Go process environment:
 | `JIRA_API_TOKEN` | Server-only token |
 | `JIRA_JQL` | Issues available to the shared application stream |
 
-If any value is absent, the source is unconfigured. The UI must say disconnected/unconfigured, never live. Demo fixtures in the legacy client are explicitly demo-only and are not inserted into backend state.
+If any of the three service-account values or `JIRA_JQL` is absent, the shared source is unconfigured. The UI must say disconnected/unconfigured, never live. Demo fixtures in the legacy client are explicitly demo-only and are not inserted into backend state.
 
 The poll interval is stored in Game configuration, defaults to 60 seconds, and can be changed between 10 and 3600 seconds. Updating it reconfigures the existing poller; it does not create another poller.
 
@@ -60,6 +71,16 @@ Use `/settings/game` to associate a stable Jira account ID with a canonical char
 - Updating Jira mappings cannot update character-owned asset paths.
 
 Do not use display names or email addresses as stable identifiers. Do not copy demo associations into production configuration without confirmation.
+
+## Per-viewer credentials and character profiles
+
+The Settings page tests a username/password against `/rest/api/2/myself`, then stores it only in an AES-GCM authenticated-encryption cookie. The cookie is HttpOnly, SameSite Strict, scoped to `/api`, valid for at most 30 days, and Secure in production. Its payload is bound to the current opaque application-session user ID and rotation nonce; a different/restarted session, tampering, expiration, removed key, logout, or disconnect makes it unreadable. SQLite never stores the password.
+
+This application has no shared account/login directory, so the adaptation uses an opaque per-browser server session as the viewer identity. It provides cache and credential isolation but is not a multi-user SSO replacement. A future real login system should supply the session user ID while preserving the same credential binding.
+
+Every character record carries an optional Jira Activity URL plus optional work email and linked-login username for identity matching. The Game View profile exposes whether that URL is attached and opens its grouped recent activity. Activity is fetched with the current viewer's credential, limited to configured Jira/Confluence origins, capped at 6 MiB, and timed out after 15 seconds.
+
+Parsed caches live under `ACTIVITY_DIR/users/<viewer>/` and are never shared between viewers. Failed refreshes return that viewer's cached copy as stale. Game View starts a bounded refresh for profiles whose cache is older than one hour, using at most five concurrent requests and 50 entries per character.
 
 ## Game View behavior
 

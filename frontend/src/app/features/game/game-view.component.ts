@@ -8,6 +8,7 @@ import {GameRuntimeService} from './game-runtime.service';
 import {GameBehaviorService} from './services/game-behavior.service';
 import {GameConfigService} from './services/game-config.service';
 import {SpectatorDirectorService} from './services/spectator-director.service';
+import {EmployeeJiraActivity, UserJiraService} from '../../core/jira/user-jira.service';
 
 @Component({
   selector:'app-game-view',
@@ -80,12 +81,33 @@ import {SpectatorDirectorService} from './services/spectator-director.service';
 
         <div class="spectator-controls">
           <span>{{presentation.autoEnabled ? presentation.pending + ' PENDING' : 'SPECTATOR OFF'}}</span>
+          <button type="button" (click)="toggleJiraProfile()" [disabled]="!activeProfile" [attr.aria-expanded]="profileOpen">JIRA PROFILE</button>
           <button type="button" (click)="toggleRotation()" [disabled]="!presentation.autoEnabled" [attr.aria-pressed]="presentation.paused">
             {{presentation.paused ? '▶ RESUME' : 'Ⅱ PAUSE'}}
           </button>
           <button type="button" (click)="next()">NEXT →</button>
         </div>
       </section>
+
+      <aside class="jira-profile-drawer" *ngIf="profileOpen&&activeProfile as character" aria-live="polite">
+        <header><div><small>EMPLOYEE JIRA PROFILE</small><h2>{{character.displayName}}</h2></div><button type="button" aria-label="Close Jira profile" (click)="profileOpen=false">×</button></header>
+        <p class="jira-profile-link-state">{{character.jiraActivityUrl?'ACTIVITY STREAM LINKED':'ACTIVITY STREAM NOT CONFIGURED'}}</p>
+        <p *ngIf="profileLoading">FETCHING PERSONAL ACTIVITY…</p>
+        <ng-container *ngIf="!profileLoading&&profileActivity as activity">
+          <p class="jira-profile-warning" *ngIf="activity.stale">STALE CACHE · {{activity.message}}</p>
+          <p class="jira-profile-warning" *ngIf="!activity.available">{{activityReason(activity)}}</p>
+          <div class="jira-profile-summary" *ngIf="activity.available"><b>{{activity.activity_count||0}}</b><span>ACTIVITIES</span><b>{{formatLoggedTime(activity.logged_total_seconds||0)}}</b><span>TIME LOGGED</span></div>
+          <div class="jira-profile-rollups" *ngIf="activity.logged_by_issue?.length">
+            <a *ngFor="let rollup of activity.logged_by_issue" [href]="rollup.issue_url||null" target="_blank" rel="noopener noreferrer"><b>{{rollup.issue_key}}</b><span>{{rollup.display}}</span></a>
+          </div>
+          <section *ngFor="let day of activity.days">
+            <h3>{{day.label}}</h3>
+            <a *ngFor="let entry of day.entries" [href]="entry.issue_url||null" target="_blank" rel="noopener noreferrer">
+              <time>{{entry.time}}</time><em>{{entry.badge}}</em><span><b>{{entry.issue_key}}</b> {{entry.issue_summary}}</span>
+            </a>
+          </section>
+        </ng-container>
+      </aside>
     </main>
   `
 })
@@ -96,6 +118,7 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   private readonly configService=inject(GameConfigService);
   private readonly behavior=inject(GameBehaviorService);
   private readonly director=inject(SpectatorDirectorService);
+  private readonly userJira=inject(UserJiraService);
   private readonly subscriptions=new Subscription();
   private baseDirectives:CharacterDirective[]=[];
   private issues:JiraIssueSnapshot[]=[];
@@ -106,9 +129,13 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   protected presentation:SpectatorState={active:null,focusCharacterId:null,autoEnabled:true,paused:false,pending:0};
   protected activeProfile:GameProfile|null=null;
   protected fullscreen=false;
+  protected profileOpen=false;
+  protected profileLoading=false;
+  protected profileActivity:EmployeeJiraActivity|null=null;
 
   ngAfterViewInit():void{
     document.addEventListener('fullscreenchange',this.handleFullscreen);
+    this.userJira.refreshProfiles();
     this.subscriptions.add(combineLatest([this.configService.config$,this.jira.snapshot$]).subscribe(([config,snapshot])=>{
       this.snapshot=snapshot;
       this.settings=config.settings;
@@ -125,7 +152,11 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
     }));
     this.subscriptions.add(this.director.state$.subscribe(state=>{
       this.presentation=state;
-      this.activeProfile=this.enabledProfiles.find(profile=>profile.characterId===state.focusCharacterId)??null;
+      const nextProfile=this.enabledProfiles.find(profile=>profile.characterId===state.focusCharacterId)??null;
+      if(nextProfile?.characterId!==this.activeProfile?.characterId){
+        this.activeProfile=nextProfile;this.profileActivity=null;
+        if(this.profileOpen)this.loadJiraProfile();
+      }else this.activeProfile=nextProfile;
       this.renderPresentation();
     }));
     this.subscriptions.add(this.runtime.selection$.subscribe(characterId=>this.director.manualFocus(characterId)));
@@ -134,6 +165,22 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   protected toggleRotation():void{this.presentation.paused?this.director.resume():this.director.pause()}
   protected next():void{this.director.next()}
   protected selectCharacter(characterId:string):void{this.director.manualFocus(characterId)}
+  protected toggleJiraProfile():void{
+    if(!this.activeProfile)return;
+    this.profileOpen=!this.profileOpen;
+    if(this.profileOpen&&!this.profileActivity)this.loadJiraProfile();
+  }
+  protected activityReason(activity:EmployeeJiraActivity):string{
+    if(activity.message)return activity.message;
+    if(activity.reason==='not_configured')return'This character has no Jira Activity URL. Add it in Characters.';
+    if(activity.reason==='no_jira_account')return'Connect your Jira account in Settings → Jira Integration.';
+    if(activity.reason==='credentials_invalid')return'Your Jira login can no longer be read. Reconnect in Settings.';
+    return'Jira activity is unavailable.';
+  }
+  protected formatLoggedTime(seconds:number):string{
+    const hours=Math.floor(seconds/3600);const minutes=Math.floor((seconds%3600)/60);
+    return hours?`${hours}h ${String(minutes).padStart(2,'0')}m`:`${minutes}m`;
+  }
   protected toggleFullscreen():void{
     if(document.fullscreenElement)void document.exitFullscreen();
     else void this.gameHost.nativeElement.closest('.game-view')?.requestFullscreen().catch(()=>undefined);
@@ -163,6 +210,15 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   }
 
   private readonly handleFullscreen=():void=>{this.fullscreen=Boolean(document.fullscreenElement)};
+
+  private loadJiraProfile():void{
+    if(!this.activeProfile)return;
+    this.profileLoading=true;
+    this.userJira.activity(this.activeProfile.characterId).subscribe({
+      next:value=>{this.profileActivity=value;this.profileLoading=false},
+      error:response=>{this.profileActivity={available:false,reason:'fetch_failed',message:response.error?.detail||'Could not load Jira activity.'};this.profileLoading=false}
+    });
+  }
 
   private renderPresentation():void{
     const active=this.presentation.active?this.behavior.directiveFor(this.presentation.active,this.issues,this.statusMappings):null;

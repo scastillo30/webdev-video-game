@@ -21,6 +21,8 @@ The store enables foreign keys, WAL mode, a five-second busy timeout, and one op
 | `jira_activity_events` | Immutable normalized activity history | Stable `event_id` is unique |
 | `jira_sync_state` | Singleton connection/freshness state | Separates cached data from live state |
 | `operational_audit` | Safe administrative mutation metadata | No bodies, queries, credentials, email, or IP |
+| `jira_user_cache` | Per-viewer Jira account-key display-name cache | Keyed by viewer, host, and account key |
+| `jira_user_sync` | Per-viewer successful activity synchronization time | Contains no credential material |
 
 ## Migration history
 
@@ -32,6 +34,7 @@ The store enables foreign keys, WAL mode, a five-second busy timeout, and one op
 | `004_game_configuration.sql` | Core settings and seeded Jira status behaviors |
 | `005_game_runtime_preferences.sql` | Scope filters, featured-ticket rule, refresh, TV/fullscreen, FPS |
 | `006_operational_audit.sql` | Bounded credential-safe mutation audit |
+| `008_user_jira_profiles.sql` | Character Activity Stream/identity fields and per-viewer Jira name/sync caches |
 
 Migrations exist under `backend/internal/store/migrations/` for embedding. The repository also keeps a mirror under `backend/migrations/`; new schema changes must keep the maintained pair synchronized until that duplication is intentionally removed.
 
@@ -42,6 +45,7 @@ Migrations exist under `backend/internal/store/migrations/` for embedding. The r
 - Game configuration updates can change mappings, anchors, enablement, and preferences; server validation prevents changing approved profile asset paths through the settings payload.
 - Jira event author and assignee have separate database columns.
 - Current issue state and historical event state are separate tables.
+- Jira passwords are never stored in SQLite. Per-viewer parsed feed files are isolated beneath `ACTIVITY_DIR/users/<viewer>/`.
 
 ## Adding a migration
 

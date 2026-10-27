@@ -60,8 +60,12 @@ Open two PowerShell windows in the repository root.
 In the first window, start the API:
 
 ```powershell
+$env:JIRA_BASE_URL = "https://company.atlassian.net"
+$env:JIRA_CREDENTIAL_KEYS = "PASTE-A-GENERATED-URL-SAFE-BASE64-32-BYTE-KEY"
 npm run backend:start
 ```
+
+Generate the key once with a trusted password/key generator or with OpenSSL (`openssl rand -base64 32`). Store it in the host's secret configuration, not in the repository. In production also set `$env:APP_ENV = "production"` so credential cookies require HTTPS.
 
 In the second window, start Angular:
 

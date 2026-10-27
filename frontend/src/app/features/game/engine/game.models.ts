@@ -11,6 +11,7 @@ export interface GameProfile {
   workstation: string;
   miniatureAsset: string;
   portraitAsset: string;
+  jiraActivityUrl: string | null;
   enabled: boolean;
 }
 
