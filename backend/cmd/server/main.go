@@ -18,6 +18,7 @@ import (
 	"time"
 	"webdev-mmorpg/backend/internal/jira"
 	"webdev-mmorpg/backend/internal/store"
+	"webdev-mmorpg/backend/internal/userjira"
 )
 
 var (
@@ -38,6 +39,23 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	keyring, err := userjira.ParseKeyring(os.Getenv("JIRA_CREDENTIAL_KEYS"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	secureCookies := strings.EqualFold(env("APP_ENV", "development"), "production") || strings.EqualFold(env("COOKIE_SECURE", "false"), "true")
+	userJiraClient, err := userjira.NewHTTPClient(env("JIRA_BASE_URL", ""), env("CONFLUENCE_BASE_URL", ""), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	activityService, err := userjira.NewActivityService(db, userJiraClient, env("JIRA_BASE_URL", ""), env("ACTIVITY_DIR", "data/jira-activity"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	userJiraService, err := userjira.NewService(db, keyring, userjira.NewSessionManager(secureCookies), userJiraClient, activityService, env("JIRA_BASE_URL", ""), secureCookies)
+	if err != nil {
+		log.Fatal(err)
+	}
 	gameConfigValue, err := db.GetGameConfig(context.Background())
 	if err != nil {
 		log.Fatal(err)
@@ -67,6 +85,11 @@ func main() {
 	mux.HandleFunc("/api/jira/snapshot", jiraService.SnapshotHandler)
 	mux.HandleFunc("/api/jira/events", jiraService.EventsHandler)
 	mux.HandleFunc("/api/jira/refresh", jiraService.RefreshHandler)
+	mux.HandleFunc("/api/jira/test-connection", userJiraService.TestConnectionHandler)
+	mux.HandleFunc("/api/jira/credential", userJiraService.CredentialHandler)
+	mux.HandleFunc("/api/jira/connection", userJiraService.ConnectionHandler)
+	mux.HandleFunc("/api/jira/connection/check", userJiraService.CheckConnectionHandler)
+	mux.HandleFunc("/api/employees/", userJiraService.EmployeeActivityHandler)
 	legacy := env("LEGACY_GAME_DIR", "..")
 	mux.Handle("/legacy-game/", http.StripPrefix("/legacy-game/", http.FileServer(http.Dir(legacy))))
 	mux.HandleFunc("/game/index.html", func(w http.ResponseWriter, r *http.Request) {
@@ -415,6 +438,16 @@ func auditAction(method, path string) string {
 	switch {
 	case method == http.MethodPost && path == "/api/jira/refresh":
 		return "jira.refresh"
+	case method == http.MethodPost && path == "/api/jira/test-connection":
+		return "jira.credential.test"
+	case method == http.MethodPut && path == "/api/jira/credential":
+		return "jira.credential.save"
+	case method == http.MethodDelete && path == "/api/jira/credential":
+		return "jira.credential.disconnect"
+	case method == http.MethodPost && path == "/api/jira/connection/check":
+		return "jira.connection.check"
+	case method == http.MethodPost && path == "/api/employees/activity/refresh":
+		return "jira.activity.refresh"
 	case method == http.MethodPut && path == "/api/game/config":
 		return "game.config.update"
 	case method == http.MethodPost && path == "/api/characters":
@@ -431,6 +464,9 @@ func auditAction(method, path string) string {
 func auditPath(path string) string {
 	if strings.HasPrefix(path, "/api/characters/") {
 		return "/api/characters/:id"
+	}
+	if strings.HasPrefix(path, "/api/employees/") && strings.HasSuffix(path, "/activity") {
+		return "/api/employees/:id/activity"
 	}
 	return path
 }

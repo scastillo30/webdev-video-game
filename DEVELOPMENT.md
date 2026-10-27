@@ -64,12 +64,24 @@ Open `http://localhost:8080`. Go serves the compiled Angular application, API, d
 | `ANGULAR_DIST` | auto-detected development/build location | Compiled Angular files for Go serving |
 | `LEGACY_GAME_DIR` | auto-detected repository root/runtime location | Office View static files |
 | `JIRA_BASE_URL` | empty | Jira Cloud base URL |
+| `JIRA_CREDENTIAL_KEYS` | required | Comma-separated URL-safe base64 32-byte encryption keys, newest first |
+| `CONFLUENCE_BASE_URL` | empty | Optional second trusted Activity Stream origin |
 | `JIRA_EMAIL` | empty | Jira Cloud login email |
 | `JIRA_API_TOKEN` | empty | Server-side token |
 | `JIRA_JQL` | empty | Backend ingestion boundary |
 | `CORS_ALLOWED_ORIGINS` | empty | Comma-separated trusted cross-origin frontend allowlist |
+| `ACTIVITY_DIR` | `backend/data/jira-activity` when started from `backend/` | Per-viewer parsed Activity Stream cache |
+| `APP_ENV` | `development` | Set to `production` to require Secure cookies |
+| `COOKIE_SECURE` | `false` | Explicit Secure-cookie override |
 
-All four Jira variables are required for a configured connection. Never put `JIRA_API_TOKEN` in Angular code, JSON fixtures, committed shell scripts, or release folders.
+Generate the required credential key before starting Go:
+
+```sh
+export JIRA_CREDENTIAL_KEYS="$(openssl rand -base64 32 | tr '+/' '-_')"
+export JIRA_BASE_URL="https://company.atlassian.net"
+```
+
+The first key encrypts new per-viewer credentials and all listed keys can decrypt, allowing rotation. Never commit the generated value. `JIRA_EMAIL`, `JIRA_API_TOKEN`, and `JIRA_JQL` are required only for the optional shared event-stream poller. Never put a Jira password or token in Angular code, JSON fixtures, logs, or release folders.
 
 ## Local data
 
@@ -90,6 +102,7 @@ frontend/src/app/                  Angular routes, stores, views, and Phaser int
 frontend/public/assets/game-board/ Runtime board background and board sprites
 backend/cmd/server/                HTTP server and route wiring
 backend/internal/jira/             Jira adapter, poller, broker, normalization
+backend/internal/userjira/         Session-bound viewer credentials and per-character activity feeds
 backend/internal/store/            SQLite access and embedded migrations
 characters/                        Character-owned manifests
 assets/characters/                 Versioned character production/runtime assets
@@ -110,7 +123,7 @@ The proxy expects Go at `127.0.0.1:8080`. If `ADDR` changes, update `frontend/pr
 
 ### Jira says disconnected
 
-This is expected when Jira is not configured. If it should be live, verify all four Jira variables in the Go process environment, then check `/api/operations/status`. Do not diagnose credentials from browser code.
+For the shared stream, verify `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, and `JIRA_JQL`, then check `/api/operations/status`. For an individual character profile, reconnect in **Settings → Jira Integration** and confirm that character has a Jira Activity URL under **Characters**. Do not diagnose passwords from browser code.
 
 ### Port already in use
 

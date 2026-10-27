@@ -57,14 +57,17 @@ The launcher sets packaged paths for Angular, legacy files, and the default `dat
 ADDR=:8080
 DB_PATH=/durable/path/game.db
 JIRA_BASE_URL=https://company.atlassian.net
+JIRA_CREDENTIAL_KEYS=<newest-key,older-rotation-keys>
 JIRA_EMAIL=...
 JIRA_API_TOKEN=...
 JIRA_JQL=...
+APP_ENV=production
+ACTIVITY_DIR=/durable/path/jira-activity
 ```
 
 Use `CORS_ALLOWED_ORIGINS` only for a trusted separate frontend. Leave it empty for the normal single-origin deployment.
 
-Treat `data/` and `backups/` as mutable host storage. Do not replace them during an application-binary upgrade.
+`JIRA_CREDENTIAL_KEYS` must contain at least one URL-safe base64 32-byte key or the server refuses to start. The newest key encrypts; older listed keys remain available only for cookie rotation. Treat `data/`, the activity-cache directory, and `backups/` as mutable host storage. Do not replace them during an application-binary upgrade.
 
 ## Startup and checks
 

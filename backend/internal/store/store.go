@@ -16,16 +16,19 @@ import (
 var migrations embed.FS
 
 type Character struct {
-	ID               string `json:"id"`
-	Name             string `json:"name"`
-	Role             string `json:"role"`
-	Epithet          string `json:"epithet"`
-	Bio              string `json:"bio"`
-	Accent           string `json:"accent"`
-	AnimationPath    string `json:"animationPath"`
-	PosterPath       string `json:"posterPath"`
-	ThumbPath        string `json:"thumbPath"`
-	CommentThumbPath string `json:"commentThumbPath"`
+	ID               string  `json:"id"`
+	Name             string  `json:"name"`
+	Role             string  `json:"role"`
+	Epithet          string  `json:"epithet"`
+	Bio              string  `json:"bio"`
+	Accent           string  `json:"accent"`
+	AnimationPath    string  `json:"animationPath"`
+	PosterPath       string  `json:"posterPath"`
+	ThumbPath        string  `json:"thumbPath"`
+	CommentThumbPath string  `json:"commentThumbPath"`
+	JiraActivityURL  *string `json:"jiraActivityUrl"`
+	WorkEmail        *string `json:"workEmail"`
+	LinkedLogin      *string `json:"linkedLoginUsername"`
 }
 type Store struct{ db *sql.DB }
 
@@ -95,11 +98,13 @@ func applyMigrations(db *sql.DB) error {
 	return nil
 }
 
-const fields = "id,name,role,epithet,bio,accent,animation_path,poster_path,thumb_path,comment_thumb_path"
+const fields = "id,name,role,epithet,bio,accent,animation_path,poster_path,thumb_path,comment_thumb_path,jira_activity_url,work_email,linked_login_username"
 
 func scan(scanner interface{ Scan(...any) error }) (Character, error) {
 	var c Character
-	err := scanner.Scan(&c.ID, &c.Name, &c.Role, &c.Epithet, &c.Bio, &c.Accent, &c.AnimationPath, &c.PosterPath, &c.ThumbPath, &c.CommentThumbPath)
+	var activityURL, workEmail, linkedLogin sql.NullString
+	err := scanner.Scan(&c.ID, &c.Name, &c.Role, &c.Epithet, &c.Bio, &c.Accent, &c.AnimationPath, &c.PosterPath, &c.ThumbPath, &c.CommentThumbPath, &activityURL, &workEmail, &linkedLogin)
+	c.JiraActivityURL, c.WorkEmail, c.LinkedLogin = ptr(activityURL), ptr(workEmail), ptr(linkedLogin)
 	return c, err
 }
 func (s *Store) List() ([]Character, error) {
@@ -125,12 +130,12 @@ func (s *Store) Create(c Character) (Character, error) {
 	if c.ID == "" || c.Name == "" || c.Role == "" {
 		return c, errors.New("id, name and role are required")
 	}
-	_, err := s.db.Exec("INSERT INTO characters(id,name,role,epithet,bio,accent,animation_path,poster_path,thumb_path,comment_thumb_path) VALUES(?,?,?,?,?,?,?,?,?,?)", c.ID, c.Name, c.Role, c.Epithet, c.Bio, c.Accent, c.AnimationPath, c.PosterPath, c.ThumbPath, c.CommentThumbPath)
+	_, err := s.db.Exec("INSERT INTO characters(id,name,role,epithet,bio,accent,animation_path,poster_path,thumb_path,comment_thumb_path,jira_activity_url,work_email,linked_login_username) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", c.ID, c.Name, c.Role, c.Epithet, c.Bio, c.Accent, c.AnimationPath, c.PosterPath, c.ThumbPath, c.CommentThumbPath, nullable(c.JiraActivityURL), nullable(c.WorkEmail), nullable(c.LinkedLogin))
 	return c, err
 }
 func (s *Store) Update(id string, c Character) (Character, error) {
 	c.ID = id
-	result, err := s.db.Exec("UPDATE characters SET name=?,role=?,epithet=?,bio=?,accent=?,animation_path=?,poster_path=?,thumb_path=?,comment_thumb_path=?,updated_at=? WHERE id=?", c.Name, c.Role, c.Epithet, c.Bio, c.Accent, c.AnimationPath, c.PosterPath, c.ThumbPath, c.CommentThumbPath, time.Now().UTC().Format(time.RFC3339), id)
+	result, err := s.db.Exec("UPDATE characters SET name=?,role=?,epithet=?,bio=?,accent=?,animation_path=?,poster_path=?,thumb_path=?,comment_thumb_path=?,jira_activity_url=?,work_email=?,linked_login_username=?,updated_at=? WHERE id=?", c.Name, c.Role, c.Epithet, c.Bio, c.Accent, c.AnimationPath, c.PosterPath, c.ThumbPath, c.CommentThumbPath, nullable(c.JiraActivityURL), nullable(c.WorkEmail), nullable(c.LinkedLogin), time.Now().UTC().Format(time.RFC3339), id)
 	if err != nil {
 		return c, err
 	}
@@ -139,6 +144,13 @@ func (s *Store) Update(id string, c Character) (Character, error) {
 		return c, sql.ErrNoRows
 	}
 	return c, nil
+}
+
+func nullable(value *string) any {
+	if value == nil || strings.TrimSpace(*value) == "" {
+		return nil
+	}
+	return strings.TrimSpace(*value)
 }
 func (s *Store) Delete(id string) error {
 	result, err := s.db.Exec("DELETE FROM characters WHERE id=?", id)
