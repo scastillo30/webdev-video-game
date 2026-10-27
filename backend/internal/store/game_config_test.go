@@ -90,3 +90,44 @@ func TestGameConfigRejectsDuplicateJiraMapping(t *testing.T) {
 		t.Fatalf("expected duplicate mapping validation error, got %v", err)
 	}
 }
+
+func TestHolidayDecorationsPersistAndValidate(t *testing.T) {
+	database, err := Open(filepath.Join(t.TempDir(), "holiday.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	ctx := context.Background()
+	config, err := database.GetGameConfig(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if config.Settings.HolidayMode != "none" || len(config.Settings.HolidayItems) != 6 {
+		t.Fatalf("unexpected holiday defaults: %#v", config.Settings)
+	}
+	for _, mode := range []string{"halloween", "christmas", "none"} {
+		config.Settings.HolidayMode = mode
+		config.Settings.HolidayItems = []string{"pumpkins", "trees"}
+		saved, err := database.SaveGameConfig(ctx, config)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if saved.Settings.HolidayMode != mode || len(saved.Settings.HolidayItems) != 2 {
+			t.Fatalf("holiday selection not persisted: %#v", saved.Settings)
+		}
+	}
+	config.Settings.HolidayMode = "unknown"
+	if _, err := database.SaveGameConfig(ctx, config); err == nil {
+		t.Fatal("accepted unknown holiday mode")
+	}
+	config.Settings.HolidayMode = "halloween"
+	config.Settings.HolidayItems = []string{"unknown"}
+	if _, err := database.SaveGameConfig(ctx, config); err == nil {
+		t.Fatal("accepted unknown decoration")
+	}
+	config.Settings.HolidayItems = []string{}
+	saved, err := database.SaveGameConfig(ctx, config)
+	if err != nil || len(saved.Settings.HolidayItems) != 0 {
+		t.Fatalf("cannot deselect all items: %v", err)
+	}
+}

@@ -11,6 +11,8 @@ import (
 )
 
 type GameSettings struct {
+	HolidayMode             string   `json:"holidayMode"`
+	HolidayItems            []string `json:"holidayItems"`
 	Scene                   string   `json:"scene"`
 	MovementEnabled         bool     `json:"movementEnabled"`
 	EffectsEnabled          bool     `json:"effectsEnabled"`
@@ -58,9 +60,9 @@ var projectKeyPattern = regexp.MustCompile(`^[A-Z][A-Z0-9_-]{0,49}$`)
 
 func (s *Store) GetGameConfig(ctx context.Context) (GameConfig, error) {
 	var config GameConfig
-	var projectsJSON, issueTypesJSON string
-	if err := s.db.QueryRowContext(ctx, `SELECT scene,movement_enabled,effects_enabled,animation_speed,spectator_enabled,rotation_interval_seconds,tv_scale,sound_enabled,jira_projects,jira_issue_types,featured_ticket_rule,refresh_interval_seconds,tv_mode_enabled,fullscreen_enabled,target_fps FROM game_settings WHERE singleton=1`).Scan(
-		&config.Settings.Scene, &config.Settings.MovementEnabled, &config.Settings.EffectsEnabled, &config.Settings.AnimationSpeed,
+	var projectsJSON, issueTypesJSON, holidayItemsJSON string
+	if err := s.db.QueryRowContext(ctx, `SELECT holiday_mode,holiday_items,scene,movement_enabled,effects_enabled,animation_speed,spectator_enabled,rotation_interval_seconds,tv_scale,sound_enabled,jira_projects,jira_issue_types,featured_ticket_rule,refresh_interval_seconds,tv_mode_enabled,fullscreen_enabled,target_fps FROM game_settings WHERE singleton=1`).Scan(
+		&config.Settings.HolidayMode, &holidayItemsJSON, &config.Settings.Scene, &config.Settings.MovementEnabled, &config.Settings.EffectsEnabled, &config.Settings.AnimationSpeed,
 		&config.Settings.SpectatorEnabled, &config.Settings.RotationIntervalSeconds, &config.Settings.TVScale, &config.Settings.SoundEnabled,
 		&projectsJSON, &issueTypesJSON, &config.Settings.FeaturedTicketRule, &config.Settings.RefreshIntervalSeconds,
 		&config.Settings.TVModeEnabled, &config.Settings.FullscreenEnabled, &config.Settings.TargetFPS); err != nil {
@@ -71,6 +73,9 @@ func (s *Store) GetGameConfig(ctx context.Context) (GameConfig, error) {
 	}
 	if err := json.Unmarshal([]byte(issueTypesJSON), &config.Settings.JiraIssueTypes); err != nil {
 		return config, fmt.Errorf("decode Jira issue types: %w", err)
+	}
+	if err := json.Unmarshal([]byte(holidayItemsJSON), &config.Settings.HolidayItems); err != nil {
+		return config, fmt.Errorf("decode holiday items: %w", err)
 	}
 	profiles, err := s.ListGameProfiles()
 	if err != nil {
@@ -94,6 +99,10 @@ func (s *Store) GetGameConfig(ctx context.Context) (GameConfig, error) {
 }
 
 func (s *Store) SaveGameConfig(ctx context.Context, config GameConfig) (GameConfig, error) {
+	if config.Settings.HolidayMode == "" {
+		config.Settings.HolidayMode = "none"
+	}
+	config.Settings.HolidayItems = normalizeList(config.Settings.HolidayItems, false)
 	config.Settings.JiraProjects = normalizeList(config.Settings.JiraProjects, true)
 	config.Settings.JiraIssueTypes = normalizeList(config.Settings.JiraIssueTypes, false)
 	if err := s.validateGameConfig(ctx, config); err != nil {
@@ -105,10 +114,11 @@ func (s *Store) SaveGameConfig(ctx context.Context, config GameConfig) (GameConf
 	}
 	defer tx.Rollback()
 	settings := config.Settings
+	holidayItemsJSON, _ := json.Marshal(settings.HolidayItems)
 	projectsJSON, _ := json.Marshal(settings.JiraProjects)
 	issueTypesJSON, _ := json.Marshal(settings.JiraIssueTypes)
-	if _, err = tx.ExecContext(ctx, `UPDATE game_settings SET scene=?,movement_enabled=?,effects_enabled=?,animation_speed=?,spectator_enabled=?,rotation_interval_seconds=?,tv_scale=?,sound_enabled=?,jira_projects=?,jira_issue_types=?,featured_ticket_rule=?,refresh_interval_seconds=?,tv_mode_enabled=?,fullscreen_enabled=?,target_fps=?,updated_at=CURRENT_TIMESTAMP WHERE singleton=1`,
-		settings.Scene, settings.MovementEnabled, settings.EffectsEnabled, settings.AnimationSpeed, settings.SpectatorEnabled,
+	if _, err = tx.ExecContext(ctx, `UPDATE game_settings SET holiday_mode=?,holiday_items=?,scene=?,movement_enabled=?,effects_enabled=?,animation_speed=?,spectator_enabled=?,rotation_interval_seconds=?,tv_scale=?,sound_enabled=?,jira_projects=?,jira_issue_types=?,featured_ticket_rule=?,refresh_interval_seconds=?,tv_mode_enabled=?,fullscreen_enabled=?,target_fps=?,updated_at=CURRENT_TIMESTAMP WHERE singleton=1`,
+		settings.HolidayMode, string(holidayItemsJSON), settings.Scene, settings.MovementEnabled, settings.EffectsEnabled, settings.AnimationSpeed, settings.SpectatorEnabled,
 		settings.RotationIntervalSeconds, settings.TVScale, settings.SoundEnabled, string(projectsJSON), string(issueTypesJSON),
 		settings.FeaturedTicketRule, settings.RefreshIntervalSeconds, settings.TVModeEnabled, settings.FullscreenEnabled, settings.TargetFPS); err != nil {
 		return GameConfig{}, err
@@ -143,6 +153,15 @@ func (s *Store) SaveGameConfig(ctx context.Context, config GameConfig) (GameConf
 
 func (s *Store) validateGameConfig(ctx context.Context, config GameConfig) error {
 	settings := config.Settings
+	if settings.HolidayMode != "none" && settings.HolidayMode != "halloween" && settings.HolidayMode != "christmas" {
+		return errors.New("unsupported holiday mode")
+	}
+	allowedItems := map[string]bool{"pumpkins": true, "bats": true, "cobwebs": true, "trees": true, "gifts": true, "garlands": true}
+	for _, item := range settings.HolidayItems {
+		if !allowedItems[item] {
+			return fmt.Errorf("unsupported holiday item %q", item)
+		}
+	}
 	if settings.Scene != "castle-command-center" {
 		return errors.New("unsupported scene")
 	}

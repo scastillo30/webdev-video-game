@@ -129,3 +129,10 @@ npm run quality:check
 ```
 
 See [TESTING.md](TESTING.md) for targeted checks and manual Game/Office acceptance.
+
+
+### Restart the Go API after backend changes
+
+`go run ./cmd/server` does not watch source files. Restart the backend after pulling or editing Go settings/schema code. An older process may accept a settings save while silently omitting new fields from its response. For holiday backgrounds, `/api/game/config` must include `settings.holidayMode` and `settings.holidayItems`. The frontend reports an error if the returned background does not match the selected value.
+
+Run `node animation/verify_holiday_settings.mjs` against the running local app to check the settings save, persistence, route navigation, and reload flow for all three backgrounds. It restores the original configuration afterward; screenshots are written to `/tmp/settings-*.png` for visual review.

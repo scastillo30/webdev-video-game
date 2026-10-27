@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "changedFrames": [
+    20,
+    21,
+    22,
+    23
+  ],
+  "unchangedOtherFrames": 44,
+  "fourUniqueLegPoses": true,
+  "baseline": 61
+}

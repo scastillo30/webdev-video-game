@@ -115,7 +115,7 @@ antialiasing or unrelated characters as a substitute for improving the target ar
 ## 6. Integrate per character
 
 The shared implementation uses **per-character `DirectionalSpriteConfig`** entries
-and independent animation clocks. Commander and Guardian are integrated. Each new
+and independent animation clocks. Commander, Guardian and Healer are integrated. Each new
 character must own its texture key, paths, frame dimensions, sequences, display
 scale, anchor, ability timeline/triggers and fallbacks; changing a filename alone
 is insufficient. Guardian uses Cube Wanderer's asset identity in the Guardian slot.
@@ -142,6 +142,11 @@ revealed cube. Its configured timeline raises for 400ms, holds the full cube for
 1.3 seconds, then lowers for 320ms. It triggers on selection, work/review states,
 completion and after nine stationary seconds. Movement cancels it. Keep this behavior
 in Guardian's configuration; other characters must not inherit its automatic reveal.
+
+Healer's special row lifts the blue-gem crosier, forms a cyan healing pulse and
+presents her victory gesture. Its timeline is 200/240/1000/180/180ms, with a ten-second
+stationary interval and selection/work/review triggers. Keep her staff and effect
+identity separate from Guardian's cube and Commander's sword flourish.
 
 Pause must freeze movement and animation clocks together. Reduced motion uses a
 neutral directional pose and instant travel. Missing sprite sheets use that same
@@ -179,6 +184,9 @@ delivering only a polished concept sheet.
   variation, with its own timeline, palette and preserved roster/source relationship.
 - `animation/package_guardian_snes_rpg_v001.py`
 - `animation/verify_guardian_snes_rpg_v001.mjs`
+- `assets/characters/healer/snes-rpg/v001/README.md`: Healer's crosier/healing-pulse variation.
+- `animation/package_healer_snes_rpg_v001.py`
+- `animation/verify_healer_snes_rpg_v001.mjs`
 
 Adapt these examples to the target ID. Do not run a Commander packaging script
 unchanged for another character: its identity, paths and manifest writes are specific.

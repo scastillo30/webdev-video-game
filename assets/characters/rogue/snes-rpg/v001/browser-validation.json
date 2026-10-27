@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "checks": [
+    "direction 0,1: walking, idle and mirror verified",
+    "direction -1,0: walking, idle and mirror verified",
+    "direction 1,0: walking, idle and mirror verified",
+    "direction 0,-1: walking, idle and mirror verified",
+    "attack reaction integrated into CELEBRATING, recovers to idle",
+    "hurt reaction integrated into BLOCKED, recovers to idle",
+    "movement toggle pauses/resumes the active tween; speed changes apply",
+    "Shadow Bard retains its own artwork and movement after pause/resume",
+    "Commander retains its own sword flourish, texture and pause/resume movement",
+    "selecting Rogue raises the hand, holds the pointing pose and lowers it; reveal pauses with game",
+    "work/review states trigger Rogue pointing gesture",
+    "Rogue uses the same 76.8px frame footprint as Commander; original board still preserved",
+    "pause/resume and Rogue/Commander/Shadow Bard switching verified",
+    "reduced motion uses a neutral directional pose",
+    "missing sprite sheet falls back to Rogue poster"
+  ],
+  "pageErrors": []
+}

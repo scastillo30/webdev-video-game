@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {BOARD_CHARACTER_IDS,boardCharacterAsset} from '../src/app/features/game/engine/board-character-assets';
 import {CharacterPathfinding} from '../src/app/features/game/engine/character-pathfinding';
-import {COMMANDER_SEQUENCES,COMMANDER_WALK,GUARDIAN_WALK,DirectionalWalk} from '../src/app/features/game/engine/directional-walk';
+import {COMMANDER_SEQUENCES,COMMANDER_WALK,GUARDIAN_WALK,HEALER_WALK,DirectionalWalk} from '../src/app/features/game/engine/directional-walk';
 import {CASTLE_ANCHORS,CASTLE_COLUMNS,CASTLE_ROWS,CastleNavigationModel} from '../src/app/features/game/engine/castle-navigation';
 import {CharacterStateMachine,stateForStatus} from '../src/app/features/game/engine/character-state-machine';
 import {chooseFeaturedIssue} from '../src/app/features/game/engine/featured-ticket';
@@ -63,7 +63,7 @@ test('Guardian owns a separate cube-wanderer sprite config without changing Comm
   assert.notEqual(guardian.key,COMMANDER_WALK.key);assert.notEqual(guardian.path,COMMANDER_WALK.path);
   assert.equal(guardian.abilityName,'cube-reveal');assert.equal(COMMANDER_WALK.abilityName,'sword-flourish');
   assert.equal(guardian.frameHeight*guardian.displayScale,COMMANDER_WALK.frameHeight*COMMANDER_WALK.displayScale);
-  assert.equal(boardCharacterAsset('rogue','fallback').directional,undefined);
+  assert.equal(boardCharacterAsset('rogue','fallback').directional?.abilityName,'pointing-glow');
 });
 
 test('Guardian raises the palm, holds the cube, lowers the hand, and returns to idle',()=>{
@@ -84,6 +84,25 @@ test('Guardian idle reveal repeats after nine stationary seconds; Commander neve
   commander.tick(9000);assert.equal(commander.currentAction,'idle');
   guardian.stop();guardian.begin({x:0,y:0},{x:48,y:0});guardian.tick(9000);
   assert.equal(guardian.currentAction,'walk');
+});
+
+test('Healer has an independent healing timeline and the approved board footprint',()=>{
+  assert.equal(boardCharacterAsset('healer','fallback').directional,HEALER_WALK);
+  assert.equal(HEALER_WALK.characterId,'healer');assert.equal(HEALER_WALK.abilityName,'healing-pulse');
+  assert.notEqual(HEALER_WALK.key,GUARDIAN_WALK.key);assert.notEqual(HEALER_WALK.path,COMMANDER_WALK.path);
+  assert.equal(HEALER_WALK.frameHeight*HEALER_WALK.displayScale,COMMANDER_WALK.frameHeight*COMMANDER_WALK.displayScale);
+  const healer=new DirectionalWalk(HEALER_WALK);healer.play('attack');assert.equal(healer.frame,24);
+  assert.equal(healer.tick(200),25);assert.equal(healer.tick(240),26);
+  assert.equal(healer.tick(999),26);assert.equal(healer.tick(1),25);
+  assert.equal(healer.tick(180),24);assert.equal(healer.tick(180),0);
+  assert.equal(healer.currentAction,'idle');
+});
+
+test('Healer casts after ten stationary seconds, preserves facing, and cancels casting for movement',()=>{
+  const healer=new DirectionalWalk(HEALER_WALK);healer.tick(9999);assert.equal(healer.currentAction,'idle');
+  healer.tick(1);assert.equal(healer.currentAction,'attack');
+  healer.face(-1,0);healer.tick(440);assert.equal(healer.frame,32);assert.equal(healer.flipX,true);
+  healer.begin({x:0,y:0},{x:0,y:-48});assert.equal(healer.currentAction,'walk');assert.equal(healer.frame,16);
 });
 
 test('A* avoids blocked and reserved tiles',()=>{

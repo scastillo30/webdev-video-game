@@ -105,3 +105,20 @@ Environment changes use a new versioned board filename and corresponding navigat
 - Office View artwork and animation mappings remain unchanged.
 
 Run `npm run test:engine`, `npm run frontend:build`, and the relevant manual checks in [TESTING.md](TESTING.md).
+
+## Holiday environment decorations
+
+At `/settings/game`, choose **Holiday Decorations → Holiday Mode**: Standard, Halloween, or Christmas. Select individual item checkboxes, then **Save Configuration**. Halloween offers jack-o’-lanterns, bats, and cobwebs; Christmas offers trees, wrapped gifts, and garlands. Each season retains its item selections when switching modes. Standard hides all seasonal decorations. Preferences are validated and persisted in SQLite by migration `007_holiday_decorations.sql`.
+
+The original background is preserved. Transparent, editable SVG decorations live in `frontend/public/assets/game-board/decorations/v001/`; placement is defined in `holiday-decorations.ts`. Floor items occupy existing blocked footprints, so navigation needs no changes. Wall items sit above the environment. These assets are independent of all roster artwork.
+
+The fireplace has layered animated flames and rising embers. Its animation follows animation speed and runtime pause/resume, and uses a stable flame pose when environment effects are disabled or reduced motion is requested.
+
+
+### Holiday backgrounds
+
+Game settings → Holiday Backgrounds selects Standard, Christmas, or Halloween using the persisted `holidayMode`. The old item checkboxes are replaced; legacy `holidayItems` remains in the API for compatibility and no longer controls scene decorations.
+
+Christmas uses the approved tree revision and adds twinkling tree lights plus gentle snow clipped to the three outside window openings. Halloween uses the approved background and adds a broomstick witch passing through those windows, fading away with a gap before returning. Both respect Environment Effects, animation speed, pause/resume, and reduced motion. Background changes preserve scene dimensions, navigation, and all character mappings.
+
+Runtime images: `frontend/public/assets/game-board/backgrounds/v001/`. Source artwork remains under `assets/backgrounds/seasonal/`. Browser integration verification: `node animation/verify_holiday_backgrounds.mjs`.

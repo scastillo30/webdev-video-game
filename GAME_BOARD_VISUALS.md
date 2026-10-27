@@ -19,6 +19,11 @@ a hand and reveals a cyan holographic cube. The original Guardian board still is
 retained as a fallback; Office `cube-wind/v002` and the canonical Guardian slot remain
 unchanged. See that version's README for the reveal timeline and validation.
 
+Healer uses `healer/snes-rpg/v001` at the same reduced board footprint. Her special
+action lifts the crosier, brightens its gem and releases a small cyan healing pulse
+with her victory-sign gesture. Office `crosier-victory/v002` remains unchanged, and
+her original board still is preserved as fallback.
+
 Game View uses a separate late-16-bit JRPG sprite presentation under:
 
 `frontend/public/assets/game-board/characters/v001/`

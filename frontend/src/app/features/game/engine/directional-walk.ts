@@ -15,7 +15,7 @@ export interface DirectionalSpriteConfig{
   readonly displayScale:number;
   readonly footOrigin:number;
   readonly sequences:DirectionalSequences;
-  readonly abilityName:'sword-flourish'|'cube-reveal';
+  readonly abilityName:'sword-flourish'|'cube-reveal'|'healing-pulse'|'shadow-cast'|'pointing-glow'|'sword-guard'|'lantern-lift'|'orb-summon';
   readonly abilityTimeline?:readonly {readonly pose:number;readonly duration:number}[];
   readonly idleAbilityIntervalMs?:number;
   readonly abilityOnFocus?:boolean;
@@ -29,9 +29,45 @@ export const COMMANDER_SEQUENCES={
 } as const;
 export const COMMANDER_WALK:DirectionalSpriteConfig={characterId:'commander',key:'commander-snes-rpg-v002',path:'/assets/characters/commander/snes-rpg/v002/spritesheet-runtime.png',frameWidth:64,frameHeight:64,columns:12,displayScale:1.2,footOrigin:62/64,sequences:COMMANDER_SEQUENCES,abilityName:'sword-flourish'};
 export const GUARDIAN_WALK:DirectionalSpriteConfig={
-  characterId:'cube-wanderer',key:'guardian-cube-reveal-v001',path:'/assets/characters/cube-wanderer/snes-rpg/v001/spritesheet-runtime.png',frameWidth:64,frameHeight:64,columns:12,displayScale:1.2,footOrigin:62/64,
+  characterId:'cube-wanderer',key:'guardian-cube-reveal-v002',path:'/assets/characters/cube-wanderer/snes-rpg/v002/spritesheet-runtime.png',frameWidth:64,frameHeight:64,columns:12,displayScale:1.2,footOrigin:62/64,
   sequences:{idle:{down:[0,1,2],up:[3,4,5],right:[6,7,8]},walk:{down:[12,13,14,15],up:[16,17,18,19],right:[20,21,22,23]},attack:{down:[24,25,26],up:[27,28,29],right:[30,31,32]},hurt:{down:[36],up:[37],right:[38]}},
   abilityName:'cube-reveal',abilityTimeline:[{pose:0,duration:180},{pose:1,duration:220},{pose:2,duration:1300},{pose:1,duration:180},{pose:0,duration:140}],idleAbilityIntervalMs:9000,abilityOnFocus:true,abilityOnStates:['WORKING','REVIEWING']
+};
+export const HEALER_WALK:DirectionalSpriteConfig={
+  characterId:'healer',key:'healer-healing-pulse-v001',path:'/assets/characters/healer/snes-rpg/v001/spritesheet-runtime.png',frameWidth:64,frameHeight:64,columns:12,displayScale:1.2,footOrigin:62/64,
+  sequences:{idle:{down:[0,1,2],up:[3,4,5],right:[6,7,8]},walk:{down:[12,13,14,15],up:[16,17,18,19],right:[20,21,22,23]},attack:{down:[24,25,26],up:[27,28,29],right:[30,31,32]},hurt:{down:[36],up:[37],right:[38]}},
+  abilityName:'healing-pulse',abilityTimeline:[{pose:0,duration:200},{pose:1,duration:240},{pose:2,duration:1000},{pose:1,duration:180},{pose:0,duration:180}],idleAbilityIntervalMs:10000,abilityOnFocus:true,abilityOnStates:['WORKING','REVIEWING']
+};
+
+export const MAGE_WALK:DirectionalSpriteConfig={
+  characterId:'mage',key:'mage-orb-summon-v001',path:'/assets/characters/mage/snes-rpg/v001/spritesheet-runtime.png',frameWidth:64,frameHeight:64,columns:12,displayScale:1.2,footOrigin:62/64,
+  sequences:COMMANDER_SEQUENCES,abilityName:'orb-summon',
+  abilityTimeline:[{pose:0,duration:180},{pose:1,duration:220},{pose:2,duration:1300},{pose:1,duration:180},{pose:0,duration:140}],
+  idleAbilityIntervalMs:9000,abilityOnFocus:true,abilityOnStates:['WORKING','REVIEWING']
+};
+export const COURIER_WALK:DirectionalSpriteConfig={
+  characterId:'courier',key:'courier-lantern-lift-v001',path:'/assets/characters/courier/snes-rpg/v001/spritesheet-runtime.png',frameWidth:64,frameHeight:64,columns:12,displayScale:1.2,footOrigin:62/64,
+  sequences:COMMANDER_SEQUENCES,abilityName:'lantern-lift',
+  abilityTimeline:[{pose:0,duration:180},{pose:1,duration:220},{pose:2,duration:1300},{pose:1,duration:180},{pose:0,duration:140}],
+  idleAbilityIntervalMs:9000,abilityOnFocus:true,abilityOnStates:['WORKING','REVIEWING']
+};
+export const SWORDSMAN_WALK:DirectionalSpriteConfig={
+  characterId:'swordsman',key:'swordsman-sword-guard-v001',path:'/assets/characters/swordsman/snes-rpg/v001/spritesheet-runtime.png',frameWidth:64,frameHeight:64,columns:12,displayScale:1.2,footOrigin:62/64,
+  sequences:COMMANDER_SEQUENCES,abilityName:'sword-guard',
+  abilityTimeline:[{pose:0,duration:180},{pose:1,duration:220},{pose:2,duration:1300},{pose:1,duration:180},{pose:0,duration:140}],
+  idleAbilityIntervalMs:9000,abilityOnFocus:true,abilityOnStates:['WORKING','REVIEWING']
+};
+export const ROGUE_WALK:DirectionalSpriteConfig={
+  characterId:'rogue',key:'rogue-pointing-glow-v001',path:'/assets/characters/rogue/snes-rpg/v001/spritesheet-runtime.png',frameWidth:64,frameHeight:64,columns:12,displayScale:1.2,footOrigin:62/64,
+  sequences:COMMANDER_SEQUENCES,abilityName:'pointing-glow',
+  abilityTimeline:[{pose:0,duration:180},{pose:1,duration:220},{pose:2,duration:1300},{pose:1,duration:180},{pose:0,duration:140}],
+  idleAbilityIntervalMs:9000,abilityOnFocus:true,abilityOnStates:['WORKING','REVIEWING']
+};
+export const BARD_WALK:DirectionalSpriteConfig={
+  characterId:'bard',key:'bard-shadow-cast-v001',path:'/assets/characters/bard/snes-rpg/v001/spritesheet-runtime.png',frameWidth:64,frameHeight:64,columns:12,displayScale:1.2,footOrigin:62/64,
+  sequences:COMMANDER_SEQUENCES,abilityName:'shadow-cast',
+  abilityTimeline:[{pose:0,duration:180},{pose:1,duration:220},{pose:2,duration:1300},{pose:1,duration:180},{pose:0,duration:140}],
+  idleAbilityIntervalMs:9000,abilityOnFocus:true,abilityOnStates:['WORKING','REVIEWING']
 };
 
 /** A distance clock: pause, FPS and speed changes cannot advance feet independently. */

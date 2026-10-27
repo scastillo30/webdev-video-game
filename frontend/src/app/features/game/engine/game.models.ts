@@ -18,6 +18,8 @@ export interface GameSettings {
   scene: 'castle-command-center';
   movementEnabled: boolean;
   effectsEnabled: boolean;
+  holidayMode: 'none' | 'halloween' | 'christmas';
+  holidayItems: string[];
   animationSpeed: number;
   spectatorEnabled: boolean;
   rotationIntervalSeconds: number;
@@ -35,6 +37,7 @@ export interface GameSettings {
 export type FeaturedTicketRule = 'recently-updated' | 'highest-priority' | 'nearest-due-date';
 
 export const defaultGameSettings=():GameSettings=>({
+  holidayMode:'none',holidayItems:['pumpkins','bats','cobwebs','trees','gifts','garlands'],
   scene:'castle-command-center',movementEnabled:true,effectsEnabled:true,animationSpeed:1,
   spectatorEnabled:true,rotationIntervalSeconds:15,tvScale:1,soundEnabled:false,
   jiraProjects:[],jiraIssueTypes:[],featuredTicketRule:'recently-updated',refreshIntervalSeconds:60,

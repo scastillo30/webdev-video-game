@@ -1,0 +1,29 @@
+Final selected full-sheet prompt (built-in imagegen):
+Use case: stylized-concept. Create a clean production pixel-art animation sheet for HEALER, the female character in reference1. Match reference2's Commander sheet quality and exact grid, NOT his identity.
+ONE SAME WOMAN throughout: blonde high ponytail, black sunglasses, ivory/red sleeveless mantle, dark tunic, olive shorts, dark leggings, brown boots. Carries EXACTLY ONE slim brown wooden crosier with EXACTLY ONE round BLUE GEM at its top. NO second staff or second blue gem in ANY pose. No sword. Free hand has no weapon.
+Style: deliberate 64x64 SNES-style sprites with flat connected color clusters, strong dark outlines, limited palette, clean readable face/glasses/hair, no painterly microtexture. Uniform chibi proportions. Standing figure about56px high inside64px tile, feetbaseline61; maintain body size and fixed elevated overworld camera. One staff remains close to body so it fits in tile.
+Canvas is 12 columns x4 rows of equal square cells,3:1 ratio, transparent. Occupied cells are33:
+ROW1 (9 figures):
+columns1,2,3 = idle FRONT facing DOWN, subtle breathing;
+columns4,5,6 = idle BACK facing UP, show back of ponytail/mantle;
+columns7,8,9 = idle PROFILE facing RIGHT.
+columns10,11,12 empty.
+ROW2 (12 figures):
+columns1,2,3,4 = WALK FRONT facing DOWN, four alternating steps;
+columns5,6,7,8 = WALK BACK facing UP, four alternating steps;
+columns9,10,11,12 = WALK PROFILE facing RIGHT, four alternating steps.
+ROW3 (9 figures):
+columns1,2,3 = healing FRONT facing DOWN;
+columns4,5,6 = healing BACK facing UP;
+columns7,8,9 = healing PROFILE facing RIGHT.
+columns10,11,12 empty.
+For each3-frame healing group, frame1 holds the single staff low/neutral; frame2 lifts that same single staff and begins raising free hand; frame3 lifts that single staff slightly more, gem shines bright CYAN with small crisp cyan rays, free hand makes two-finger victory V. Make the free-hand peace sign visible beside her head. Light is small and connected to gem, not a huge detached halo. No extra staff to represent motion, no motion trails that look like a second staff. Staff stays on SAME side throughout each facing group. Staff and gem always stay within frame, don't obscure face. Back view shows ONE staff to side and back of raised free hand. No front face in back views.
+ROW4 (3 figures):
+column1 hurt FRONT, column2 hurt BACK, column3 hurt RIGHT; columns4..12 empty.
+Hurt holds the SAME single staff; dimblue gem, no healing rays.
+Exactly9+12+9+3=33 characters, one per occupied cell; all15unusedcells empty alpha. Each sprite including staff stays within tile boundaries; no overlap between cells. No text, labels, numbers, border, grid, checkerboard, scenery, floor or cast shadows. Real transparency. Do not omit row2column8 back-walk or row3column9 healing-right. Keep detailed illustrations out: pixel art in the style of reference2, readable at actual small game scale.
+
+Additional individually generated fourth walk-down pose:
+Use case: precise-object-edit. Edit this SINGLE CHIBI HEALER sprite into the alternate walking-down step. Preserve exact art style, same VERY LARGE head/ponytail to tiny body proportions, same blonde hair, black sunglasses, ivory/red mantle, olive shorts, leggings and boots. She is facing straight toward viewer (DOWN direction). Keep exactly ONE wooden staff with one blue gem on SCREEN LEFT, held upright in her right hand. No aura and no extra staff.
+Change only the walking step: make SCREEN LEFT boot the forward/low boot and SCREEN RIGHT boot the slightly back/higher boot, bend the knees a little, free arm counter-swings slightly. Keep torso facing front, no profile or back view. Keep head horizontal and face smile. Chibi overworld pixel art character about2 heads tall INCLUDING voluminous high ponytail. Enlarge pixel clusters cleanly; native64x64 style and compact silhouette, character/staff fit inside square, feet baseline. Do not make a taller realistic body, do not reduce the head, no thin long legs.
+Actual transparent background, one complete full-body character only, generous small margin around figure, no text, no labels, no floor/shadow, no cropping of staff or boots.

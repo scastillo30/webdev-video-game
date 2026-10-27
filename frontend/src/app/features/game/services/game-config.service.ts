@@ -19,6 +19,11 @@ export class GameConfigService{
   }
 
   save(config:GameConfig):Observable<GameConfig>{
-    return this.http.put<GameConfig>('/api/game/config',config).pipe(tap(saved=>{this.errorState.next('');this.state.next(saved)}));
+    return this.http.put<GameConfig>('/api/game/config',config).pipe(tap(saved=>{
+      if(saved.settings.holidayMode!==config.settings.holidayMode){
+        throw new Error('The server did not save the selected background. Restart the backend with the current version and try again.');
+      }
+      this.errorState.next('');this.state.next(saved);
+    }));
   }
 }

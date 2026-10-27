@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import {HolidayBackground} from './holiday-background';
 import {boardCharacterAsset} from './board-character-assets';
 import {CharacterController} from './character-controller';
 import {CharacterPathfinding} from './character-pathfinding';
@@ -17,6 +18,11 @@ export const CASTLE_HEIGHT=CASTLE_ROWS*CASTLE_TILE_SIZE;
 const cellKey=(point:GridPoint):string=>`${point.x},${point.y}`;
 
 export class CastleScene extends Phaser.Scene{
+  private holiday!:HolidayBackground;
+  private background!:Phaser.GameObjects.Image;
+  private crystalObjects:Phaser.GameObjects.Shape[]=[];
+  private fireClock=0;
+  private fire!:Phaser.GameObjects.Graphics;
   private readonly controllers=new Map<string,CharacterController>();
   private readonly directiveSignatures=new Map<string,string>();
   private readonly navigation=new CastleNavigationModel();
@@ -36,6 +42,7 @@ export class CastleScene extends Phaser.Scene{
 
   preload():void{
 	this.load.image('castle-office-background','/assets/game-board/castle-office-v001.png');
+    for(const mode of ['christmas','halloween'])this.load.image(`castle-${mode}`,`/assets/game-board/backgrounds/v001/${mode}.png`);
     for(const profile of this.profiles.filter(item=>item.enabled)){
       const fallbackPath=`/legacy-game/${profile.miniatureAsset}`;
       this.load.image(`hero-${profile.characterId}`,boardCharacterAsset(profile.characterId,fallbackPath).path);
@@ -47,6 +54,10 @@ export class CastleScene extends Phaser.Scene{
   create():void{
     this.createGrid();
     this.createArchitecture();
+    this.holiday=new HolidayBackground(this,CASTLE_WIDTH,CASTLE_HEIGHT);
+    this.refreshBackground();
+    this.fire=this.add.graphics().setDepth(6);
+    this.drawFire();
     this.createFallbackTextures();
     this.pathfinding=new CharacterPathfinding(CASTLE_COLUMNS,CASTLE_ROWS,this.navigation.blocked);
     for(const profile of this.profiles.filter(item=>item.enabled)){
@@ -58,6 +69,8 @@ export class CastleScene extends Phaser.Scene{
   }
 
   override update(time:number,delta:number):void{
+    if(this.settings.effectsEnabled&&!this.reducedMotion){this.fireClock+=Math.min(delta,100)*this.settings.animationSpeed;this.drawFire()}
+    this.holiday.update(delta,this.settings,this.reducedMotion);
     for(const controller of this.controllers.values())controller.animate(delta);
     if(time-this.lastUpdate<100)return;
     this.lastUpdate=time;
@@ -79,6 +92,8 @@ export class CastleScene extends Phaser.Scene{
 
   configure(settings:GameSettings):void{
     this.settings=settings;
+    this.refreshBackground();
+    if(this.fire)this.drawFire();
     for(const controller of this.controllers.values())controller.configure(settings);
     for(const tween of this.ambientTweens)settings.effectsEnabled?tween.resume():tween.pause();
   }
@@ -94,7 +109,7 @@ export class CastleScene extends Phaser.Scene{
   }
 
   private createGrid():void{
-	this.add.image(0,0,'castle-office-background').setOrigin(0).setDisplaySize(CASTLE_WIDTH,CASTLE_HEIGHT).setDepth(0);
+	this.background=this.add.image(0,0,'castle-office-background').setOrigin(0).setDisplaySize(CASTLE_WIDTH,CASTLE_HEIGHT).setDepth(0);
 	const atmosphere=this.add.graphics().setDepth(1);
 	atmosphere.fillGradientStyle(0x03101d,0x03101d,0x020711,0x020711,.05,.05,.22,.22).fillRect(0,0,CASTLE_WIDTH,CASTLE_HEIGHT);
     if(new URLSearchParams(window.location.search).get('navGrid')==='1')this.drawNavigationGrid();
@@ -147,13 +162,38 @@ export class CastleScene extends Phaser.Scene{
   private addCrystalGlow(x:number,y:number):void{
 	const aura=this.add.circle(x,y,54,0x35dfff,.09).setDepth(4);
 	const shard=this.add.polygon(x,y,[0,-33,13,-10,9,28,0,38,-9,28,-13,-10],0xa8f5ff,.18).setStrokeStyle(1,0x7deaff,.62).setDepth(5);
+	this.crystalObjects=[aura,shard];
 	if(!this.reducedMotion)this.ambientTweens.push(this.tweens.add({targets:[aura,shard],alpha:{from:.18,to:.62},scale:{from:.96,to:1.05},duration:1900/this.settings.animationSpeed,yoyo:true,repeat:-1,ease:'Sine.inOut',paused:!this.settings.effectsEnabled}));
   }
 
+  private refreshBackground():void{
+    const mode=this.settings.holidayMode;
+    this.background.setTexture(mode==='christmas'||mode==='halloween'?`castle-${mode}`:'castle-office-background').setDisplaySize(CASTLE_WIDTH,CASTLE_HEIGHT);
+    for(const object of this.crystalObjects)object.setVisible(mode!=='christmas');
+    this.holiday.configure(mode);
+  }
+
+  private drawFire():void{
+    this.fire.clear();
+    const t=this.fireClock/1000;
+    // Layered tongues remain inside the illustrated hearth, anchored above its logs.
+    this.fire.fillStyle(0xff8b29,.09).fillEllipse(1280,159,88,64);
+    for(let i=0;i<7;i++){
+      const x=1256+i*8,y=176;
+      const wave=Math.sin(t*(7+i*.4)+i*2);
+      const height=15+(i%3)*5+(wave+1)*6;
+      this.fire.fillStyle(0xf36b20,.85).fillTriangle(x-6,y,x+wave*3,y-height,x+7,y);
+      this.fire.fillStyle(0xffd45e,.95).fillTriangle(x-3,y,x+wave*2,y-height*.7,x+4,y);
+      this.fire.fillStyle(0xfff1ae,.9).fillTriangle(x-2,y,x,y-height*.35,x+2,y);
+    }
+    if(this.settings.effectsEnabled&&!this.reducedMotion)for(let i=0;i<4;i++){
+      const phase=(t*.5+i*.27)%1;
+      this.fire.fillStyle(0xffd17c,(1-phase)*.8).fillCircle(1264+i*10+Math.sin(t*2+i)*3,166-phase*30,1.2);
+    }
+  }
+
   private addFireGlow(x:number,y:number):void{
-	const glow=this.add.circle(x,y,72,0xff9c3b,.08).setDepth(4).setBlendMode(Phaser.BlendModes.ADD);
-	const ember=this.add.circle(x,y,8,0xffdc82,.45).setDepth(5);
-	if(!this.reducedMotion)this.ambientTweens.push(this.tweens.add({targets:[glow,ember],alpha:{from:.12,to:.62},scaleX:{from:.88,to:1.12},scaleY:{from:1.08,to:.92},duration:520/this.settings.animationSpeed,yoyo:true,repeat:-1,paused:!this.settings.effectsEnabled}));
+    this.add.circle(x,y,55,0xff9c3b,.06).setDepth(4).setBlendMode(Phaser.BlendModes.ADD);
   }
 
   private createFallbackTextures():void{

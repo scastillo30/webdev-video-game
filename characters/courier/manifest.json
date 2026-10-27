@@ -1,0 +1,132 @@
+{
+  "id": "courier",
+  "name": "Moon Courier",
+  "identity": "Red-hooded cheerful bearded courier carrying a woven backpack with a cratered moon, delivery satchel and brass crescent lantern.",
+  "animations": {
+    "snes-rpg": {
+      "characterId": "courier",
+      "gameSlot": "courier",
+      "animationId": "snes-rpg",
+      "version": "v001",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "sheetWidth": 768,
+      "sheetHeight": 256,
+      "columns": 12,
+      "rows": 4,
+      "occupiedFrames": 33,
+      "paletteColors": 24,
+      "footBaseline": 61,
+      "runtimeFootOrigin": [
+        32,
+        62
+      ],
+      "runtimeDisplayScale": 1.2,
+      "sequences": {
+        "idle-down": [
+          0,
+          1,
+          2
+        ],
+        "idle-up": [
+          3,
+          4,
+          5
+        ],
+        "idle-right": [
+          6,
+          7,
+          8
+        ],
+        "walk-down": [
+          12,
+          13,
+          14,
+          15
+        ],
+        "walk-up": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "walk-right": [
+          20,
+          21,
+          22,
+          23
+        ],
+        "lantern-lift-down": [
+          24,
+          25,
+          26
+        ],
+        "lantern-lift-up": [
+          27,
+          28,
+          29
+        ],
+        "lantern-lift-right": [
+          30,
+          31,
+          32
+        ],
+        "hurt-down": [
+          36
+        ],
+        "hurt-up": [
+          37
+        ],
+        "hurt-right": [
+          38
+        ]
+      },
+      "abilityTimeline": [
+        {
+          "pose": 0,
+          "duration": 180
+        },
+        {
+          "pose": 1,
+          "duration": 220
+        },
+        {
+          "pose": 2,
+          "duration": 1300
+        },
+        {
+          "pose": 1,
+          "duration": 180
+        },
+        {
+          "pose": 0,
+          "duration": 140
+        }
+      ],
+      "idleAbilityIntervalMs": 9000,
+      "abilityOnFocus": true,
+      "leftFacing": "Mirror right; presentation hand is mirrored on left-facing sprites",
+      "compatibility": {
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "sheetWidth": 384,
+        "sheetHeight": 128,
+        "footBaseline": 30,
+        "spritesheet": "spritesheet.png"
+      },
+      "technique": "Moon Courier identity-preserving built-in imagegen artwork, registered area-coverage export with shared material palette and binary alpha",
+      "source": "assets/characters/courier/snes-rpg/v001/source-generated.png",
+      "spritesheet": "assets/characters/courier/snes-rpg/v001/spritesheet-runtime.png",
+      "compatibilitySpritesheet": "assets/characters/courier/snes-rpg/v001/spritesheet.png",
+      "animation": "assets/characters/courier/snes-rpg/v001/lantern-lift-down.webp",
+      "poster": "assets/characters/courier/snes-rpg/v001/poster.webp",
+      "head": "assets/characters/courier/snes-rpg/v001/head.webp",
+      "gameIntegration": "Moon Courier castle board slot only; original Office artwork and all original assets preserved"
+    }
+  },
+  "legacyAssetsPreserved": [
+    "assets/courier_full.webp",
+    "assets/courier_body.webp",
+    "assets/courier_head.webp"
+  ]
+}

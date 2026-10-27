@@ -6,7 +6,7 @@ import {CharacterState, GameConfig, GameProfile, StatusBehaviorMapping} from '..
 import {GameConfigService} from '../game/services/game-config.service';
 
 const cloneConfig=(config:GameConfig):GameConfig=>({
-  settings:{...config.settings,jiraProjects:[...config.settings.jiraProjects],jiraIssueTypes:[...config.settings.jiraIssueTypes]},
+  settings:{...config.settings,holidayItems:[...(config.settings.holidayItems??[])],jiraProjects:[...config.settings.jiraProjects],jiraIssueTypes:[...config.settings.jiraIssueTypes]},
   profiles:config.profiles.map(profile=>({...profile})),
   statusMappings:config.statusMappings.map(mapping=>({...mapping}))
 });
@@ -26,6 +26,13 @@ const cloneConfig=(config:GameConfig):GameConfig=>({
       <form *ngIf="edit as config" (ngSubmit)="save()" class="game-settings-form">
         <p class="settings-alert error" *ngIf="error">{{error}}</p>
         <p class="settings-alert success" *ngIf="saved">Configuration saved. Game View will use it immediately.</p>
+
+        <section class="settings-card">
+          <div class="settings-card-title"><span>✦</span><div><h2>Holiday Backgrounds</h2><p>Choose the castle background. Christmas includes twinkling tree lights and snowfall outside; Halloween includes a visiting witch.</p></div></div>
+          <div class="settings-grid">
+            <label>BACKGROUND<select name="holidayMode" [(ngModel)]="config.settings.holidayMode"><option value="none">Standard</option><option value="christmas">Christmas</option><option value="halloween">Halloween</option></select></label>
+          </div>
+        </section>
 
         <section class="settings-card">
           <div class="settings-card-title"><span>01</span><div><h2>Scene & Motion</h2><p>Runtime behavior without changing character-owned animation files.</p></div></div>
@@ -133,7 +140,7 @@ export class GameSettingsComponent implements OnInit,OnDestroy{
     this.saving=true;
     this.service.save(this.edit).subscribe({
       next:config=>{this.setEdit(config);this.saving=false;this.saved=true},
-      error:response=>{this.saving=false;this.error=response.error?.error||'Could not save configuration'}
+      error:response=>{this.saving=false;this.error=response.error?.error||response.message||'Could not save configuration'}
     });
   }
 

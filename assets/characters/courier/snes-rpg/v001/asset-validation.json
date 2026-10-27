@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "exports": [
+    {
+      "file": "spritesheet-runtime.png",
+      "frameSize": 64,
+      "occupiedFrames": 33,
+      "uniquePoses": 30,
+      "binaryAlpha": true,
+      "alignedBaselines": true,
+      "paletteColors": 24
+    },
+    {
+      "file": "spritesheet.png",
+      "frameSize": 32,
+      "occupiedFrames": 33,
+      "uniquePoses": 30,
+      "binaryAlpha": true,
+      "alignedBaselines": true,
+      "paletteColors": 24
+    }
+  ]
+}

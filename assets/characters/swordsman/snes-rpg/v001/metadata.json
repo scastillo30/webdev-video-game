@@ -1,0 +1,472 @@
+{
+  "characterId": "swordsman",
+  "gameSlot": "swordsman",
+  "animationId": "snes-rpg",
+  "version": "v001",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "sheetWidth": 768,
+  "sheetHeight": 256,
+  "columns": 12,
+  "rows": 4,
+  "occupiedFrames": 33,
+  "paletteColors": 24,
+  "footBaseline": 61,
+  "runtimeFootOrigin": [
+    32,
+    62
+  ],
+  "runtimeDisplayScale": 1.2,
+  "sequences": {
+    "idle-down": [
+      0,
+      1,
+      2
+    ],
+    "idle-up": [
+      3,
+      4,
+      5
+    ],
+    "idle-right": [
+      6,
+      7,
+      8
+    ],
+    "walk-down": [
+      12,
+      13,
+      14,
+      15
+    ],
+    "walk-up": [
+      16,
+      17,
+      18,
+      19
+    ],
+    "walk-right": [
+      20,
+      21,
+      22,
+      23
+    ],
+    "sword-guard-down": [
+      24,
+      25,
+      26
+    ],
+    "sword-guard-up": [
+      27,
+      28,
+      29
+    ],
+    "sword-guard-right": [
+      30,
+      31,
+      32
+    ],
+    "hurt-down": [
+      36
+    ],
+    "hurt-up": [
+      37
+    ],
+    "hurt-right": [
+      38
+    ]
+  },
+  "abilityTimeline": [
+    {
+      "pose": 0,
+      "duration": 180
+    },
+    {
+      "pose": 1,
+      "duration": 220
+    },
+    {
+      "pose": 2,
+      "duration": 1300
+    },
+    {
+      "pose": 1,
+      "duration": 180
+    },
+    {
+      "pose": 0,
+      "duration": 140
+    }
+  ],
+  "idleAbilityIntervalMs": 9000,
+  "abilityOnFocus": true,
+  "leftFacing": "Mirror right; presentation hand is mirrored on left-facing sprites",
+  "compatibility": {
+    "frameWidth": 32,
+    "frameHeight": 32,
+    "sheetWidth": 384,
+    "sheetHeight": 128,
+    "footBaseline": 30,
+    "spritesheet": "spritesheet.png"
+  },
+  "technique": "Swordsman identity-preserving built-in imagegen artwork, registered area-coverage export with shared material palette and binary alpha",
+  "registrations": [
+    {
+      "row": 0,
+      "column": 0,
+      "sourceBounds": [
+        37,
+        7,
+        158,
+        185
+      ],
+      "bodyCenterX": 103.0
+    },
+    {
+      "row": 0,
+      "column": 1,
+      "sourceBounds": [
+        209,
+        7,
+        329,
+        185
+      ],
+      "bodyCenterX": 275.5
+    },
+    {
+      "row": 0,
+      "column": 2,
+      "sourceBounds": [
+        384,
+        6,
+        497,
+        185
+      ],
+      "bodyCenterX": 444.0
+    },
+    {
+      "row": 0,
+      "column": 3,
+      "sourceBounds": [
+        575,
+        7,
+        683,
+        181
+      ],
+      "bodyCenterX": 626.0
+    },
+    {
+      "row": 0,
+      "column": 4,
+      "sourceBounds": [
+        756,
+        7,
+        872,
+        183
+      ],
+      "bodyCenterX": 808.0
+    },
+    {
+      "row": 0,
+      "column": 5,
+      "sourceBounds": [
+        936,
+        7,
+        1056,
+        183
+      ],
+      "bodyCenterX": 987.0
+    },
+    {
+      "row": 0,
+      "column": 6,
+      "sourceBounds": [
+        1104,
+        8,
+        1252,
+        184
+      ],
+      "bodyCenterX": 1180.0
+    },
+    {
+      "row": 0,
+      "column": 7,
+      "sourceBounds": [
+        1287,
+        8,
+        1430,
+        182
+      ],
+      "bodyCenterX": 1360.0
+    },
+    {
+      "row": 0,
+      "column": 8,
+      "sourceBounds": [
+        1462,
+        7,
+        1611,
+        182
+      ],
+      "bodyCenterX": 1536.0
+    },
+    {
+      "row": 1,
+      "column": 0,
+      "sourceBounds": [
+        37,
+        189,
+        176,
+        364
+      ],
+      "bodyCenterX": 103.0
+    },
+    {
+      "row": 1,
+      "column": 1,
+      "sourceBounds": [
+        210,
+        189,
+        346,
+        364
+      ],
+      "bodyCenterX": 274.0
+    },
+    {
+      "row": 1,
+      "column": 2,
+      "sourceBounds": [
+        379,
+        189,
+        522,
+        364
+      ],
+      "bodyCenterX": 443.0
+    },
+    {
+      "row": 1,
+      "column": 3,
+      "sourceBounds": [
+        560,
+        189,
+        697,
+        364
+      ],
+      "bodyCenterX": 620.0
+    },
+    {
+      "row": 1,
+      "column": 4,
+      "sourceBounds": [
+        749,
+        189,
+        881,
+        364
+      ],
+      "bodyCenterX": 801.0
+    },
+    {
+      "row": 1,
+      "column": 5,
+      "sourceBounds": [
+        932,
+        189,
+        1064,
+        364
+      ],
+      "bodyCenterX": 984.0
+    },
+    {
+      "row": 1,
+      "column": 6,
+      "sourceBounds": [
+        1123,
+        188,
+        1255,
+        364
+      ],
+      "bodyCenterX": 1176.0
+    },
+    {
+      "row": 1,
+      "column": 8,
+      "sourceBounds": [
+        1290,
+        193,
+        1441,
+        364
+      ],
+      "bodyCenterX": 1371.0
+    },
+    {
+      "row": 1,
+      "column": 9,
+      "sourceBounds": [
+        1466,
+        193,
+        1626,
+        364
+      ],
+      "bodyCenterX": 1554.5
+    },
+    {
+      "row": 1,
+      "column": 10,
+      "sourceBounds": [
+        1648,
+        193,
+        1810,
+        364
+      ],
+      "bodyCenterX": 1736.0
+    },
+    {
+      "row": 1,
+      "column": 11,
+      "sourceBounds": [
+        1825,
+        194,
+        1959,
+        364
+      ],
+      "bodyCenterX": 1913.0
+    },
+    {
+      "row": 2,
+      "column": 0,
+      "sourceBounds": [
+        43,
+        369,
+        152,
+        544
+      ],
+      "bodyCenterX": 103.0
+    },
+    {
+      "row": 2,
+      "column": 1,
+      "sourceBounds": [
+        210,
+        370,
+        344,
+        544
+      ],
+      "bodyCenterX": 273.0
+    },
+    {
+      "row": 2,
+      "column": 2,
+      "sourceBounds": [
+        386,
+        369,
+        527,
+        543
+      ],
+      "bodyCenterX": 446.0
+    },
+    {
+      "row": 2,
+      "column": 3,
+      "sourceBounds": [
+        552,
+        370,
+        700,
+        545
+      ],
+      "bodyCenterX": 623.0
+    },
+    {
+      "row": 2,
+      "column": 4,
+      "sourceBounds": [
+        739,
+        370,
+        881,
+        545
+      ],
+      "bodyCenterX": 804.0
+    },
+    {
+      "row": 2,
+      "column": 5,
+      "sourceBounds": [
+        908,
+        370,
+        1056,
+        545
+      ],
+      "bodyCenterX": 985.0
+    },
+    {
+      "row": 2,
+      "column": 6,
+      "sourceBounds": [
+        1094,
+        372,
+        1265,
+        545
+      ],
+      "bodyCenterX": 1179.0
+    },
+    {
+      "row": 2,
+      "column": 7,
+      "sourceBounds": [
+        1278,
+        371,
+        1415,
+        545
+      ],
+      "bodyCenterX": 1360.0
+    },
+    {
+      "row": 2,
+      "column": 8,
+      "sourceBounds": [
+        1450,
+        372,
+        1625,
+        545
+      ],
+      "bodyCenterX": 1548.0
+    },
+    {
+      "row": 3,
+      "column": 0,
+      "sourceBounds": [
+        26,
+        555,
+        164,
+        719
+      ],
+      "bodyCenterX": 108.0
+    },
+    {
+      "row": 3,
+      "column": 1,
+      "sourceBounds": [
+        217,
+        552,
+        342,
+        720
+      ],
+      "bodyCenterX": 277.0
+    },
+    {
+      "row": 3,
+      "column": 2,
+      "sourceBounds": [
+        364,
+        554,
+        524,
+        720
+      ],
+      "bodyCenterX": 474.0
+    },
+    {
+      "row": 1,
+      "column": 7,
+      "source": "source-walk-up.png"
+    }
+  ]
+}

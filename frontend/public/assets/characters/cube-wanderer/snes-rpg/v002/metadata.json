@@ -1,0 +1,480 @@
+{
+  "characterId": "cube-wanderer",
+  "gameSlot": "guardian",
+  "animationId": "snes-rpg",
+  "version": "v002",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "sheetWidth": 768,
+  "sheetHeight": 256,
+  "columns": 12,
+  "rows": 4,
+  "occupiedFrames": 33,
+  "paletteColors": 24,
+  "footBaseline": 61,
+  "runtimeFootOrigin": [
+    32,
+    62
+  ],
+  "runtimeDisplayScale": 1.2,
+  "sequences": {
+    "idle-down": [
+      0,
+      1,
+      2
+    ],
+    "idle-up": [
+      3,
+      4,
+      5
+    ],
+    "idle-right": [
+      6,
+      7,
+      8
+    ],
+    "walk-down": [
+      12,
+      13,
+      14,
+      15
+    ],
+    "walk-up": [
+      16,
+      17,
+      18,
+      19
+    ],
+    "walk-right": [
+      20,
+      21,
+      22,
+      23
+    ],
+    "cube-reveal-down": [
+      24,
+      25,
+      26
+    ],
+    "cube-reveal-up": [
+      27,
+      28,
+      29
+    ],
+    "cube-reveal-right": [
+      30,
+      31,
+      32
+    ],
+    "hurt-down": [
+      36
+    ],
+    "hurt-up": [
+      37
+    ],
+    "hurt-right": [
+      38
+    ]
+  },
+  "abilityTimeline": [
+    {
+      "pose": 0,
+      "duration": 180
+    },
+    {
+      "pose": 1,
+      "duration": 220
+    },
+    {
+      "pose": 2,
+      "duration": 1300
+    },
+    {
+      "pose": 1,
+      "duration": 180
+    },
+    {
+      "pose": 0,
+      "duration": 140
+    }
+  ],
+  "idleAbilityIntervalMs": 9000,
+  "abilityOnFocus": true,
+  "leftFacing": "Mirror right; presentation hand is mirrored on left-facing sprites",
+  "compatibility": {
+    "frameWidth": 32,
+    "frameHeight": 32,
+    "sheetWidth": 384,
+    "sheetHeight": 128,
+    "footBaseline": 30,
+    "spritesheet": "spritesheet.png"
+  },
+  "technique": "Guardian identity-preserving built-in imagegen artwork, registered area-coverage export with shared material palette and binary alpha",
+  "registrations": [
+    {
+      "row": 0,
+      "column": 3,
+      "sourceBounds": [
+        588,
+        29,
+        703,
+        187
+      ],
+      "bodyCenterX": 645.0
+    },
+    {
+      "row": 0,
+      "column": 4,
+      "sourceBounds": [
+        768,
+        29,
+        883,
+        187
+      ],
+      "bodyCenterX": 825.0
+    },
+    {
+      "row": 0,
+      "column": 5,
+      "sourceBounds": [
+        948,
+        29,
+        1064,
+        188
+      ],
+      "bodyCenterX": 1006.0
+    },
+    {
+      "row": 0,
+      "column": 8,
+      "sourceBounds": [
+        1471,
+        30,
+        1575,
+        188
+      ],
+      "bodyCenterX": 1537.0
+    },
+    {
+      "row": 0,
+      "column": 0,
+      "sourceBounds": [
+        44,
+        31,
+        161,
+        188
+      ],
+      "bodyCenterX": 103.0
+    },
+    {
+      "row": 0,
+      "column": 1,
+      "sourceBounds": [
+        225,
+        31,
+        342,
+        187
+      ],
+      "bodyCenterX": 285.0
+    },
+    {
+      "row": 0,
+      "column": 2,
+      "sourceBounds": [
+        406,
+        31,
+        523,
+        188
+      ],
+      "bodyCenterX": 464.0
+    },
+    {
+      "row": 0,
+      "column": 6,
+      "sourceBounds": [
+        1113,
+        31,
+        1219,
+        188
+      ],
+      "bodyCenterX": 1181.0
+    },
+    {
+      "row": 0,
+      "column": 7,
+      "sourceBounds": [
+        1296,
+        31,
+        1395,
+        188
+      ],
+      "bodyCenterX": 1356.0
+    },
+    {
+      "row": 1,
+      "column": 0,
+      "sourceBounds": [
+        32,
+        210,
+        167,
+        372
+      ],
+      "bodyCenterX": 98.0
+    },
+    {
+      "row": 1,
+      "column": 1,
+      "sourceBounds": [
+        209,
+        210,
+        336,
+        372
+      ],
+      "bodyCenterX": 271.0
+    },
+    {
+      "row": 1,
+      "column": 2,
+      "sourceBounds": [
+        389,
+        210,
+        509,
+        366
+      ],
+      "bodyCenterX": 449.0
+    },
+    {
+      "row": 1,
+      "column": 3,
+      "sourceBounds": [
+        569,
+        210,
+        692,
+        372
+      ],
+      "bodyCenterX": 632.0
+    },
+    {
+      "row": 1,
+      "column": 5,
+      "sourceBounds": [
+        934,
+        210,
+        1052,
+        372
+      ],
+      "bodyCenterX": 992.0
+    },
+    {
+      "row": 1,
+      "column": 4,
+      "sourceBounds": [
+        753,
+        211,
+        874,
+        372
+      ],
+      "bodyCenterX": 811.0
+    },
+    {
+      "row": 1,
+      "column": 6,
+      "sourceBounds": [
+        1115,
+        211,
+        1231,
+        372
+      ],
+      "bodyCenterX": 1175.0
+    },
+    {
+      "row": 1,
+      "column": 11,
+      "sourceBounds": [
+        1973,
+        211,
+        2099,
+        370
+      ],
+      "bodyCenterX": 2054.0
+    },
+    {
+      "row": 1,
+      "column": 7,
+      "sourceBounds": [
+        1272,
+        212,
+        1402,
+        370
+      ],
+      "bodyCenterX": 1357.0
+    },
+    {
+      "row": 1,
+      "column": 8,
+      "sourceBounds": [
+        1457,
+        212,
+        1587,
+        370
+      ],
+      "bodyCenterX": 1542.0
+    },
+    {
+      "row": 1,
+      "column": 9,
+      "sourceBounds": [
+        1626,
+        212,
+        1757,
+        370
+      ],
+      "bodyCenterX": 1712.0
+    },
+    {
+      "row": 1,
+      "column": 10,
+      "sourceBounds": [
+        1803,
+        212,
+        1931,
+        370
+      ],
+      "bodyCenterX": 1885.0
+    },
+    {
+      "row": 2,
+      "column": 5,
+      "sourceBounds": [
+        938,
+        387,
+        1092,
+        551
+      ],
+      "bodyCenterX": 1002.0
+    },
+    {
+      "row": 2,
+      "column": 0,
+      "sourceBounds": [
+        32,
+        393,
+        168,
+        549
+      ],
+      "bodyCenterX": 101.0
+    },
+    {
+      "row": 2,
+      "column": 2,
+      "sourceBounds": [
+        374,
+        393,
+        525,
+        549
+      ],
+      "bodyCenterX": 437.0
+    },
+    {
+      "row": 2,
+      "column": 3,
+      "sourceBounds": [
+        570,
+        393,
+        713,
+        549
+      ],
+      "bodyCenterX": 651.0
+    },
+    {
+      "row": 2,
+      "column": 6,
+      "sourceBounds": [
+        1117,
+        393,
+        1243,
+        551
+      ],
+      "bodyCenterX": 1188.0
+    },
+    {
+      "row": 2,
+      "column": 7,
+      "sourceBounds": [
+        1282,
+        393,
+        1417,
+        551
+      ],
+      "bodyCenterX": 1356.0
+    },
+    {
+      "row": 2,
+      "column": 8,
+      "sourceBounds": [
+        1439,
+        393,
+        1588,
+        551
+      ],
+      "bodyCenterX": 1502.5
+    },
+    {
+      "row": 2,
+      "column": 1,
+      "sourceBounds": [
+        213,
+        394,
+        340,
+        549
+      ],
+      "bodyCenterX": 283.0
+    },
+    {
+      "row": 2,
+      "column": 4,
+      "sourceBounds": [
+        765,
+        396,
+        898,
+        549
+      ],
+      "bodyCenterX": 830.0
+    },
+    {
+      "row": 3,
+      "column": 0,
+      "sourceBounds": [
+        26,
+        568,
+        163,
+        710
+      ],
+      "bodyCenterX": 94.0
+    },
+    {
+      "row": 3,
+      "column": 1,
+      "sourceBounds": [
+        216,
+        568,
+        331,
+        709
+      ],
+      "bodyCenterX": 277.0
+    },
+    {
+      "row": 3,
+      "column": 2,
+      "sourceBounds": [
+        372,
+        569,
+        517,
+        709
+      ],
+      "bodyCenterX": 467.0
+    }
+  ],
+  "source": "source-walk-right.png",
+  "change": "Only sideways walking legs revised: contact, passing, opposite contact, opposite passing; left mirrors right."
+}

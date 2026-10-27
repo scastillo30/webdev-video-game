@@ -9,7 +9,7 @@ const outputFile=join(outputDirectory,'game-engine.test.mjs');
 
 try{
   await build({
-    entryPoints:['tests/game-engine.test.ts'],
+    stdin:{contents:"import './tests/game-engine.test.ts'; import './tests/holiday-decorations.test.ts';",resolveDir:process.cwd(),loader:'ts'},
     outfile:outputFile,
     bundle:true,
     platform:'node',
