@@ -9,7 +9,7 @@ import {GameBehaviorService} from './services/game-behavior.service';
 import {GameConfigService} from './services/game-config.service';
 import {SpectatorDirectorService} from './services/spectator-director.service';
 import {EmployeeJiraActivity, UserJiraService} from '../../core/jira/user-jira.service';
-import {jiraStatusPresentation, jiraWorkPresentation} from '../../core/jira/jira-work-presentation';
+import {jiraRelativeTime, jiraStatusPresentation, jiraWorkPresentation} from '../../core/jira/jira-work-presentation';
 
 @Component({
   selector:'app-game-view',
@@ -55,7 +55,7 @@ import {jiraStatusPresentation, jiraWorkPresentation} from '../../core/jira/jira
               <small *ngIf="presentation.active">JIRA USER · {{presentation.active.event.authorName || 'IDENTITY HIDDEN'}}</small>
             </div>
             <ng-container *ngIf="presentation.active as item; else selectedIdle">
-              <strong class="activity-dialogue">{{dialogueFor(item.event)}}</strong>
+              <p class="activity-dialogue">{{dialogueWorkFor(item.event)}} <strong>{{relativeTime(item.event.occurredAt)}}</strong>!</p>
               <a class="ticket-title" [href]="item.event.issueUrl" target="_blank" rel="noopener noreferrer">
                 <b>{{item.event.issueKey}}</b> {{item.event.issueSummary}}
               </a>
@@ -190,8 +190,8 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
     else void this.gameHost.nativeElement.closest('.game-view')?.requestFullscreen().catch(()=>undefined);
   }
 
-  protected dialogueFor(event:JiraActivityEvent):string{
-    return jiraWorkPresentation(event,this.issues.find(issue=>issue.issueKey===event.issueKey)??null).text;
+  protected dialogueWorkFor(event:JiraActivityEvent):string{
+    return jiraWorkPresentation(event,this.issues.find(issue=>issue.issueKey===event.issueKey)??null).work;
   }
 
   protected statusFor(event:JiraActivityEvent){
@@ -200,13 +200,7 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   }
 
   protected relativeTime(value:string):string{
-    const elapsed=Date.now()-Date.parse(value);
-    if(!Number.isFinite(elapsed))return'Unknown time';
-    const minutes=Math.max(0,Math.floor(elapsed/60_000));
-    if(minutes<1)return'Just now';
-    if(minutes<60)return`${minutes}m ago`;
-    const hours=Math.floor(minutes/60);if(hours<24)return`${hours}h ago`;
-    return`${Math.floor(hours/24)}d ago`;
+    return jiraRelativeTime(value);
   }
 
   ngOnDestroy():void{
@@ -227,7 +221,7 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
 
   private renderPresentation():void{
     const active=this.presentation.active?this.behavior.directiveFor(this.presentation.active,this.issues,this.statusMappings):null;
-    const directives=active?[...this.baseDirectives.filter(item=>item.characterId!==active.characterId),active]:this.baseDirectives;
+    const directives=this.behavior.singleSpeakerDirectives(this.baseDirectives,active);
     this.runtime.applyDirectives(directives);
     this.runtime.focusCharacter(this.presentation.focusCharacterId);
   }

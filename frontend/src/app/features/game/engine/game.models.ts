@@ -64,6 +64,8 @@ export interface CharacterDirective {
   issue: JiraIssueSnapshot | null;
   event: JiraActivityEvent | null;
   label: string;
+  bubbleTitle?: string | null;
+  bubbleTime?: string | null;
   status: {label:string;color:number} | null;
 }
 

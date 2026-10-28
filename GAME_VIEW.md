@@ -25,7 +25,7 @@ The image supplies appearance; code supplies movement rules. `castle-navigation.
 
 Characters can use workstations and shared targets such as the planning table, library/archive areas, QA board, consoles, and idle/home locations. The autonomous scheduler chooses low-frequency movement and social/work interactions; Jira directives can override ambient intent. Characters must not cross desks, walls, the fountain, the central table, or other mapped obstacles.
 
-All character bubbles use that character's latest mapped Jira ticket narration, including while walking, meeting, or interacting with a workstation. Location labels and ambient conversation copy are not shown in bubbles. When Jira or a character mapping cannot be read, the bubble shows `Cannot access JIRA Status`.
+Only the active spectator character shows a Jira bubble; other characters keep their Jira-driven movement and state without opening competing bubbles. The active bubble presents the recorded action, ticket title, bold compact relative time (`10m ago`, `10h ago`, or `10d ago`), and status. Location labels and ambient conversation copy are not shown. When Jira or a character mapping cannot be read, the presentation shows `Cannot access JIRA Status`.
 
 The board accepts both the shared Jira snapshot and the employee Jira Activity URL feed already used by the Jira Profile drawer. A linked, readable employee feed therefore drives the bubbles even when the optional shared snapshot reports `not configured`.
 

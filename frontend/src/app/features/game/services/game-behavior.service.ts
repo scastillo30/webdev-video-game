@@ -48,7 +48,8 @@ export class GameBehaviorService{
       let state:CharacterState=status?this.configuredState(status,category,statusMappings):'IDLE';
       if(state==='CELEBRATING')state='IDLE';
       const presentation=event?jiraWorkPresentation(event,issue):issue?jiraAssignedWorkPresentation(issue):null;
-      return{characterId:profile.characterId,state,issue,event,label:presentation?.text??JIRA_UNAVAILABLE_MESSAGE,status:presentation?.status??null};
+      return{characterId:profile.characterId,state,issue,event,label:presentation?.work??JIRA_UNAVAILABLE_MESSAGE,
+        bubbleTitle:event?.issueSummary??issue?.summary??null,bubbleTime:presentation?.relativeTime??null,status:presentation?.status??null};
     });
     const spectatorItems:SpectatorItem[]=[];
     const spectatorIds=new Set<string>();
@@ -75,8 +76,13 @@ export class GameBehaviorService{
     else if(/COMMENT|DISCUSS/.test(action))state='DISCUSSING';
     else if(state==='IDLE')state='WORKING';
     const presentation=jiraWorkPresentation(event,issue);
-    const grouped=item.groupedEventCount>1?`${presentation.text} I also have ${item.groupedEventCount-1} more ${item.groupedEventCount===2?'update':'updates'} to share.`:presentation.text;
-    return{characterId:item.character.characterId,state,issue,event,label:grouped,status:presentation.status};
+    const grouped=item.groupedEventCount>1?`${presentation.work}. I also have ${item.groupedEventCount-1} more ${item.groupedEventCount===2?'update':'updates'} to share`:presentation.work;
+    return{characterId:item.character.characterId,state,issue,event,label:grouped,bubbleTitle:event.issueSummary,
+      bubbleTime:presentation.relativeTime,status:presentation.status};
+  }
+
+  singleSpeakerDirectives(directives:CharacterDirective[],active:CharacterDirective|null):CharacterDirective[]{
+    return directives.map(directive=>directive.characterId===active?.characterId?active:{...directive,label:'',bubbleTitle:null,bubbleTime:null,status:null});
   }
 
   private mapping(profiles:GameProfile[]):Map<string,GameProfile>{

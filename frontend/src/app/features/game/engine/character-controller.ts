@@ -15,6 +15,8 @@ export class CharacterController{
   private readonly bubble:Phaser.GameObjects.Container;
   private readonly bubbleBack:Phaser.GameObjects.Rectangle;
   private readonly bubbleText:Phaser.GameObjects.Text;
+  private readonly bubbleTitleText:Phaser.GameObjects.Text;
+  private readonly bubbleTimeText:Phaser.GameObjects.Text;
   private readonly bubbleStatusBack:Phaser.GameObjects.Rectangle;
   private readonly bubbleStatusText:Phaser.GameObjects.Text;
   private readonly bubbleY:number;
@@ -63,11 +65,13 @@ export class CharacterController{
 	const plate=scene.add.rectangle(0,17,96,18,0x071426,.94).setStrokeStyle(1,0x8e7145,.9);
 	const label=scene.add.text(0,17,profile.displayName.toUpperCase(),{fontFamily:'Cinzel,serif',fontSize:'9px',color:'#f0d39b'}).setOrigin(.5);
 	this.bubbleY=this.directional?-118:-154;
-	this.bubbleBack=scene.add.rectangle(0,this.bubbleY,226,64,0x071426,.98).setStrokeStyle(1,0xddb868,.95);
-	this.bubbleText=scene.add.text(0,this.bubbleY-8,'',{fontFamily:'Manrope,sans-serif',fontSize:'10px',color:'#f3ead9',align:'center',lineSpacing:2,wordWrap:{width:210}}).setOrigin(.5);
+	this.bubbleBack=scene.add.rectangle(0,this.bubbleY,236,64,0x071426,.98).setStrokeStyle(1,0xddb868,.95);
+	this.bubbleText=scene.add.text(0,this.bubbleY-8,'',{fontFamily:'Manrope,sans-serif',fontSize:'10px',color:'#f3ead9',align:'center',lineSpacing:2,wordWrap:{width:220}}).setOrigin(.5);
+	this.bubbleTitleText=scene.add.text(0,this.bubbleY,'',{fontFamily:'Manrope,sans-serif',fontSize:'9px',color:'#8ee9ff',align:'center',wordWrap:{width:218}}).setOrigin(.5).setVisible(false);
+	this.bubbleTimeText=scene.add.text(0,this.bubbleY,'',{fontFamily:'Manrope,sans-serif',fontSize:'9px',fontStyle:'bold',color:'#fff1c9',align:'center'}).setOrigin(.5).setVisible(false);
 	this.bubbleStatusBack=scene.add.rectangle(0,this.bubbleY+20,118,16,0x112638,.98).setStrokeStyle(1,0x8ee9ff,.95).setVisible(false);
 	this.bubbleStatusText=scene.add.text(0,this.bubbleY+20,'',{fontFamily:'Manrope,sans-serif',fontSize:'8px',fontStyle:'bold',color:'#8ee9ff',align:'center'}).setOrigin(.5).setVisible(false);
-    this.bubble=scene.add.container(0,0,[this.bubbleBack,this.bubbleText,this.bubbleStatusBack,this.bubbleStatusText]).setAlpha(0);
+    this.bubble=scene.add.container(0,0,[this.bubbleBack,this.bubbleText,this.bubbleTitleText,this.bubbleTimeText,this.bubbleStatusBack,this.bubbleStatusText]).setAlpha(0);
 	const hitArea=this.directional?new Phaser.Geom.Rectangle(-32,-78,64,106):new Phaser.Geom.Rectangle(-44,-118,88,136);
 	this.container=scene.add.container(position.x,position.y,[this.halo,shadow,this.figure,plate,label,this.bubble]).setSize(hitArea.width,hitArea.height).setInteractive(hitArea,Phaser.Geom.Rectangle.Contains);
     this.container.on('pointerdown',()=>onSelect(profile.characterId));
@@ -100,8 +104,9 @@ export class CharacterController{
   apply(directive:CharacterDirective,target:GridPoint,reserved:ReadonlySet<string>,facingX?:number):void{
 	this.activitySequence++;
 	this.autonomousActivity=false;
-	const finish=()=>{this.faceTowards(facingX);this.setState(directive.state,directive.label,directive.status);if(directive.state==='CELEBRATING')this.celebrate()};
-    this.moveTo(target,reserved,finish,directive.state,directive.label,directive.status);
+	const details={title:directive.bubbleTitle??'',time:directive.bubbleTime??''};
+	const finish=()=>{this.faceTowards(facingX);this.setState(directive.state,directive.label,directive.status,details);if(directive.state==='CELEBRATING')this.celebrate()};
+    this.moveTo(target,reserved,finish,directive.state,directive.label,directive.status,details);
   }
 
   wander(target:GridPoint,reserved:ReadonlySet<string>):void{
@@ -150,14 +155,14 @@ export class CharacterController{
 	this.container.setScale(active&&!this.directional?1.08:1);this.container.setAlpha(1);
   }
 
-  private moveTo(target:GridPoint,reserved:ReadonlySet<string>,onComplete:()=>void,finalState:CharacterState,travelLabel='',travelStatus:{label:string;color:number}|null=null):void{
+  private moveTo(target:GridPoint,reserved:ReadonlySet<string>,onComplete:()=>void,finalState:CharacterState,travelLabel='',travelStatus:{label:string;color:number}|null=null,bubbleDetails:{title:string;time:string}|null=null):void{
 	if(this.moving){this.scene.tweens.killTweensOf(this.container);this.moving=false;this.movementTween=undefined;this.showWalkFrame(this.walk.stop());this.machine.transition('IDLE')}
     const path=this.pathfinding.find(this.cell,target,reserved);
 	if(!path.length){this.targetCell=null;if(this.cell.x===target.x&&this.cell.y===target.y)onComplete();return}
 	this.targetCell={...target};
 	if(!this.movementEnabled){this.targetCell=null;onComplete();return}
 	if(this.reducedMotion){const end=path[path.length-1],previous=path.length>1?path[path.length-2]:this.cell;this.walk.face(end.x-previous.x,end.y-previous.y);this.showWalkFrame(this.walk.stop());this.cell={...end};this.targetCell=null;const world=this.world(this.cell);this.container.setPosition(world.x,world.y);this.updateDepth();onComplete();return}
-    this.machine.transition('WALKING');this.moving=true;if(finalState==='IDLE')this.hideBubble(true);else this.showBubble(travelLabel,travelStatus);
+    this.machine.transition('WALKING');this.moving=true;if(finalState==='IDLE')this.hideBubble(true);else this.showBubble(travelLabel,travelStatus,bubbleDetails);
     const advance=(index:number):void=>{
 	  const next=path[index];if(!next){this.moving=false;this.movementTween=undefined;this.showWalkFrame(this.walk.stop());this.cell={...target};this.targetCell=null;this.hideBubble(finalState==='IDLE');onComplete();return}
 	  const world=this.world(next),delta=world.x-this.container.x;
@@ -168,7 +173,7 @@ export class CharacterController{
     advance(0);
   }
 
-  private setState(state:CharacterState,label:string,status:{label:string;color:number}|null=null):void{
+  private setState(state:CharacterState,label:string,status:{label:string;color:number}|null=null,bubbleDetails:{title:string;time:string}|null=null):void{
     const changed=this.machine.transition(state);
     if(changed&&this.directional&&!this.moving){
       this.walk.stop();
@@ -182,7 +187,7 @@ export class CharacterController{
     if(state==='BLOCKED')this.image.setTint(0xffa0ad);
     else if(state==='REVIEWING')this.image.setTint(0xb8deff);
     else if(state==='WORKING')this.image.setTint(0xffe5a6);
-    if(label)this.showBubble(label,status);else this.hideBubble(true);
+    if(label)this.showBubble(label,status,bubbleDetails);else this.hideBubble(true);
   }
 
 	private setFlipX(flip:boolean):void{this.image.setFlipX(flip);this.silhouette.setFlipX(flip)}
@@ -194,14 +199,21 @@ export class CharacterController{
 		this.setFlipX(worldX<this.container.x);
 	}
 
-  private showBubble(text:string,status:{label:string;color:number}|null=null):void{
+  private showBubble(text:string,status:{label:string;color:number}|null=null,details:{title:string;time:string}|null=null):void{
     const hasStatus=Boolean(status);
-    this.bubbleText.setText(text).setY(this.bubbleY+(hasStatus?-8:0));
-    this.bubbleBack.setSize(226,hasStatus?64:50);
+    const hasDetails=Boolean(details?.title||details?.time);
+    const title=details?.title?.trim()??'';
+    this.bubbleText.setText(text).setY(this.bubbleY+(hasDetails?-35:hasStatus?-8:0));
+    this.bubbleTitleText.setText(title.length>72?`${title.slice(0,69)}…`:title).setY(this.bubbleY-10).setVisible(hasDetails&&Boolean(title));
+    this.bubbleTimeText.setText(details?.time??'').setY(this.bubbleY+18).setVisible(hasDetails&&Boolean(details?.time));
+    this.bubbleBack.setSize(236,hasDetails?104:hasStatus?64:50);
     this.bubbleStatusBack.setVisible(hasStatus);
     this.bubbleStatusText.setVisible(hasStatus);
     if(status){
       const color=`#${status.color.toString(16).padStart(6,'0')}`;
+      const statusY=this.bubbleY+(hasDetails?40:20);
+      this.bubbleStatusBack.setY(statusY);
+      this.bubbleStatusText.setY(statusY);
       this.bubbleStatusBack.setStrokeStyle(1,status.color,.95).setFillStyle(status.color,.14);
       this.bubbleStatusText.setText(`STATUS · ${status.label}`).setColor(color);
     }

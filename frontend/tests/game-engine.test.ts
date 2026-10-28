@@ -175,10 +175,13 @@ test('featured ticket policy is deterministic',()=>{
 test('Jira work presentation narrates activity in first person with a readable time',()=>{
   const event:JiraActivityEvent={eventId:'event-1',issueKey:'PLANNA-25867',authorId:'user',authorName:'User',assigneeId:'user',assigneeName:'User',action:'UPDATED',previousStatus:null,newStatus:null,currentStatus:'In Progress',occurredAt:'2026-10-27T10:00:00Z',issueSummary:'Casino switcher',issueUrl:'https://example.invalid/browse/PLANNA-25867'};
   const presentation=jiraWorkPresentation(event,null,Date.parse('2026-10-27T12:00:00Z'));
-  assert.equal(presentation.text,'I have updated PLANNA-25867 2 hours ago!');
+  assert.equal(presentation.work,'I have updated PLANNA-25867');
+  assert.equal(presentation.relativeTime,'2h ago');
+  assert.equal(presentation.text,'I have updated PLANNA-25867 2h ago!');
   assert.deepEqual(presentation.status,jiraStatusPresentation('In Progress'));
   assert.equal(presentation.status.cssColor,'#69d5ff');
-  assert.equal(jiraRelativeTime('2026-10-27T11:59:00Z',Date.parse('2026-10-27T12:00:00Z')),'1 minute ago');
+  assert.equal(jiraRelativeTime('2026-10-27T11:59:00Z',Date.parse('2026-10-27T12:00:00Z')),'1m ago');
+  assert.equal(jiraRelativeTime('2026-10-25T12:00:00Z',Date.parse('2026-10-27T12:00:00Z')),'2d ago');
 });
 
 test('Jira status presentation uses distinct semantic colors and does not guess missing status',()=>{
@@ -196,7 +199,7 @@ test('Office Jira bridge links saved character mappings to the latest narrated w
   const payload=officeJiraBridgePayload(snapshot,config);
   assert.equal(payload.userCharacterMap['user-1'],'guardian');
   assert.equal(payload.workByCharacter.guardian.ticketKey,'PLANNA-25867');
-  assert.match(payload.workByCharacter.guardian.narration,/^I have updated PLANNA-25867 2 hours ago!$/);
+  assert.match(payload.workByCharacter.guardian.narration,/^I have updated PLANNA-25867 2h ago!$/);
   assert.equal(payload.workByCharacter.guardian.statusColor,'#d6a5ff');
   assert.equal(payload.events.length,1);
 });
@@ -219,8 +222,14 @@ test('Game bubbles use the latest Jira narration and the explicit unavailable fa
   const event:JiraActivityEvent={eventId:'event-3',issueKey:'PLANNA-333',authorId:'user-1',authorName:'Gilberth',assigneeId:'user-1',assigneeName:'Gilberth',action:'UPDATED',previousStatus:null,newStatus:null,currentStatus:'Code Review',occurredAt,issueSummary:'Review Jira bubbles',issueUrl:'https://example.invalid/browse/PLANNA-333'};
   const connected:JiraSnapshot={connection:{configured:true,state:'live',lastAttemptAt:occurredAt,lastSuccessAt:occurredAt,message:'Live'},issues:[issue('PLANNA-333',{assigneeId:'user-1',status:'Code Review',updatedAt:occurredAt})],events:[event]};
   const directive=service.derive(connected,[profile],[],settings).directives[0];
-  assert.match(directive.label,/^I have updated PLANNA-333 2 hours ago!$/);
+  assert.equal(directive.label,'I have updated PLANNA-333');
+  assert.equal(directive.bubbleTitle,'Review Jira bubbles');
+  assert.equal(directive.bubbleTime,'2h ago');
   assert.equal(directive.status?.label,'CODE REVIEW');
+  const speaker=service.directiveFor({character:profile,event,groupedEventCount:1},connected.issues,[]);
+  const presented=service.singleSpeakerDirectives([directive,{...directive,characterId:'commander',label:'Another Jira update'}],speaker);
+  assert.equal(presented.filter(item=>Boolean(item.label)).length,1);
+  assert.equal(presented.find(item=>item.characterId==='commander')?.bubbleTitle,null);
 });
 
 test('Per-character Jira profile activity feeds Game and Office when the shared stream is unavailable',()=>{

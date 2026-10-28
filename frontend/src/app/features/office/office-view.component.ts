@@ -8,7 +8,7 @@ import {OfficeJiraBridgePayload,officeJiraBridgePayload} from './office-jira-bri
 @Component({
   selector: 'app-office-view',
   standalone: true,
-  template: `<main class="office-view"><iframe #officeFrame src="/legacy-game/index.html?offline=1&gameBuild=14&parentJira=1" title="WEBDEV MMORPG Office View" (load)="sendLatest()"></iframe></main>`
+  template: `<main class="office-view"><iframe #officeFrame src="/legacy-game/index.html?offline=1&gameBuild=15&parentJira=1" title="WEBDEV MMORPG Office View" (load)="sendLatest()"></iframe></main>`
 })
 export class OfficeViewComponent implements AfterViewInit, OnDestroy {
   @ViewChild('officeFrame') private frame?: ElementRef<HTMLIFrameElement>;
@@ -17,8 +17,12 @@ export class OfficeViewComponent implements AfterViewInit, OnDestroy {
   private readonly config = inject(GameConfigService);
   private subscription?: Subscription;
   private latest?: OfficeJiraBridgePayload;
+  private readonly handleOfficeReady=(event:MessageEvent):void=>{
+    if(event.origin===location.origin&&event.source===this.frame?.nativeElement.contentWindow&&event.data?.type==='webdev:office-ready:v1')this.sendLatest();
+  };
 
   ngAfterViewInit(): void {
+    window.addEventListener('message',this.handleOfficeReady);
     this.subscription = combineLatest([this.jira.snapshot$,this.config.config$,this.userJira.profileEvents$]).subscribe(([snapshot,config,profileEvents]) => {
       this.userJira.watchProfileActivity(config.profiles.filter(profile=>profile.enabled),config.settings.refreshIntervalSeconds);
       this.latest = officeJiraBridgePayload(snapshot,config,profileEvents);
@@ -27,6 +31,7 @@ export class OfficeViewComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    window.removeEventListener('message',this.handleOfficeReady);
     this.subscription?.unsubscribe();
   }
 

@@ -7,6 +7,8 @@ export interface JiraStatusPresentation {
 }
 
 export interface JiraWorkPresentation {
+  work: string;
+  relativeTime: string;
   text: string;
   status: JiraStatusPresentation;
 }
@@ -42,11 +44,11 @@ export function jiraRelativeTime(value:string,now=Date.now()):string{
   if(!Number.isFinite(elapsed))return'recently';
   const minutes=Math.max(0,Math.floor(elapsed/60_000));
   if(minutes<1)return'just now';
-  if(minutes<60)return`${minutes} ${minutes===1?'minute':'minutes'} ago`;
+  if(minutes<60)return`${minutes}m ago`;
   const hours=Math.floor(minutes/60);
-  if(hours<24)return`${hours} ${hours===1?'hour':'hours'} ago`;
+  if(hours<24)return`${hours}h ago`;
   const days=Math.floor(hours/24);
-  return`${days} ${days===1?'day':'days'} ago`;
+  return`${days}d ago`;
 }
 
 export function jiraWorkPresentation(event:JiraActivityEvent,issue:JiraIssueSnapshot|null=null,now=Date.now()):JiraWorkPresentation{
@@ -63,12 +65,14 @@ export function jiraWorkPresentation(event:JiraActivityEvent,issue:JiraIssueSnap
   else if(action==='UPDATED'||action==='EDITED')work=`I have updated ${event.issueKey}`;
   else work=`I worked on ${event.issueKey}`;
   const currentStatus=event.currentStatus??event.newStatus??issue?.status;
-  return{text:`${work} ${when}!`,status:jiraStatusPresentation(currentStatus)};
+  return{work,relativeTime:when,text:`${work} ${when}!`,status:jiraStatusPresentation(currentStatus)};
 }
 
 export function jiraAssignedWorkPresentation(issue:JiraIssueSnapshot,now=Date.now()):JiraWorkPresentation{
+  const relativeTime=jiraRelativeTime(issue.updatedAt,now);
+  const work=`I am working on ${issue.issueKey}; it was updated`;
   return{
-    text:`I am working on ${issue.issueKey}; it was updated ${jiraRelativeTime(issue.updatedAt,now)}!`,
+    work,relativeTime,text:`${work} ${relativeTime}!`,
     status:jiraStatusPresentation(issue.status)
   };
 }
