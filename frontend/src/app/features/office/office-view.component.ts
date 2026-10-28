@@ -12,7 +12,7 @@ interface OfficeFrameWindow extends Window {
 @Component({
   selector: 'app-office-view',
   standalone: true,
-  template: `<main class="office-view"><iframe #officeFrame src="/legacy-game/index.html?offline=1&gameBuild=16&parentJira=1" title="WEBDEV MMORPG Office View" (load)="sendLatest()"></iframe></main>`
+  template: `<main class="office-view"><iframe #officeFrame src="/legacy-game/index.html?offline=1&gameBuild=17&parentJira=1" title="WEBDEV MMORPG Office View" (load)="sendLatest()"></iframe></main>`
 })
 export class OfficeViewComponent implements AfterViewInit, OnDestroy {
   @ViewChild('officeFrame') private frame?: ElementRef<HTMLIFrameElement>;

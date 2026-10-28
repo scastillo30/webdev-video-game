@@ -162,7 +162,7 @@ export class CharacterController{
 	this.targetCell={...target};
 	if(!this.movementEnabled){this.targetCell=null;onComplete();return}
 	if(this.reducedMotion){const end=path[path.length-1],previous=path.length>1?path[path.length-2]:this.cell;this.walk.face(end.x-previous.x,end.y-previous.y);this.showWalkFrame(this.walk.stop());this.cell={...end};this.targetCell=null;const world=this.world(this.cell);this.container.setPosition(world.x,world.y);this.updateDepth();onComplete();return}
-    this.machine.transition('WALKING');this.moving=true;if(finalState==='IDLE')this.hideBubble(true);else this.showBubble(travelLabel,travelStatus,bubbleDetails);
+    this.machine.transition('WALKING');this.moving=true;if(finalState==='IDLE'||!travelLabel)this.hideBubble(true);else this.showBubble(travelLabel,travelStatus,bubbleDetails);
     const advance=(index:number):void=>{
 	  const next=path[index];if(!next){this.moving=false;this.movementTween=undefined;this.showWalkFrame(this.walk.stop());this.cell={...target};this.targetCell=null;this.hideBubble(finalState==='IDLE');onComplete();return}
 	  const world=this.world(next),delta=world.x-this.container.x;

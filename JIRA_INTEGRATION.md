@@ -94,7 +94,7 @@ The spectator director groups pending events by mapped author, rotates fairly, a
 
 ## Office View bridge
 
-Angular loads the preserved Office runtime from `/legacy-game/index.html?parentJira=1`. A versioned, same-origin `postMessage` bridge sends the current normalized snapshot and subsequent events. When that bridge is active, the legacy browser adapter does not independently poll.
+Angular loads the preserved Office runtime from `/legacy-game/index.html?parentJira=1`. A versioned same-origin bridge applies the current normalized snapshot and subsequent events directly; `postMessage` is retained as a compatibility fallback. In parent-managed mode the legacy browser adapter does not poll—the iframe synchronously ingests each Angular payload into its presentation queue.
 
 The root-level `jira/examples.json` remains useful for standalone legacy demonstration. It must be labeled as a fixture and must never be presented as live Jira activity.
 

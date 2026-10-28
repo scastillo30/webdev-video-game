@@ -263,6 +263,8 @@ test('spectator queue deduplicates events and rotates fairly',()=>{
   assert.notEqual(first,second);
   assert.deepEqual(new Set([first,second]),new Set(['alpha','beta']));
   assert.equal(latest.pending,0);
+  director.showOverview();
+  assert.equal(latest.active,null);assert.equal(latest.focusCharacterId,null);assert.equal(latest.paused,true);
   director.clearActivity();
   assert.equal(latest.active,null);assert.equal(latest.focusCharacterId,null);assert.equal(latest.pending,0);
   director.stop();subscription.unsubscribe();

@@ -58,6 +58,11 @@ export class SpectatorDirectorService{
     this.publish({active:this.latestByCharacter.get(characterId)??null,focusCharacterId:characterId,autoEnabled:this.state.value.autoEnabled,paused:true,pending:this.pendingCount()});
   }
 
+  showOverview():void{
+    this.clearTimer();
+    this.publish({...this.state.value,active:null,focusCharacterId:null,paused:true,pending:this.pendingCount()});
+  }
+
   clearActivity():void{
     this.clearTimer();this.queues.clear();this.latestByCharacter.clear();this.characterOrder=[];this.rotationIndex=-1;
     this.publish({...this.state.value,active:null,focusCharacterId:null,pending:0});

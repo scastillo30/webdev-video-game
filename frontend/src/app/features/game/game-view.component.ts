@@ -82,6 +82,7 @@ import {jiraRelativeTime, jiraStatusPresentation, jiraWorkPresentation} from '..
 
         <div class="spectator-controls">
           <span>{{presentation.autoEnabled ? presentation.pending + ' PENDING' : 'SPECTATOR OFF'}}</span>
+          <button type="button" (click)="showPartyOverview()">PARTY OVERVIEW</button>
           <button type="button" (click)="toggleJiraProfile()" [disabled]="!activeProfile" [attr.aria-expanded]="profileOpen">JIRA PROFILE</button>
           <button type="button" (click)="toggleRotation()" [disabled]="!presentation.autoEnabled" [attr.aria-pressed]="presentation.paused">
             {{presentation.paused ? '▶ RESUME' : 'Ⅱ PAUSE'}}
@@ -169,6 +170,7 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   protected toggleRotation():void{this.presentation.paused?this.director.resume():this.director.pause()}
   protected next():void{this.director.next()}
   protected selectCharacter(characterId:string):void{this.director.manualFocus(characterId)}
+  protected showPartyOverview():void{this.profileOpen=false;this.director.showOverview()}
   protected toggleJiraProfile():void{
     if(!this.activeProfile)return;
     this.profileOpen=!this.profileOpen;

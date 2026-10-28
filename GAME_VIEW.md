@@ -70,6 +70,8 @@ For a mapped event author it:
 
 Featured ticket rules are `recently-updated`, `highest-priority`, and `nearest-due-date`. Manual character selection pauses automatic rotation until Resume; Next advances presentation. Jira collection continues in all presentation pause states.
 
+**Party Overview** clears the selected speaker and returns the lower panel and camera to the whole-party presentation. It pauses spectator rotation so the overview remains stable until Resume or another character is selected.
+
 ## Controls and preferences
 
 Game View exposes controls for spectator pause/resume, next focus, effects, movement, sound, fullscreen, and view/settings navigation. Persistent values are edited at `/settings/game`.
