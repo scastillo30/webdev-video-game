@@ -20,6 +20,7 @@
     "release:candidate": "node scripts/verify-release-candidate.mjs",
     "soak:verify": "node scripts/verify-soak-report.mjs",
     "test:release-tools": "node --test scripts/release-tools.test.mjs",
+    "test:jira-runtime": "node --test scripts/jira-activity.test.mjs",
     "quality:check": "node scripts/quality-gate.mjs",
     "db:backup": "cd backend && go run ./cmd/admin backup",
     "db:verify": "cd backend && go run ./cmd/admin verify",

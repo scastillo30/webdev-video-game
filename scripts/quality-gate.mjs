@@ -15,6 +15,7 @@ const steps=[
   ['Staged whitespace check','git',['diff','--cached','--check'],root,{}],
   ['Character ownership guard',node,[join(root,'scripts','verify-character-assets.mjs')],root,{}],
   ['Release-tool tests',node,['--test',join(root,'scripts','release-tools.test.mjs')],root,{}],
+  ['Jira runtime tests',node,['--test',join(root,'scripts','jira-activity.test.mjs')],root,{}],
   ['Go tests',go,['test','./...'],join(root,'backend'),goEnvironment],
   ['Angular type check',node,[join(root,'frontend','node_modules','typescript','bin','tsc'),'-p','tsconfig.app.json','--noEmit'],join(root,'frontend'),{}],
   ['Game-engine tests',node,[join(root,'frontend','scripts','run-engine-tests.mjs')],join(root,'frontend'),{}],

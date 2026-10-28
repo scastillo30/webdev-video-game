@@ -36,8 +36,8 @@
   }
 
   class ActivityController{
-    constructor({config,adapter,queue,onEvents,onConnection}){this.config=config;this.adapter=adapter;this.queue=queue;this.onEvents=onEvents||(()=>{});this.onConnection=onConnection||(()=>{});this.timer=null;this.lastSuccess=0;this.running=false}
-    async poll(){if(this.running)return;this.running=true;this.onConnection({state:'loading',lastSuccess:this.lastSuccess});try{const result=await this.adapter.fetchActivities({since:this.lastSuccess?new Date(this.lastSuccess).toISOString():null});const events=Array.isArray(result)?result:(result?.events||[]),connection=result?.connection||'live',accepted=this.queue.ingest(events);this.lastSuccess=Date.now();this.onConnection({state:connection,lastSuccess:this.lastSuccess});if(accepted.length)this.onEvents(accepted)}catch(error){this.onConnection({state:'disconnected',lastSuccess:this.lastSuccess,error:error?.message||'Activity source unavailable'})}finally{this.running=false}}
+    constructor({config,adapter,queue,onEvents,onConnection}){this.config=config;this.adapter=adapter;this.queue=queue;this.onEvents=onEvents||(()=>{});this.onConnection=onConnection||(()=>{});this.timer=null;this.lastSuccess=0;this.running=false;this.pollQueued=false}
+    async poll(){if(this.running){this.pollQueued=true;return}do{this.pollQueued=false;this.running=true;this.onConnection({state:'loading',lastSuccess:this.lastSuccess});try{const result=await this.adapter.fetchActivities({since:this.lastSuccess?new Date(this.lastSuccess).toISOString():null});const events=Array.isArray(result)?result:(result?.events||[]),connection=result?.connection||'live',accepted=this.queue.ingest(events);this.lastSuccess=Date.now();this.onConnection({state:connection,lastSuccess:this.lastSuccess});if(accepted.length)this.onEvents(accepted)}catch(error){this.onConnection({state:'disconnected',lastSuccess:this.lastSuccess,error:error?.message||'Activity source unavailable'})}finally{this.running=false}}while(this.pollQueued)}
     start(){this.poll();this.timer=setInterval(()=>this.poll(),this.config.pollIntervalMs)}
     stop(){clearInterval(this.timer);this.timer=null}
   }

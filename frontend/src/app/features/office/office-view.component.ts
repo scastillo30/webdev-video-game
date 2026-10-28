@@ -5,10 +5,14 @@ import {UserJiraService} from '../../core/jira/user-jira.service';
 import {GameConfigService} from '../game/services/game-config.service';
 import {OfficeJiraBridgePayload,officeJiraBridgePayload} from './office-jira-bridge';
 
+interface OfficeFrameWindow extends Window {
+  WEBDEV_OFFICE_JIRA_BRIDGE?:{apply:(payload:OfficeJiraBridgePayload)=>void};
+}
+
 @Component({
   selector: 'app-office-view',
   standalone: true,
-  template: `<main class="office-view"><iframe #officeFrame src="/legacy-game/index.html?offline=1&gameBuild=15&parentJira=1" title="WEBDEV MMORPG Office View" (load)="sendLatest()"></iframe></main>`
+  template: `<main class="office-view"><iframe #officeFrame src="/legacy-game/index.html?offline=1&gameBuild=16&parentJira=1" title="WEBDEV MMORPG Office View" (load)="sendLatest()"></iframe></main>`
 })
 export class OfficeViewComponent implements AfterViewInit, OnDestroy {
   @ViewChild('officeFrame') private frame?: ElementRef<HTMLIFrameElement>;
@@ -37,6 +41,12 @@ export class OfficeViewComponent implements AfterViewInit, OnDestroy {
 
   protected sendLatest(): void {
     if (!this.latest || !this.frame?.nativeElement.contentWindow) return;
-    this.frame.nativeElement.contentWindow.postMessage({type:'webdev:jira-state:v1',payload:this.latest},location.origin);
+    const target=this.frame.nativeElement.contentWindow as OfficeFrameWindow;
+    try{
+      if(target.WEBDEV_OFFICE_JIRA_BRIDGE){target.WEBDEV_OFFICE_JIRA_BRIDGE.apply(this.latest);return}
+    }catch{
+      // A deployment may host the legacy runtime on another origin; postMessage remains the safe fallback.
+    }
+    target.postMessage({type:'webdev:jira-state:v1',payload:this.latest},location.origin);
   }
 }
