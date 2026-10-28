@@ -68,9 +68,9 @@ For a mapped event author it:
 3. Gives the spectator director a fair per-user item.
 4. Moves/focuses the correct character and updates the Angular activity panel atomically.
 
-Featured ticket rules are `recently-updated`, `highest-priority`, and `nearest-due-date`. Manual character selection pauses automatic rotation until Resume; Next advances presentation. Jira collection continues in all presentation pause states.
+Featured ticket rules are `recently-updated`, `highest-priority`, and `nearest-due-date`. Manual character selection pauses automatic rotation until Play; Next advances presentation. Jira collection continues in all presentation pause states.
 
-**Party Overview** clears the selected speaker and returns the lower panel and camera to the whole-party presentation. It pauses spectator rotation so the overview remains stable until Resume or another character is selected.
+**Party Overview** clears the selected speaker and returns the lower panel and camera to the whole-party presentation. It pauses spectator rotation so the overview remains stable until Play or another character is selected. Play starts a fair randomized cycle through characters with Jira history; each appearance selects a varied Jira update without immediately repeating the previous character or ticket. Pause stops the presentation timer without stopping Jira collection.
 
 ## Controls and preferences
 

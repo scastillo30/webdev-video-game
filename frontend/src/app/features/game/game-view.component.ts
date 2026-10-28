@@ -81,12 +81,11 @@ import {jiraRelativeTime, jiraStatusPresentation, jiraWorkPresentation} from '..
         </ng-template>
 
         <div class="spectator-controls">
-          <span>{{presentation.autoEnabled ? presentation.pending + ' PENDING' : 'SPECTATOR OFF'}}</span>
+          <span>{{!presentation.autoEnabled ? 'SPECTATOR OFF' : (presentation.paused ? 'PAUSED · ' + presentation.pending + ' PENDING' : 'PLAYING · RANDOM JIRA')}}</span>
           <button type="button" (click)="showPartyOverview()">PARTY OVERVIEW</button>
           <button type="button" (click)="toggleJiraProfile()" [disabled]="!activeProfile" [attr.aria-expanded]="profileOpen">JIRA PROFILE</button>
-          <button type="button" (click)="toggleRotation()" [disabled]="!presentation.autoEnabled" [attr.aria-pressed]="presentation.paused">
-            {{presentation.paused ? '▶ RESUME' : 'Ⅱ PAUSE'}}
-          </button>
+          <button type="button" class="play-control" (click)="play()" [disabled]="!presentation.autoEnabled||!presentation.paused" [attr.aria-pressed]="presentation.autoEnabled&&!presentation.paused">▶ PLAY</button>
+          <button type="button" (click)="pause()" [disabled]="!presentation.autoEnabled||presentation.paused" [attr.aria-pressed]="presentation.paused">Ⅱ PAUSE</button>
           <button type="button" (click)="next()">NEXT →</button>
         </div>
       </section>
@@ -167,7 +166,8 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
     this.subscriptions.add(this.runtime.selection$.subscribe(characterId=>this.director.manualFocus(characterId)));
   }
 
-  protected toggleRotation():void{this.presentation.paused?this.director.resume():this.director.pause()}
+  protected play():void{this.director.play()}
+  protected pause():void{this.director.pause()}
   protected next():void{this.director.next()}
   protected selectCharacter(characterId:string):void{this.director.manualFocus(characterId)}
   protected showPartyOverview():void{this.profileOpen=false;this.director.showOverview()}

@@ -58,8 +58,13 @@ export class GameBehaviorService{
       if(character&&allowedKeys.has(event.issueKey)){spectatorItems.push({character,event,groupedEventCount:1});spectatorIds.add(event.eventId)}
     }
     for(const profile of profiles.filter(profile=>profile.enabled)){
-      const event=[...(profileEvents[profile.characterId]??[])].filter(candidate=>this.profileEventInScope(candidate,settings)).sort((left,right)=>Date.parse(right.occurredAt)-Date.parse(left.occurredAt))[0];
-      if(event&&!spectatorIds.has(event.eventId))spectatorItems.push({character:profile,event,groupedEventCount:1});
+      const events=[...(profileEvents[profile.characterId]??[])].filter(candidate=>this.profileEventInScope(candidate,settings));
+      for(const event of events){
+        if(!spectatorIds.has(event.eventId)){
+          spectatorItems.push({character:profile,event,groupedEventCount:1});
+          spectatorIds.add(event.eventId);
+        }
+      }
     }
     return{directives,spectatorItems};
   }

@@ -247,7 +247,7 @@ test('Per-character Jira profile activity feeds Game and Office when the shared 
   assert.equal(office.workByCharacter.commander.ticketKey,'PLANNA-27030');assert.equal(office.workByCharacter.commander.currentStatus,null);
 });
 
-test('spectator queue deduplicates events and rotates fairly',()=>{
+test('spectator queue deduplicates events and uses a fair randomized replay cycle',()=>{
   Object.assign(globalThis,{window:globalThis});
   const profile=(id:string):GameProfile=>({characterId:id,displayName:id,characterClass:'Tester',jiraAccountId:`user-${id}`,homeLocation:'command-dais',workstation:'planning-table',miniatureAsset:'assets/test.webp',portraitAsset:'assets/test.webp',enabled:true});
   const item=(character:GameProfile,eventId:string):SpectatorItem=>({character,groupedEventCount:1,event:{eventId,issueKey:`ISSUE-${eventId}`,authorId:character.jiraAccountId,authorName:character.displayName,assigneeId:null,assigneeName:null,action:'UPDATED',previousStatus:null,newStatus:null,currentStatus:'In Progress',occurredAt:'2026-10-24T12:00:00Z',issueSummary:'Test',issueUrl:'https://example.invalid'}});
@@ -263,9 +263,27 @@ test('spectator queue deduplicates events and rotates fairly',()=>{
   assert.notEqual(first,second);
   assert.deepEqual(new Set([first,second]),new Set(['alpha','beta']));
   assert.equal(latest.pending,0);
+  director.next();
+  assert.ok(['alpha','beta'].includes(latest.focusCharacterId));
+  assert.notEqual(latest.focusCharacterId,second,'a completed random cycle does not immediately repeat the same character');
   director.showOverview();
   assert.equal(latest.active,null);assert.equal(latest.focusCharacterId,null);assert.equal(latest.paused,true);
+  director.play();
+  assert.ok(latest.active);assert.equal(latest.paused,false);
+  director.pause();assert.equal(latest.paused,true);
   director.clearActivity();
   assert.equal(latest.active,null);assert.equal(latest.focusCharacterId,null);assert.equal(latest.pending,0);
+  director.stop();subscription.unsubscribe();
+});
+
+test('spectator replay varies a character Jira update without repeating it immediately',()=>{
+  Object.assign(globalThis,{window:globalThis});
+  const character:GameProfile={characterId:'alpha',displayName:'Alpha',characterClass:'Tester',jiraAccountId:'user-alpha',homeLocation:'command-dais',workstation:'planning-table',miniatureAsset:'assets/test.webp',portraitAsset:'assets/test.webp',jiraActivityUrl:null,enabled:true};
+  const item=(eventId:string):SpectatorItem=>({character,groupedEventCount:1,event:{eventId,issueKey:`ISSUE-${eventId}`,authorId:'user-alpha',authorName:'Alpha',assigneeId:null,assigneeName:null,action:'UPDATED',previousStatus:null,newStatus:null,currentStatus:'In Progress',occurredAt:'2026-10-24T12:00:00Z',issueSummary:`Update ${eventId}`,issueUrl:'https://example.invalid'}});
+  const director=new SpectatorDirectorService();let latest:any;
+  const subscription=director.state$.subscribe(state=>latest=state);
+  director.configure(true,300);director.ingest([item('1'),item('2'),item('3')]);
+  const first=latest.active.event.eventId;director.next();
+  assert.notEqual(latest.active.event.eventId,first);
   director.stop();subscription.unsubscribe();
 });
