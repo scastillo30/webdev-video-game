@@ -101,7 +101,7 @@ export class CharacterController{
 	this.activitySequence++;
 	this.autonomousActivity=false;
 	const finish=()=>{this.faceTowards(facingX);this.setState(directive.state,directive.label,directive.status);if(directive.state==='CELEBRATING')this.celebrate()};
-    this.moveTo(target,reserved,finish,directive.state);
+    this.moveTo(target,reserved,finish,directive.state,directive.label,directive.status);
   }
 
   wander(target:GridPoint,reserved:ReadonlySet<string>):void{
@@ -109,25 +109,25 @@ export class CharacterController{
     this.moveTo(target,reserved,()=>this.setState('IDLE',''),'IDLE');
   }
 
-	interact(target:GridPoint,reserved:ReadonlySet<string>,label:string,state:CharacterState,duration=3200,facingX?:number,onArrive?:()=>void):void{
+	interact(target:GridPoint,reserved:ReadonlySet<string>,label:string,state:CharacterState,status:{label:string;color:number}|null=null,duration=3200,facingX?:number,onArrive?:()=>void):void{
 		if(!this.availableForConversation)return;
 		const sequence=++this.activitySequence;
 		this.autonomousActivity=true;
 		this.moveTo(target,reserved,()=>{
-			this.faceTowards(facingX);this.setState(state,label);onArrive?.();
+			this.faceTowards(facingX);this.setState(state,label,status);onArrive?.();
 			this.scene.time.delayedCall(duration,()=>{
 				if(sequence!==this.activitySequence||this.moving||this.machine.state!==state)return;
 				this.autonomousActivity=false;this.setState('IDLE','');this.scheduleIdle(this.scene.time.now);
 			});
-		},state);
+		},state,label,status);
 		if(!this.moving&&this.machine.state==='IDLE')this.autonomousActivity=false;
 	}
 
-	engage(label:string,state:CharacterState='DISCUSSING',duration=3200,facingX?:number):void{
+	engage(label:string,state:CharacterState='DISCUSSING',status:{label:string;color:number}|null=null,duration=3200,facingX?:number):void{
 		if(!this.availableForConversation)return;
 		const sequence=++this.activitySequence;
 		this.autonomousActivity=true;
-		this.faceTowards(facingX);this.setState(state,label);
+		this.faceTowards(facingX);this.setState(state,label,status);
 		this.scene.time.delayedCall(duration,()=>{
 			if(sequence!==this.activitySequence||this.moving||this.machine.state!==state)return;
 			this.autonomousActivity=false;this.setState('IDLE','');this.scheduleIdle(this.scene.time.now);
@@ -150,14 +150,14 @@ export class CharacterController{
 	this.container.setScale(active&&!this.directional?1.08:1);this.container.setAlpha(1);
   }
 
-  private moveTo(target:GridPoint,reserved:ReadonlySet<string>,onComplete:()=>void,finalState:CharacterState):void{
+  private moveTo(target:GridPoint,reserved:ReadonlySet<string>,onComplete:()=>void,finalState:CharacterState,travelLabel='',travelStatus:{label:string;color:number}|null=null):void{
 	if(this.moving){this.scene.tweens.killTweensOf(this.container);this.moving=false;this.movementTween=undefined;this.showWalkFrame(this.walk.stop());this.machine.transition('IDLE')}
     const path=this.pathfinding.find(this.cell,target,reserved);
 	if(!path.length){this.targetCell=null;if(this.cell.x===target.x&&this.cell.y===target.y)onComplete();return}
 	this.targetCell={...target};
 	if(!this.movementEnabled){this.targetCell=null;onComplete();return}
 	if(this.reducedMotion){const end=path[path.length-1],previous=path.length>1?path[path.length-2]:this.cell;this.walk.face(end.x-previous.x,end.y-previous.y);this.showWalkFrame(this.walk.stop());this.cell={...end};this.targetCell=null;const world=this.world(this.cell);this.container.setPosition(world.x,world.y);this.updateDepth();onComplete();return}
-    this.machine.transition('WALKING');this.moving=true;if(finalState==='IDLE')this.hideBubble(true);else this.showBubble('On my way…');
+    this.machine.transition('WALKING');this.moving=true;if(finalState==='IDLE')this.hideBubble(true);else this.showBubble(travelLabel,travelStatus);
     const advance=(index:number):void=>{
 	  const next=path[index];if(!next){this.moving=false;this.movementTween=undefined;this.showWalkFrame(this.walk.stop());this.cell={...target};this.targetCell=null;this.hideBubble(finalState==='IDLE');onComplete();return}
 	  const world=this.world(next),delta=world.x-this.container.x;

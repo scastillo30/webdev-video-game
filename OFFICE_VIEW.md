@@ -57,6 +57,8 @@ The supported Angular character metadata maintenance route is `/characters`. The
 
 Use `/settings/game` for Game View profiles, Jira account mappings, status behaviors, and display settings. Neither maintenance surface authorizes overwriting character-owned source assets.
 
+The main conversation box is Jira-only in the integrated Office View. It shows the displayed character's latest mapped ticket narration and status; it never falls back to the legacy story script. If live Jira data or a mapped ticket cannot be read, it shows `Cannot access JIRA Status`.
+
 ## Regression checklist
 
 - `/` loads the iframe from `/legacy-game/`, not `/game`.

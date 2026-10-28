@@ -8,8 +8,9 @@ import {CharacterStateMachine,stateForStatus} from '../src/app/features/game/eng
 import {chooseFeaturedIssue} from '../src/app/features/game/engine/featured-ticket';
 import {JiraActivityEvent,JiraIssueSnapshot,JiraSnapshot} from '../src/app/core/jira/jira.models';
 import {defaultGameSettings,GameConfig,GameProfile,SpectatorItem} from '../src/app/features/game/engine/game.models';
-import {jiraRelativeTime,jiraStatusPresentation,jiraWorkPresentation} from '../src/app/core/jira/jira-work-presentation';
+import {JIRA_UNAVAILABLE_MESSAGE,jiraRelativeTime,jiraStatusPresentation,jiraWorkPresentation} from '../src/app/core/jira/jira-work-presentation';
 import {officeJiraBridgePayload} from '../src/app/features/office/office-jira-bridge';
+import {GameBehaviorService} from '../src/app/features/game/services/game-behavior.service';
 import {SpectatorDirectorService} from '../src/app/features/game/services/spectator-director.service';
 
 const issue=(key:string,overrides:Partial<JiraIssueSnapshot>={}):JiraIssueSnapshot=>({
@@ -206,6 +207,19 @@ test('Office Jira bridge keeps mappings but withholds Jira work when the shared 
   const payload=officeJiraBridgePayload(snapshot,config);
   assert.equal(payload.userCharacterMap['user-1'],'guardian');
   assert.deepEqual(payload.workByCharacter,{});assert.deepEqual(payload.events,[]);
+});
+
+test('Game bubbles use the latest Jira narration and the explicit unavailable fallback',()=>{
+  const profile:GameProfile={characterId:'guardian',displayName:'Gilberth',characterClass:'Guardian',jiraAccountId:'user-1',homeLocation:'command-dais',workstation:'planning-table',miniatureAsset:'guardian.webp',portraitAsset:'guardian-head.webp',jiraActivityUrl:null,enabled:true};
+  const service=new GameBehaviorService(),settings=defaultGameSettings();
+  const disconnected:JiraSnapshot={connection:{configured:true,state:'disconnected',lastAttemptAt:null,lastSuccessAt:null,message:'Offline'},issues:[],events:[]};
+  assert.equal(service.derive(disconnected,[profile],[],settings).directives[0].label,JIRA_UNAVAILABLE_MESSAGE);
+  const occurredAt=new Date(Date.now()-2*60*60*1000).toISOString();
+  const event:JiraActivityEvent={eventId:'event-3',issueKey:'PLANNA-333',authorId:'user-1',authorName:'Gilberth',assigneeId:'user-1',assigneeName:'Gilberth',action:'UPDATED',previousStatus:null,newStatus:null,currentStatus:'Code Review',occurredAt,issueSummary:'Review Jira bubbles',issueUrl:'https://example.invalid/browse/PLANNA-333'};
+  const connected:JiraSnapshot={connection:{configured:true,state:'live',lastAttemptAt:occurredAt,lastSuccessAt:occurredAt,message:'Live'},issues:[issue('PLANNA-333',{assigneeId:'user-1',status:'Code Review',updatedAt:occurredAt})],events:[event]};
+  const directive=service.derive(connected,[profile],[],settings).directives[0];
+  assert.match(directive.label,/^I have updated PLANNA-333 2 hours ago!$/);
+  assert.equal(directive.status?.label,'CODE REVIEW');
 });
 
 test('spectator queue deduplicates events and rotates fairly',()=>{

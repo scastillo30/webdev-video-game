@@ -1,5 +1,5 @@
 import {JiraActivityEvent, JiraConnection, JiraIssueSnapshot, JiraSnapshot} from '../../core/jira/jira.models';
-import {jiraRelativeTime,jiraStatusPresentation,jiraWorkPresentation} from '../../core/jira/jira-work-presentation';
+import {jiraAssignedWorkPresentation,jiraWorkPresentation} from '../../core/jira/jira-work-presentation';
 import {GameConfig,GameProfile} from '../game/engine/game.models';
 
 export interface OfficeJiraEvent {
@@ -30,11 +30,11 @@ const eventPayload=(event:JiraActivityEvent,issue:JiraIssueSnapshot|null):Office
 };
 
 const assignedIssuePayload=(profile:GameProfile,issue:JiraIssueSnapshot):OfficeJiraEvent=>{
-  const status=jiraStatusPresentation(issue.status);
+  const presentation=jiraAssignedWorkPresentation(issue);
   return{eventId:`issue:${issue.issueKey}:${issue.updatedAt}`,authorId:profile.jiraAccountId,authorName:profile.displayName,
     assigneeId:issue.assigneeId,assigneeName:issue.assigneeName,ticketKey:issue.issueKey,ticketTitle:issue.summary,ticketUrl:issue.issueUrl,
     action:'WORKING',previousStatus:null,newStatus:null,currentStatus:issue.status,timestamp:issue.updatedAt,
-    narration:`I am working on ${issue.issueKey}; it was updated ${jiraRelativeTime(issue.updatedAt)}!`,statusColor:status.cssColor};
+    narration:presentation.text,statusColor:presentation.status.cssColor};
 };
 
 export function officeJiraBridgePayload(snapshot:JiraSnapshot,config:GameConfig):OfficeJiraBridgePayload{

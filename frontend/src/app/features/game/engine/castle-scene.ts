@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import {JIRA_UNAVAILABLE_MESSAGE} from '../../../core/jira/jira-work-presentation';
 import {HolidayBackground} from './holiday-background';
 import {boardCharacterAsset} from './board-character-assets';
 import {CharacterController} from './character-controller';
@@ -25,6 +26,7 @@ export class CastleScene extends Phaser.Scene{
   private fire!:Phaser.GameObjects.Graphics;
   private readonly controllers=new Map<string,CharacterController>();
   private readonly directiveSignatures=new Map<string,string>();
+  private readonly directivesByCharacter=new Map<string,CharacterDirective>();
   private readonly navigation=new CastleNavigationModel();
   private pathfinding!:CharacterPathfinding;
   private focusedCharacterId:string|null=null;
@@ -79,6 +81,7 @@ export class CastleScene extends Phaser.Scene{
 
   applyDirectives(directives:CharacterDirective[]):void{
     for(const directive of directives){
+      this.directivesByCharacter.set(directive.characterId,directive);
       const controller=this.controllers.get(directive.characterId);
       if(!controller)continue;
       const signature=[directive.state,directive.issue?.issueKey,directive.event?.eventId,directive.label,directive.status?.label].join('|');
@@ -214,7 +217,7 @@ export class CastleScene extends Phaser.Scene{
     else if(directive.state==='DISCUSSING')station='planning-table';
     else if(directive.state==='CELEBRATING')station='quest-board';
     const target=station?this.navigation.station(station,controller.currentCell,reserved):null;
-    return target??{point:this.navigation.anchor(controller.profile.homeLocation),label:'',state:directive.state};
+    return target??{point:this.navigation.anchor(controller.profile.homeLocation),state:directive.state};
   }
 
   private tryIdleMove(controller:CharacterController):void{
@@ -226,7 +229,8 @@ export class CastleScene extends Phaser.Scene{
     const station=behavior===1?'planning-table':behavior===2?'library':behavior===3?controller.profile.workstation:'';
     if(station&&autonomousCount<2){
       const target=this.navigation.station(station,controller.currentCell,reserved);
-      if(target){controller.interact(target.point,reserved,target.label,target.state,3400,target.facingX);return}
+      const work=this.workFor(controller);
+      if(target){controller.interact(target.point,reserved,work.label,target.state,work.status,3400,target.facingX);return}
     }
     const destination=this.navigation.roam(this.navigation.anchor(controller.profile.homeLocation),controller.currentCell,reserved);
     if(destination)controller.wander(destination,reserved);
@@ -250,14 +254,16 @@ export class CastleScene extends Phaser.Scene{
     if(!partner)return false;
     const meetingPoint=this.navigation.adjacentTo(partner.currentCell,controller.currentCell,reserved);
     if(!meetingPoint||!this.pathfinding.find(controller.currentCell,meetingPoint,reserved).length)return false;
+    const work=this.workFor(controller),partnerWork=this.workFor(partner);
     controller.interact(
       meetingPoint,
       reserved,
-      `Syncing with ${partner.profile.displayName}`,
+      work.label,
       'DISCUSSING',
+      work.status,
       3600,
       partner.currentCell.x,
-      ()=>partner.engage(`Syncing with ${controller.profile.displayName}`,'DISCUSSING',3600,meetingPoint.x)
+      ()=>partner.engage(partnerWork.label,'DISCUSSING',partnerWork.status,3600,meetingPoint.x)
     );
     return true;
   }
@@ -271,6 +277,10 @@ export class CastleScene extends Phaser.Scene{
   }
 
   private identityIndex(characterId:string):number{return this.profiles.findIndex(profile=>profile.characterId===characterId)}
+  private workFor(controller:CharacterController):Pick<CharacterDirective,'label'|'status'>{
+    const directive=this.directivesByCharacter.get(controller.profile.characterId);
+    return{label:directive?.label??JIRA_UNAVAILABLE_MESSAGE,status:directive?.status??null};
+  }
   private cellDistance(left:GridPoint,right:GridPoint):number{return Math.abs(left.x-right.x)+Math.abs(left.y-right.y)}
-  private destroyControllers():void{for(const controller of this.controllers.values())controller.destroy();this.controllers.clear()}
+  private destroyControllers():void{for(const controller of this.controllers.values())controller.destroy();this.controllers.clear();this.directivesByCharacter.clear()}
 }

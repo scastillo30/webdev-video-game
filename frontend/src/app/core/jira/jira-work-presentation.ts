@@ -11,6 +11,8 @@ export interface JiraWorkPresentation {
   status: JiraStatusPresentation;
 }
 
+export const JIRA_UNAVAILABLE_MESSAGE='Cannot access JIRA Status';
+
 const palette={
   complete:{color:0x62dfb8,cssColor:'#62dfb8'},
   blocked:{color:0xff7d96,cssColor:'#ff7d96'},
@@ -60,4 +62,11 @@ export function jiraWorkPresentation(event:JiraActivityEvent,issue:JiraIssueSnap
   else work=`I worked on ${event.issueKey}`;
   const currentStatus=event.currentStatus??event.newStatus??issue?.status;
   return{text:`${work} ${when}!`,status:jiraStatusPresentation(currentStatus)};
+}
+
+export function jiraAssignedWorkPresentation(issue:JiraIssueSnapshot,now=Date.now()):JiraWorkPresentation{
+  return{
+    text:`I am working on ${issue.issueKey}; it was updated ${jiraRelativeTime(issue.updatedAt,now)}!`,
+    status:jiraStatusPresentation(issue.status)
+  };
 }

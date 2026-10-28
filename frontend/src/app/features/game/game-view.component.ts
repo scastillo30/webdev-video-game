@@ -67,7 +67,7 @@ import {jiraStatusPresentation, jiraWorkPresentation} from '../../core/jira/jira
               </div>
             </ng-container>
             <ng-template #selectedIdle>
-              <strong class="idle-copy">Manual focus · no mapped Jira activity available for this character.</strong>
+              <strong class="idle-copy">Cannot access JIRA Status</strong>
             </ng-template>
           </div>
         </ng-container>
