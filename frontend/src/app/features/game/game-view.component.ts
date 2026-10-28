@@ -21,9 +21,9 @@ import {jiraStatusPresentation, jiraWorkPresentation} from '../../core/jira/jira
       <section class="game-scene-shell" aria-labelledby="gameTitle">
         <div class="game-toolbar">
           <div><small>LIVE GAME BOARD · SHARED JIRA STREAM</small><h1 id="gameTitle">CASTLE COMMAND CENTER</h1></div>
-          <div class="game-health" [attr.data-state]="snapshot.connection.state">
+          <div class="game-health" [attr.data-state]="profileActivityAvailable ? 'live' : snapshot.connection.state">
             <i aria-hidden="true"></i>
-            <span>{{snapshot.connection.configured ? snapshot.connection.state : 'not configured'}}</span>
+            <span>{{profileActivityAvailable ? 'profile activity' : (snapshot.connection.configured ? snapshot.connection.state : 'not configured')}}</span>
             <b>{{enabledProfiles.length}} HEROES · {{settings.rotationIntervalSeconds}}S</b>
             <button *ngIf="settings.fullscreenEnabled" type="button" class="fullscreen-control" (click)="toggleFullscreen()" [attr.aria-pressed]="fullscreen">{{fullscreen?'EXIT FULLSCREEN':'FULLSCREEN'}}</button>
           </div>
@@ -76,7 +76,7 @@ import {jiraStatusPresentation, jiraWorkPresentation} from '../../core/jira/jira
           <div class="activity-portrait activity-crest">✦</div>
           <div class="activity-copy">
             <div class="activity-heading"><span>PARTY OVERVIEW</span><small>SHARED JIRA EVENT STREAM</small></div>
-            <strong class="idle-copy">{{snapshot.connection.message || 'The party is idle. New mapped activity will enter the spectator queue.'}}</strong>
+            <strong class="idle-copy">{{profileActivityAvailable ? 'Per-character Jira activity is available.' : (snapshot.connection.message || 'The party is idle. New mapped activity will enter the spectator queue.')}}</strong>
           </div>
         </ng-template>
 
@@ -133,22 +133,24 @@ export class GameViewComponent implements AfterViewInit,OnDestroy{
   protected profileOpen=false;
   protected profileLoading=false;
   protected profileActivity:EmployeeJiraActivity|null=null;
+  protected profileActivityAvailable=false;
 
   ngAfterViewInit():void{
     document.addEventListener('fullscreenchange',this.handleFullscreen);
-    this.userJira.refreshProfiles();
-    this.subscriptions.add(combineLatest([this.configService.config$,this.jira.snapshot$]).subscribe(([config,snapshot])=>{
+    this.subscriptions.add(combineLatest([this.configService.config$,this.jira.snapshot$,this.userJira.profileEvents$]).subscribe(([config,snapshot,profileEvents])=>{
       this.snapshot=snapshot;
       this.settings=config.settings;
       this.statusMappings=config.statusMappings;
       this.enabledProfiles=config.profiles.filter(profile=>profile.enabled);
+      this.userJira.watchProfileActivity(this.enabledProfiles,config.settings.refreshIntervalSeconds);
+      this.profileActivityAvailable=Object.values(profileEvents).some(events=>events.length>0);
       this.issues=snapshot.issues;
       this.runtime.configure(config.settings);
       if(!this.runtime.running())this.runtime.start(this.gameHost.nativeElement,this.enabledProfiles);
       this.director.configure(config.settings.spectatorEnabled,config.settings.rotationIntervalSeconds);
-      const result=this.behavior.derive(snapshot,this.enabledProfiles,this.statusMappings,this.settings);
+      const result=this.behavior.derive(snapshot,this.enabledProfiles,this.statusMappings,this.settings,profileEvents);
       this.baseDirectives=result.directives;
-      if(snapshot.connection.configured&&snapshot.connection.state==='live')this.director.ingest(result.spectatorItems);
+      if(result.spectatorItems.length)this.director.ingest(result.spectatorItems);
       else this.director.clearActivity();
       this.renderPresentation();
     }));

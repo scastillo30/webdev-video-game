@@ -83,6 +83,7 @@ type cachedEntry struct {
 
 type ActivityEntry struct {
 	ID            string   `json:"id"`
+	OccurredAt    string   `json:"occurred_at"`
 	Time          string   `json:"time"`
 	Badge         string   `json:"badge"`
 	IssueKey      string   `json:"issue_key"`
@@ -420,7 +421,7 @@ func renderFeed(feed cachedFeed, stale bool, message string) ActivityResponse {
 			dayIndex[date] = index
 			response.Days = append(response.Days, ActivityDay{Date: date, Label: published.Format("Jan 2, 2006"), Entries: []ActivityEntry{}})
 		}
-		entry := ActivityEntry{ID: item.ID, Time: published.Format("15:04"), Badge: item.Badge, IssueKey: item.IssueKey, IssueSummary: item.IssueSummary,
+		entry := ActivityEntry{ID: item.ID, OccurredAt: published.UTC().Format(time.RFC3339Nano), Time: published.Format("15:04"), Badge: item.Badge, IssueKey: item.IssueKey, IssueSummary: item.IssueSummary,
 			IssueURL: item.IssueURL, TitleHTML: item.TitleHTML, ContentHTML: item.ContentHTML, Categories: item.Categories, LoggedSeconds: item.LoggedSeconds}
 		response.Days[index].Entries = append(response.Days[index].Entries, entry)
 		if item.LoggedSeconds > 0 && item.IssueKey != "" {

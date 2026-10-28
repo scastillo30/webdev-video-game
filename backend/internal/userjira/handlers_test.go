@@ -242,6 +242,9 @@ func TestActivityStaleFallbackAndPerUserCacheIsolation(t *testing.T) {
 	if err != nil || !response.Available || response.ActivityCount != 1 {
 		t.Fatalf("fresh fetch failed: response=%#v err=%v", response, err)
 	}
+	if len(response.Days) != 1 || len(response.Days[0].Entries) != 1 || response.Days[0].Entries[0].OccurredAt != "2026-10-09T17:30:00Z" {
+		t.Fatalf("activity response must preserve its machine-readable occurrence time: %#v", response.Days)
+	}
 	if _, err = service.activity.readCache("viewer-b", character); !errorsIsNotExist(err) {
 		t.Fatalf("viewer B accessed viewer A cache: %v", err)
 	}

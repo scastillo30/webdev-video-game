@@ -7,7 +7,7 @@ import {JIRA_UNAVAILABLE_MESSAGE,jiraAssignedWorkPresentation,jiraWorkPresentati
 
 @Injectable()
 export class GameBehaviorService{
-  derive(snapshot:JiraSnapshot,profiles:GameProfile[],statusMappings:StatusBehaviorMapping[],settings:GameSettings):GameBehaviorResult{
+  derive(snapshot:JiraSnapshot,profiles:GameProfile[],statusMappings:StatusBehaviorMapping[],settings:GameSettings,profileEvents:Readonly<Record<string,JiraActivityEvent[]>>={}):GameBehaviorResult{
     const byJiraId=this.mapping(profiles);
     const issuesByCharacter=new Map<string,JiraIssueSnapshot[]>();
     const eventsByCharacter=new Map<string,JiraActivityEvent[]>();
@@ -29,6 +29,14 @@ export class GameBehaviorService{
         events.push(event);eventsByCharacter.set(character.characterId,events);
       }
     }
+    for(const profile of profiles.filter(profile=>profile.enabled)){
+      const events=eventsByCharacter.get(profile.characterId)??[];
+      const known=new Set(events.map(event=>event.eventId));
+      for(const event of profileEvents[profile.characterId]??[]){
+        if(!known.has(event.eventId)&&this.profileEventInScope(event,settings)){events.push(event);known.add(event.eventId)}
+      }
+      if(events.length)eventsByCharacter.set(profile.characterId,events);
+    }
     const directives=profiles.filter(profile=>profile.enabled).map(profile=>{
       const assignedIssue=chooseFeaturedIssue(issuesByCharacter.get(profile.characterId)??[],settings.featuredTicketRule);
       const latestEvent=[...(eventsByCharacter.get(profile.characterId)??[])].sort((left,right)=>Date.parse(right.occurredAt)-Date.parse(left.occurredAt))[0]??null;
@@ -43,9 +51,14 @@ export class GameBehaviorService{
       return{characterId:profile.characterId,state,issue,event,label:presentation?.text??JIRA_UNAVAILABLE_MESSAGE,status:presentation?.status??null};
     });
     const spectatorItems:SpectatorItem[]=[];
+    const spectatorIds=new Set<string>();
     for(const event of allowedEvents){
       const character=event.authorId?byJiraId.get(event.authorId):undefined;
-      if(character&&allowedKeys.has(event.issueKey))spectatorItems.push({character,event,groupedEventCount:1});
+      if(character&&allowedKeys.has(event.issueKey)){spectatorItems.push({character,event,groupedEventCount:1});spectatorIds.add(event.eventId)}
+    }
+    for(const profile of profiles.filter(profile=>profile.enabled)){
+      const event=[...(profileEvents[profile.characterId]??[])].filter(candidate=>this.profileEventInScope(candidate,settings)).sort((left,right)=>Date.parse(right.occurredAt)-Date.parse(left.occurredAt))[0];
+      if(event&&!spectatorIds.has(event.eventId))spectatorItems.push({character:profile,event,groupedEventCount:1});
     }
     return{directives,spectatorItems};
   }
@@ -74,6 +87,11 @@ export class GameBehaviorService{
     const projectAllowed=!settings.jiraProjects.length||settings.jiraProjects.includes(issue.projectKey.toUpperCase());
     const typeAllowed=!settings.jiraIssueTypes.length||settings.jiraIssueTypes.some(type=>type.localeCompare(issue.issueType,undefined,{sensitivity:'accent'})===0);
     return projectAllowed&&typeAllowed;
+  }
+
+  private profileEventInScope(event:JiraActivityEvent,settings:GameSettings):boolean{
+    const project=event.issueKey.split('-')[0]?.toUpperCase()??'';
+    return!settings.jiraProjects.length||settings.jiraProjects.includes(project);
   }
 
   private configuredState(status:string,category:string,mappings:StatusBehaviorMapping[]):CharacterState{

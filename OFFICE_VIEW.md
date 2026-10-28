@@ -59,6 +59,8 @@ Use `/settings/game` for Game View profiles, Jira account mappings, status behav
 
 The main conversation box is Jira-only in the integrated Office View. It shows the displayed character's latest mapped ticket narration and status; it never falls back to the legacy story script. If live Jira data or a mapped ticket cannot be read, it shows `Cannot access JIRA Status`.
 
+Office View consumes the same normalized sources as Game View: the shared Jira snapshot when available and each linked employee Jira Activity URL as a fallback. A character whose Jira Profile drawer has readable activity must therefore show that activity in the main conversation box.
+
 ## Regression checklist
 
 - `/` loads the iframe from `/legacy-game/`, not `/game`.

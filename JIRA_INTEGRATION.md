@@ -80,6 +80,8 @@ This application has no shared account/login directory, so the adaptation uses a
 
 Every character record carries an optional Jira Activity URL plus optional work email and linked-login username for identity matching. The Game View profile exposes whether that URL is attached and opens its grouped recent activity. Activity is fetched with the current viewer's credential, limited to configured Jira/Confluence origins, capped at 6 MiB, and timed out after 15 seconds.
 
+The same per-character activity response is normalized into the presentation event stream used by Game View bubbles and the Office View dialogue. This is the fallback source when the shared `/api/jira/snapshot` integration is not configured. The feed provides the recorded action, issue key, title, URL, and occurrence time; when it does not provide the ticket's current workflow status, the UI displays `PENDING SYNC` rather than guessing.
+
 Parsed caches live under `ACTIVITY_DIR/users/<viewer>/` and are never shared between viewers. Failed refreshes return that viewer's cached copy as stale. Game View starts a bounded refresh for profiles whose cache is older than one hour, using at most five concurrent requests and 50 entries per character.
 
 ## Game View behavior

@@ -37,20 +37,26 @@ const assignedIssuePayload=(profile:GameProfile,issue:JiraIssueSnapshot):OfficeJ
     narration:presentation.text,statusColor:presentation.status.cssColor};
 };
 
-export function officeJiraBridgePayload(snapshot:JiraSnapshot,config:GameConfig):OfficeJiraBridgePayload{
-  const profiles=config.profiles.filter(profile=>profile.enabled&&profile.jiraAccountId);
-  const userCharacterMap=Object.fromEntries(profiles.map(profile=>[profile.jiraAccountId!,profile.characterId]));
-  if(!snapshot.connection.configured||snapshot.connection.state!=='live')return{connection:snapshot.connection,events:[],userCharacterMap,workByCharacter:{}};
-  const issues=snapshot.issues.filter(issue=>allowedIssue(issue,config));
+export function officeJiraBridgePayload(snapshot:JiraSnapshot,config:GameConfig,profileEvents:Readonly<Record<string,JiraActivityEvent[]>>={}):OfficeJiraBridgePayload{
+  const profiles=config.profiles.filter(profile=>profile.enabled);
+  const userCharacterMap=Object.fromEntries(profiles.map(profile=>[profile.jiraAccountId||`character:${profile.characterId}`,profile.characterId]));
+  const sharedLive=snapshot.connection.configured&&snapshot.connection.state==='live';
+  const issues=sharedLive?snapshot.issues.filter(issue=>allowedIssue(issue,config)):[];
   const issuesByKey=new Map(issues.map(issue=>[issue.issueKey,issue]));
   const allowedKeys=new Set(issuesByKey.keys());
-  const events=snapshot.events.filter(event=>allowedKeys.has(event.issueKey)).map(event=>eventPayload(event,issuesByKey.get(event.issueKey)??null));
+  const sharedEvents=sharedLive?snapshot.events.filter(event=>allowedKeys.has(event.issueKey)).map(event=>eventPayload(event,issuesByKey.get(event.issueKey)??null)):[];
+  const personalEvents=profiles.flatMap(profile=>(profileEvents[profile.characterId]??[]).map(event=>eventPayload(event,null)));
+  const events=[...new Map([...sharedEvents,...personalEvents].map(event=>[event.eventId,event])).values()]
+    .sort((left,right)=>Date.parse(right.timestamp)-Date.parse(left.timestamp));
   const workByCharacter:Record<string,OfficeJiraEvent>={};
   for(const profile of profiles){
-    const authored=events.filter(event=>event.authorId===profile.jiraAccountId).sort((a,b)=>Date.parse(b.timestamp)-Date.parse(a.timestamp))[0];
-    const assigned=issues.filter(issue=>issue.assigneeId===profile.jiraAccountId).sort((a,b)=>Date.parse(b.updatedAt)-Date.parse(a.updatedAt))[0];
+    const authorId=profile.jiraAccountId||`character:${profile.characterId}`;
+    const authored=events.filter(event=>event.authorId===authorId).sort((a,b)=>Date.parse(b.timestamp)-Date.parse(a.timestamp))[0];
+    const assigned=profile.jiraAccountId?issues.filter(issue=>issue.assigneeId===profile.jiraAccountId).sort((a,b)=>Date.parse(b.updatedAt)-Date.parse(a.updatedAt))[0]:undefined;
     if(authored&&(!assigned||Date.parse(authored.timestamp)>=Date.parse(assigned.updatedAt)))workByCharacter[profile.characterId]=authored;
     else if(assigned)workByCharacter[profile.characterId]=assignedIssuePayload(profile,assigned);
   }
-  return{connection:snapshot.connection,events,userCharacterMap,workByCharacter};
+  const latestPersonal=[...personalEvents].sort((left,right)=>Date.parse(right.timestamp)-Date.parse(left.timestamp))[0];
+  const connection:JiraConnection=sharedLive||!latestPersonal?snapshot.connection:{configured:true,state:'live',lastAttemptAt:latestPersonal.timestamp,lastSuccessAt:latestPersonal.timestamp,message:'Per-character Jira activity connected'};
+  return{connection,events,userCharacterMap,workByCharacter};
 }

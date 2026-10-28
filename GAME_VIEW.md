@@ -27,6 +27,8 @@ Characters can use workstations and shared targets such as the planning table, l
 
 All character bubbles use that character's latest mapped Jira ticket narration, including while walking, meeting, or interacting with a workstation. Location labels and ambient conversation copy are not shown in bubbles. When Jira or a character mapping cannot be read, the bubble shows `Cannot access JIRA Status`.
 
+The board accepts both the shared Jira snapshot and the employee Jira Activity URL feed already used by the Jira Profile drawer. A linked, readable employee feed therefore drives the bubbles even when the optional shared snapshot reports `not configured`.
+
 ## Character presentation
 
 Game View and Office View intentionally use separate but linked artwork:

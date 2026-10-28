@@ -54,10 +54,12 @@ export function jiraWorkPresentation(event:JiraActivityEvent,issue:JiraIssueSnap
   const when=jiraRelativeTime(event.occurredAt,now);
   let work:string;
   if(action==='MOVED'&&event.previousStatus&&event.newStatus)work=`I moved ${event.issueKey} from ${event.previousStatus} to ${event.newStatus}`;
+  else if(action==='MOVED'||action==='TRANSITIONED')work=`I moved ${event.issueKey}`;
   else if(/CLOSED|RESOLVED|COMPLETED|DONE/.test(action))work=`I completed ${event.issueKey}`;
   else if(/COMMENT|DISCUS/.test(action))work=`I shared an update on ${event.issueKey}`;
   else if(/CREATED|OPENED/.test(action))work=`I created ${event.issueKey}`;
   else if(/REVIEW|APPROV/.test(action))work=`I reviewed ${event.issueKey}`;
+  else if(/LOGGED|WORKLOG/.test(action))work=`I logged work on ${event.issueKey}`;
   else if(action==='UPDATED'||action==='EDITED')work=`I have updated ${event.issueKey}`;
   else work=`I worked on ${event.issueKey}`;
   const currentStatus=event.currentStatus??event.newStatus??issue?.status;

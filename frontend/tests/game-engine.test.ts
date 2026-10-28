@@ -11,6 +11,7 @@ import {defaultGameSettings,GameConfig,GameProfile,SpectatorItem} from '../src/a
 import {JIRA_UNAVAILABLE_MESSAGE,jiraRelativeTime,jiraStatusPresentation,jiraWorkPresentation} from '../src/app/core/jira/jira-work-presentation';
 import {officeJiraBridgePayload} from '../src/app/features/office/office-jira-bridge';
 import {GameBehaviorService} from '../src/app/features/game/services/game-behavior.service';
+import {employeeJiraEvents} from '../src/app/core/jira/profile-activity-events';
 import {SpectatorDirectorService} from '../src/app/features/game/services/spectator-director.service';
 
 const issue=(key:string,overrides:Partial<JiraIssueSnapshot>={}):JiraIssueSnapshot=>({
@@ -220,6 +221,21 @@ test('Game bubbles use the latest Jira narration and the explicit unavailable fa
   const directive=service.derive(connected,[profile],[],settings).directives[0];
   assert.match(directive.label,/^I have updated PLANNA-333 2 hours ago!$/);
   assert.equal(directive.status?.label,'CODE REVIEW');
+});
+
+test('Per-character Jira profile activity feeds Game and Office when the shared stream is unavailable',()=>{
+  const profile:GameProfile={characterId:'commander',displayName:'Sebastian',characterClass:'Architect',jiraAccountId:null,homeLocation:'command-dais',workstation:'planning-table',miniatureAsset:'commander.webp',portraitAsset:'commander-head.webp',jiraActivityUrl:'https://jira.example.invalid/activity',enabled:true};
+  const personal=employeeJiraEvents(profile,{available:true,activity_count:1,days:[{date:'2026-10-27',label:'Oct 27, 2026',entries:[{
+    id:'activity-1',occurred_at:'2026-10-27T16:10:00Z',time:'10:10',badge:'Transitioned',issue_key:'PLANNA-27030',issue_summary:'Fix logout URL',issue_url:'https://jira.example.invalid/browse/PLANNA-27030',title_html:'',content_html:null,categories:[],logged_seconds:0
+  }]}]});
+  assert.equal(personal.length,1);assert.equal(personal[0].action,'MOVED');assert.equal(personal[0].authorId,'character:commander');
+  const disconnected:JiraSnapshot={connection:{configured:false,state:'disconnected',lastAttemptAt:null,lastSuccessAt:null,message:'Not configured'},issues:[],events:[]};
+  const config:GameConfig={settings:defaultGameSettings(),profiles:[profile],statusMappings:[]};
+  const directive=new GameBehaviorService().derive(disconnected,[profile],[],config.settings,{commander:personal}).directives[0];
+  assert.match(directive.label,/^I moved PLANNA-27030/);assert.equal(directive.status?.label,'PENDING SYNC');
+  const office=officeJiraBridgePayload(disconnected,config,{commander:personal});
+  assert.equal(office.connection.state,'live');assert.equal(office.connection.configured,true);
+  assert.equal(office.workByCharacter.commander.ticketKey,'PLANNA-27030');assert.equal(office.workByCharacter.commander.currentStatus,null);
 });
 
 test('spectator queue deduplicates events and rotates fairly',()=>{
