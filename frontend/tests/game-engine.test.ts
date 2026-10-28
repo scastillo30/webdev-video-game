@@ -6,9 +6,10 @@ import {COMMANDER_SEQUENCES,COMMANDER_WALK,GUARDIAN_WALK,HEALER_WALK,Directional
 import {CASTLE_ANCHORS,CASTLE_COLUMNS,CASTLE_ROWS,CastleNavigationModel} from '../src/app/features/game/engine/castle-navigation';
 import {CharacterStateMachine,stateForStatus} from '../src/app/features/game/engine/character-state-machine';
 import {chooseFeaturedIssue} from '../src/app/features/game/engine/featured-ticket';
-import {JiraActivityEvent,JiraIssueSnapshot} from '../src/app/core/jira/jira.models';
-import {GameProfile,SpectatorItem} from '../src/app/features/game/engine/game.models';
-import {jiraRelativeTime,jiraStatusPresentation,jiraWorkPresentation} from '../src/app/features/game/engine/jira-work-presentation';
+import {JiraActivityEvent,JiraIssueSnapshot,JiraSnapshot} from '../src/app/core/jira/jira.models';
+import {defaultGameSettings,GameConfig,GameProfile,SpectatorItem} from '../src/app/features/game/engine/game.models';
+import {jiraRelativeTime,jiraStatusPresentation,jiraWorkPresentation} from '../src/app/core/jira/jira-work-presentation';
+import {officeJiraBridgePayload} from '../src/app/features/office/office-jira-bridge';
 import {SpectatorDirectorService} from '../src/app/features/game/services/spectator-director.service';
 
 const issue=(key:string,overrides:Partial<JiraIssueSnapshot>={}):JiraIssueSnapshot=>({
@@ -183,6 +184,28 @@ test('Jira status presentation uses distinct semantic colors and does not guess 
   assert.notEqual(jiraStatusPresentation('Code Review').cssColor,jiraStatusPresentation('To Do').cssColor);
   assert.equal(jiraStatusPresentation(null).label,'PENDING SYNC');
   assert.equal(jiraStatusPresentation(null).cssColor,'#f3a3df');
+});
+
+test('Office Jira bridge links saved character mappings to the latest narrated work item',()=>{
+  const profile:GameProfile={characterId:'guardian',displayName:'Gilberth',characterClass:'Guardian',jiraAccountId:'user-1',homeLocation:'command-dais',workstation:'planning-table',miniatureAsset:'guardian.webp',portraitAsset:'guardian-head.webp',jiraActivityUrl:null,enabled:true};
+  const config:GameConfig={settings:{...defaultGameSettings(),jiraProjects:['PLANNA']},profiles:[profile],statusMappings:[]};
+  const event:JiraActivityEvent={eventId:'event-2',issueKey:'PLANNA-25867',authorId:'user-1',authorName:'Gilberth',assigneeId:'user-1',assigneeName:'Gilberth',action:'UPDATED',previousStatus:null,newStatus:null,currentStatus:'Code Review',occurredAt:new Date(Date.now()-2*60*60*1000).toISOString(),issueSummary:'Casino switcher',issueUrl:'https://example.invalid/browse/PLANNA-25867'};
+  const snapshot:JiraSnapshot={connection:{configured:true,state:'live',lastAttemptAt:null,lastSuccessAt:event.occurredAt,message:'Live'},issues:[issue('PLANNA-25867',{assigneeId:'user-1',status:'Code Review',updatedAt:event.occurredAt})],events:[event]};
+  const payload=officeJiraBridgePayload(snapshot,config);
+  assert.equal(payload.userCharacterMap['user-1'],'guardian');
+  assert.equal(payload.workByCharacter.guardian.ticketKey,'PLANNA-25867');
+  assert.match(payload.workByCharacter.guardian.narration,/^I have updated PLANNA-25867 2 hours ago!$/);
+  assert.equal(payload.workByCharacter.guardian.statusColor,'#d6a5ff');
+  assert.equal(payload.events.length,1);
+});
+
+test('Office Jira bridge keeps mappings but withholds Jira work when the shared stream is disconnected',()=>{
+  const profile:GameProfile={characterId:'guardian',displayName:'Gilberth',characterClass:'Guardian',jiraAccountId:'user-1',homeLocation:'command-dais',workstation:'planning-table',miniatureAsset:'guardian.webp',portraitAsset:'guardian-head.webp',jiraActivityUrl:null,enabled:true};
+  const config:GameConfig={settings:defaultGameSettings(),profiles:[profile],statusMappings:[]};
+  const snapshot:JiraSnapshot={connection:{configured:true,state:'disconnected',lastAttemptAt:null,lastSuccessAt:null,message:'Offline'},issues:[issue('PLANNA-1')],events:[]};
+  const payload=officeJiraBridgePayload(snapshot,config);
+  assert.equal(payload.userCharacterMap['user-1'],'guardian');
+  assert.deepEqual(payload.workByCharacter,{});assert.deepEqual(payload.events,[]);
 });
 
 test('spectator queue deduplicates events and rotates fairly',()=>{

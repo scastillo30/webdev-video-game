@@ -1,4 +1,4 @@
-import {JiraActivityEvent, JiraIssueSnapshot} from '../../../core/jira/jira.models';
+import {JiraActivityEvent, JiraIssueSnapshot} from './jira.models';
 
 export interface JiraStatusPresentation {
   label: string;

@@ -3,7 +3,7 @@ import {JiraIssueSnapshot, JiraSnapshot} from '../../../core/jira/jira.models';
 import {stateForStatus} from '../engine/character-state-machine';
 import {chooseFeaturedIssue} from '../engine/featured-ticket';
 import {CharacterDirective, CharacterState, GameBehaviorResult, GameProfile, GameSettings, SpectatorItem, StatusBehaviorMapping} from '../engine/game.models';
-import {jiraStatusPresentation,jiraWorkPresentation} from '../engine/jira-work-presentation';
+import {jiraStatusPresentation,jiraWorkPresentation} from '../../../core/jira/jira-work-presentation';
 
 @Injectable()
 export class GameBehaviorService{

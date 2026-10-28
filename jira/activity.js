@@ -13,12 +13,14 @@
     const timestamp=new Date(timestampValue);
     if(Number.isNaN(timestamp.getTime()))return null;
     const suppliedUrl=text(raw.ticketUrl||raw.issue?.url,600),base=text(issueBaseUrl,500).replace(/\/$/,'');
+    const suppliedColor=text(raw.statusColor,20),statusColor=/^#[0-9a-f]{6}$/i.test(suppliedColor)?suppliedColor:'';
     return Object.freeze({
       eventId,authorId,authorName:text(raw.authorName||raw.author?.name||'Unknown JIRA user',100),
       assigneeId:nullable(raw.assigneeId||raw.assignee?.id||raw.assignee?.accountId,160),assigneeName:nullable(raw.assigneeName||raw.assignee?.name,100),
       ticketKey,ticketTitle:text(raw.ticketTitle||raw.issue?.title||raw.issue?.summary||'Untitled issue',300),
       ticketUrl:validUrl(suppliedUrl||(base?`${base}/browse/${encodeURIComponent(ticketKey)}`:'')),
-      action:text(raw.action||raw.eventType||'UPDATED',50).toUpperCase(),previousStatus:nullable(raw.previousStatus,100),newStatus:nullable(raw.newStatus,100),currentStatus:nullable(raw.currentStatus||raw.issue?.status,100),timestamp:timestamp.toISOString()
+      action:text(raw.action||raw.eventType||'UPDATED',50).toUpperCase(),previousStatus:nullable(raw.previousStatus,100),newStatus:nullable(raw.newStatus,100),currentStatus:nullable(raw.currentStatus||raw.issue?.status,100),timestamp:timestamp.toISOString(),
+      narration:text(raw.narration,500),statusColor
     });
   }
 

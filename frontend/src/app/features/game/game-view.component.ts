@@ -9,7 +9,7 @@ import {GameBehaviorService} from './services/game-behavior.service';
 import {GameConfigService} from './services/game-config.service';
 import {SpectatorDirectorService} from './services/spectator-director.service';
 import {EmployeeJiraActivity, UserJiraService} from '../../core/jira/user-jira.service';
-import {jiraStatusPresentation, jiraWorkPresentation} from './engine/jira-work-presentation';
+import {jiraStatusPresentation, jiraWorkPresentation} from '../../core/jira/jira-work-presentation';
 
 @Component({
   selector:'app-game-view',

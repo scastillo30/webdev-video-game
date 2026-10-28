@@ -15,7 +15,9 @@ The root `index.html`, `styles.css`, `game.js`, `characters/registry.js`, `jira/
 
 ## Shared Jira bridge
 
-The Angular Office component listens to the root Jira store and sends normalized snapshots/events through a versioned same-origin `postMessage` contract. `parentJira=1` tells the legacy runtime that the parent owns Jira collection, preventing duplicate polling.
+The Angular Office component combines the root Jira store with the saved Game configuration and sends normalized events, current issues, and stable Jira-account-to-character mappings through a versioned same-origin `postMessage` contract. `parentJira=1` tells the legacy runtime that the parent owns Jira collection, preventing duplicate polling.
+
+When the shared stream is live, the displayed Office character keeps a Jira work card in the lower conversation panel. The card prefers that character's newest authored event; when a newer assigned issue exists, it shows that current work instead. Narration, relative time, ticket link, action, and semantic status color use the same presentation rules as Game View. The Hero Quest panel continues to show the mapped author's recent activity history. A new queued event temporarily takes priority, then the panel returns to the displayed character's latest work. Disconnected or stale data is not presented as live work.
 
 Standalone legacy development can still use `jira/examples.json` or a browser adapter, but fixture data must be visibly marked demo. Production credentials never belong in Office JavaScript.
 
